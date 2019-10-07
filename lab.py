@@ -13,24 +13,33 @@ PLASS2 = "ENCFF543VGD.bed"
 
 PLASS1 = "ENCFF401ONY.bed"
 
+GES = "ges1_ctcf_12_fp-stylefactor.bed"
+
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 10000)
 
 
-def read_chip_file(file):
+def read_chip_file(file, score):
     data = pd.read_csv(file, sep='\t', comment='t', header=None)
-    header = ["chrom", "chromStart", "chromEnd", "name", "score", "strand",
-              "signalVal", "pVal",
-              "qVal", "peak"]
-    data.columns = header[:len(data.columns)]
-    # לבדוק סינון לפי score
-    # data = data[data['score'] >= 1000]
-    # print(data["chromStart"])
-    data = data.drop_duplicates()
-    data = data.drop(
-        columns=["name", "score", "strand", "signalVal", "pVal", "qVal"])
-    # data = data.sort_values(by=["chrom", "chromStart"])
+    if file == GES:
+        data = data.drop([i for i in range(3, 6)], axis=1)
+        header = ["chrom", "chromStart", "chromEnd"]
+        data.columns = header[:len(data.columns)]
+        peak = data['chromEnd'].sub(data['chromStart']).to_frame('peak')
+        data.insert(3, "peak", peak//2)
+        data.drop_duplicates()
+    else:
+        header = ["chrom", "chromStart", "chromEnd", "name", "score", "strand",
+                  "signalVal", "pVal", "qVal", "peak"]
+        data.columns = header[:len(data.columns)]
+        # לבדוק סינון לפי score
+        data = data[data['score'] >= score]
+        # print(data["chromStart"])
+        data = data.drop_duplicates()
+        data = data.drop(
+            columns=["name", "score", "strand", "signalVal", "pVal", "qVal"])
+        # data = data.sort_values(by=["chrom", "chromStart"])
     return data
 
 
@@ -64,7 +73,6 @@ def parse(data):
     for index, info in zip(data["CHR"], data["MAPINFO"]):
         if index == 'X':
             chrom[22].append(info)
-            chrom
         elif index == 'Y':
             chrom[23].append(info)
         else:
@@ -109,29 +117,37 @@ def find_peak(lst, peak, start, buffer):
     return False
 
 
-if __name__ == '__main__':
-    dict = {
-        "all files": [IMM1, PLASS1, PLASS2,
-             PLASS3, IMM2],
-        "Plass": [PLASS1, PLASS2, PLASS3],
-        "imm": [IMM1, IMM2]
-    }
+def create_graph(score, data):
     for (k, v) in dict.items():
         chip = []
         # print("***** results for " + str(l) + ": ******")
         for i in range(len(v)):
-            chip.append(read_chip_file(v[i]))
+            chip.append(read_chip_file(v[i], score))
         # print(chip)
-
-        data = parse(read_micro_info("normal.csv"))
         buff = [250, 500, 750, 1000]
         y = []
         for b in buff:
             y.append(search(data, chip, b))
         plt.plot(buff, y, label=k)
-    plt.title("results vs range of search")
+    plt.title("results vs range of search, data filtered by score " + str(score))
     plt.grid()
     plt.legend()
-    plt.savefig("results by different range.png")
+    plt.savefig("results by different range for score " + str(score))
+    plt.show()
+
+
+if __name__ == '__main__':
+    dict = {
+        "all files": [IMM1, PLASS1, PLASS2,
+             PLASS3, IMM2, GES],
+        "Plass": [PLASS1, PLASS2, PLASS3],
+        "imm": [IMM1, IMM2],
+        "GES-1": [GES]
+    }
+    data = parse(read_micro_info("normal.csv"))
+    scores = [0, 600, 700, 800, 900, 1000]
+    for score in scores:
+        print("still alive")
+        create_graph(score, data)
 
 
