@@ -1,6 +1,17 @@
 import pandas as pd
 from sklearn import preprocessing as p
 import numpy as np
+import matplotlib.pyplot as plt
+
+IMM2 = "ENCFF833FTF.bed"
+
+IMM1 = "ENCFF449NOT.bed"
+
+PLASS3 = "ENCFF032DEW.bed"
+
+PLASS2 = "ENCFF543VGD.bed"
+
+PLASS1 = "ENCFF401ONY.bed"
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
@@ -8,17 +19,18 @@ pd.set_option('display.width', 10000)
 
 
 def read_chip_file(file):
-    # לבדוק סינון לפי score
     data = pd.read_csv(file, sep='\t', comment='t', header=None)
     header = ["chrom", "chromStart", "chromEnd", "name", "score", "strand",
               "signalVal", "pVal",
               "qVal", "peak"]
     data.columns = header[:len(data.columns)]
+    # לבדוק סינון לפי score
+    # data = data[data['score'] >= 1000]
     # print(data["chromStart"])
     data = data.drop_duplicates()
     data = data.drop(
         columns=["name", "score", "strand", "signalVal", "pVal", "qVal"])
-   # data = data.sort_values(by=["chrom", "chromStart"])
+    # data = data.sort_values(by=["chrom", "chromStart"])
     return data
 
 
@@ -97,14 +109,29 @@ def find_peak(lst, peak, start, buffer):
     return False
 
 
-chip = []
-names = ["ENCFF449NOT.bed", "ENCFF401ONY.bed", "ENCFF543VGD.bed",
-         "ENCFF032DEW.bed", "ENCFF833FTF.bed"]
-for i in range(len(names)):
-    chip.append(read_chip_file(names[i]))
-# print(chip)
+if __name__ == '__main__':
+    dict = {
+        "all files": [IMM1, PLASS1, PLASS2,
+             PLASS3, IMM2],
+        "Plass": [PLASS1, PLASS2, PLASS3],
+        "imm": [IMM1, IMM2]
+    }
+    for (k, v) in dict.items():
+        chip = []
+        # print("***** results for " + str(l) + ": ******")
+        for i in range(len(v)):
+            chip.append(read_chip_file(v[i]))
+        # print(chip)
 
-data = parse(read_micro_info("normal.csv"))
-buff = [250, 500, 1000, 1500]
-for b in buff:
-    print(search(data, chip, b))
+        data = parse(read_micro_info("normal.csv"))
+        buff = [250, 500, 750, 1000]
+        y = []
+        for b in buff:
+            y.append(search(data, chip, b))
+        plt.plot(buff, y, label=k)
+    plt.title("results vs range of search")
+    plt.grid()
+    plt.legend()
+    plt.savefig("results by different range.png")
+
+
