@@ -70,14 +70,15 @@ def read_micro_info(file):
 # def search(data, length):
 
 
-def parse(data, col_value):
+def parse(data, charname, value, chrom=None): # todo : args doc
     """
-    parsing the data by chromosomes.
-    :param data: the pandas matrix with the data
+    parsing the data by the micro array test.
+    :param data: the probes information
     :return: array with the locations sorted by chromosomes
     """
-    chrom = [[] for i in range(24)]
-    for index, info in zip(data["CHR"], data[col_value]):
+    if (chrom == None):
+        chrom = [[] for i in range(24)]
+    for index, info in zip(data[charname], data[value]):
         if index == 'X':
             chrom[22].append(info)
         elif index == 'Y':
@@ -158,7 +159,7 @@ if __name__ == '__main__':
         "imm": [IMM1, IMM2],
         "GES-1": [GES]
     }
-    data = parse(read_micro_info("normal.csv"). "MAPINFO")
+    data = parse(read_micro_info("normal.csv"), "CHR", "MAPINFO")
     scores = [0, 600, 700, 800, 900, 1000]
     for score in scores:
         print("still alive")
