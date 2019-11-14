@@ -1,6 +1,6 @@
 import pandas as pd
-from sklearn import preprocessing as p
-import numpy as np
+#from sklearn import preprocessing as p
+#import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -45,6 +45,11 @@ def read_chip_file(file, score):
 
 
 def read_micro_info(file):
+    """
+    reading the information from the micro chip lab. filters by Genome_Build 36
+    :param file: the micro chip csv file
+    :return: pandas matrix with the filtered data
+    """
     data = pd.read_csv(file)
     data = data.drop_duplicates()
     data = data.drop(
@@ -62,14 +67,16 @@ def read_micro_info(file):
                  "UCSC_CpG_Islands_Name"])
     data = data[data['Genome_Build'] >= 36]  # drop the empty genome build
     # data = data[data['CHR'] > 1] # drop the empty chrom
-
     return data
-
-
 # def search(data, length):
 
 
 def parse(data):
+    """
+    parsing the data by chromosomes.
+    :param data: the pandas matrix with the data
+    :return: array with the locations sorted by chromosomes
+    """
     chrom = [[] for i in range(24)]
     for index, info in zip(data["CHR"], data["MAPINFO"]):
         if index == 'X':
@@ -84,6 +91,13 @@ def parse(data):
 
 
 def search(parse_data, chip_data, buffer):
+    """
+    searching if prob is at the area of an peak +- the buffer.
+    :param parse_data: the probes
+    :param chip_data: the data from the chip array experience
+    :param buffer: the buffer of bases we look at around the peak
+    :return: the ratio between sum of probes are is the buffer to the total amount of probes
+    """
     row_num = 0
     counter = 0
     for i in range(len(chip_data)):
