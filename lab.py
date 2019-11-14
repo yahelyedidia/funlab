@@ -3,7 +3,6 @@ import pandas as pd
 #import numpy as np
 import matplotlib.pyplot as plt
 
-
 IMM2 = "ENCFF833FTF.bed"
 
 IMM1 = "ENCFF449NOT.bed"
@@ -34,7 +33,7 @@ def read_chip_file(file, score):
         header = ["chrom", "chromStart", "chromEnd", "name", "score", "strand",
                   "signalVal", "pVal", "qVal", "peak"]
         data.columns = header[:len(data.columns)]
-        # לבדוק סינון לפי score
+        #  check by score
         data = data[data['score'] >= score]
         # print(data["chromStart"])
         data = data.drop_duplicates()
@@ -71,14 +70,14 @@ def read_micro_info(file):
 # def search(data, length):
 
 
-def parse(data):
+def parse(data, col_value):
     """
     parsing the data by chromosomes.
     :param data: the pandas matrix with the data
     :return: array with the locations sorted by chromosomes
     """
     chrom = [[] for i in range(24)]
-    for index, info in zip(data["CHR"], data["MAPINFO"]):
+    for index, info in zip(data["CHR"], data[col_value]):
         if index == 'X':
             chrom[22].append(info)
         elif index == 'Y':
@@ -159,7 +158,7 @@ if __name__ == '__main__':
         "imm": [IMM1, IMM2],
         "GES-1": [GES]
     }
-    data = parse(read_micro_info("normal.csv"))
+    data = parse(read_micro_info("normal.csv"). "MAPINFO")
     scores = [0, 600, 700, 800, 900, 1000]
     for score in scores:
         print("still alive")

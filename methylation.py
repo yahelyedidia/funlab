@@ -28,4 +28,4 @@ def create_avg(file):
     return data
 
 
-print(create_avg("GES/GSE89269_series_matrix.txt.gz").head())
+# print(create_avg("GES/GSE89269_series_matrix.txt.gz").head())
