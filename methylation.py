@@ -1,18 +1,18 @@
 import pandas as pd
-from sklearn import preprocessing as p
-import numpy as np
-import matplotlib.pyplot as plt
+#from sklearn import preprocessing as p
+#import numpy as np
+#import matplotlib.pyplot as plt
 import lab
 
 TRASHOLD = 0.5
 
-
 def create_avg(file):
-    data = pd.read_csv(file, sep='\t', comment='t')
+    data = pd.read_csv(file, sep='\t', comment='t', header=None, error_bad_lines=False)
     data = data.drop_duplicates()
     data = data.set_index("ID_REF")
     avg = []
     binar = []
+    print("hi")
     for line in data.iterrows():
         lst = line[1]
         s = sum([float(pair[1]) for pair in lst])
@@ -22,9 +22,10 @@ def create_avg(file):
             binar.append(0)
         else:
             binar.append(1)
+        print("end of line, going to the next line")
     data["avg"] = avg
     data["bin"] = binar
     return data
 
-print(create_avg("GSE89269_series_matrix.txt").head())
 
+print(create_avg("GES/GSE89269_series_matrix.txt.gz").head())
