@@ -6,15 +6,15 @@ DINFO = "Smoothed_Methylation_Level_H2_DMSO"
 
 NODINFO = "Smoothed_Methylation_Level_H2_DAC"
 
-DMC = "files/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+DMC = "Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-DMSO = "files/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+DMSO = "Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-PLASS3 = "files/Plass/ENCFF032DEW.bed"
+PLASS3 = "ENCFF032DEW.bed"
 
-PLASS2 = "files/Plass/ENCFF543VGD.bed"
+PLASS2 = "ENCFF543VGD.bed"
 
-PLASS1 = "files/Plass/ENCFF401ONY.bed"
+PLASS1 = "ENCFF401ONY.bed"
 
 
 def read_gz_file(file1, file2, filter):
@@ -75,10 +75,15 @@ def search(nodrags, drags, chip_data):
                 chr = int(chr[3:]) - 1
             startin = find_start(nodrags[chr], start)
             endin = find_start(nodrags[chr], end)
-            nodragcount += endin - startin
+            nodrag_met = endin - startin
+            nodragcount += nodrag_met
             startin = find_start(drags[chr], start)
             endin = find_start(drags[chr], end)
-            dragcount += endin - startin
+            drag_met = endin - startin
+            dragcount += drag_met
+            if(1 >= nodrag_met - drag_met >= -1):
+                print(chip_data[i])
+
     print("no drags count :" + str(nodragcount) + "\nwith drags count : " + str(dragcount))
     print("the ratio :" + str(nodragcount - dragcount))
 
