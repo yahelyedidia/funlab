@@ -21,6 +21,13 @@ pd.set_option('display.width', 10000)
 
 
 def read_chip_file(file, score):
+    """
+    A function that gets ChipSeq and convert the file to csv file while
+    remove the row that ander the score treshold
+    :param file: the file to convert
+    :param score: the treshold
+    :return: the file in csv format
+    """
     data = pd.read_csv(file, sep='\t', comment='t', header=None)
     if file == GES:
         data = data.drop([i for i in range(3, 6)], axis=1)
@@ -117,6 +124,14 @@ def search(parse_data, chip_data, buffer):
 
 
 def find_peak(lst, peak, start, buffer):
+    """
+    find in list of probes i
+    :param lst:
+    :param peak:
+    :param start:
+    :param buffer:
+    :return:
+    """
     first = 0
     last = len(lst) - 1
     val = start + peak
