@@ -1,27 +1,60 @@
 import pandas as pd
 import lab
-import methylation
+import numpy as np
+# import methylation
+# from statistics import mean
+import csv
 
 DINFO = "Smoothed_Methylation_Level_H2_DMSO"
 
 NODINFO = "Smoothed_Methylation_Level_H2_DAC"
 
-DMC = "tehila/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+CONTROL = "GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
-DMSO = "tehila/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+AFTER_TREATMENT = "GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
-PLASS3 = "tehila/Plass/ENCFF032DEW.bed.gz"
+PLASS3 = "ENCFF032DEW.bed"
 
-PLASS2 = "tehila/Plass/ENCFF543VGD.bed.gz"
+PLASS2 = "ENCFF543VGD.bed"
 
-PLASS1 = "tehila/Plass/ENCFF401ONY.bed.gz"
+PLASS1 = "ENCFF401ONY.bed"
+
+
+def closest_to_peak(lst, peak, start):
+    """
+    find in list of probes i
+    :param lst:
+    :param peak:
+    :param start:
+    :param buffer:
+    :return:
+    """
+    first = 0
+    last = len(lst) - 1
+    val = start + peak
+    mid = 0
+    while first <= last:
+        mid = (first + last) // 2
+        if val == lst[mid][0]:
+            return lst[mid][1]
+        else:
+            if val < lst[mid][0]:
+                last = mid - 1
+            else:
+                first = mid + 1
+    if mid-1 < 0:
+        return lst[mid+1][1]
+    elif mid+1 > last:
+        return lst[mid-1][1]
+
+    return max(lst[mid-1][1], lst[mid+1][1])
 
 
 def read_gz_file(file1, file2, filter):
     nodrag = pd.read_csv(file1, sep='\t', low_memory=False)
     drag = pd.read_csv(file2, sep='\t', low_memory=False)
-    nodrag = nodrag[nodrag[NODINFO] >= filter]
-    drag = drag[drag[DINFO] >= filter]
+    nodrag = nodrag[nodrag[DINFO] >= filter]
+    drag = drag[drag[NODINFO] >= filter]
     return nodrag, drag
 
 
@@ -38,6 +71,7 @@ def smooth_parse(data, name):
         i.sort()
     return chrom
 
+
 def find_start(lst, start):
     first = 0
     last = len(lst) - 1
@@ -52,6 +86,7 @@ def find_start(lst, start):
                 first = mid + 1
     return mid
 
+
 def search(nodrags, drags, chip_data, name):
     """
     searching if prob is at the area of an peak +- the buffer.
@@ -62,30 +97,44 @@ def search(nodrags, drags, chip_data, name):
     """
     nodragcount = 0
     dragcount = 0
-    f= open(name,"w+")
-    f.write("** chr **   ** start **  ** end **\n")
-    for i in range(len(chip_data)):
-        for start, end, chr in zip(chip_data[i]["chromStart"],
-                                    chip_data[i]["chromEnd"],
-                                    chip_data[i]["chrom"]):
-            if chr == 'chrX':
-                chr = 22
-            elif chr == 'chrY':
-                chr = 23
-            else:
-                chr = int(chr[3:]) - 1
-            startin = find_start(nodrags[chr], start)
-            endin = find_start(nodrags[chr], end)
-            nodrag_met = endin - startin
-            nodragcount += nodrag_met
-            startin = find_start(drags[chr], start)
-            endin = find_start(drags[chr], end)
-
-            drag_met = endin - startin
-            dragcount += drag_met
-            if(nodrag_met - drag_met > 1 or nodrag_met - drag_met < -1):
-                f.write(str(chr+1) +" " + str(start) + " " + str(end)+"\n")
-    f.close()
+    head = ["chr", "start", "end", "no drugs avg", "with drugs avg"]
+    # df = pd.DataFrame(columns=head)
+    # f = open(name, "w+")
+    # f.write("** chr ** \t ** start **\t ** end ** \t **no drugs avg** \t **with drugs avg** \n")
+    with open(name, mode='w') as res_file:
+        writer = csv.DictWriter(res_file, fieldnames=head)
+        writer.writeheader()
+        for i in range(len(chip_data)):
+            for start, end, chr, peak in zip(chip_data[i]["chromStart"],
+                                        chip_data[i]["chromEnd"],
+                                        chip_data[i]["chrom"],
+                                             chip_data[i]["peak"]):
+                if chr == 'chrX':
+                    chr = 22
+                elif chr == 'chrY':
+                    chr = 23
+                else:
+                    chr = int(chr[3:]) - 1
+                startin = find_start(nodrags[chr], start)
+                endin = find_start(nodrags[chr], end)
+                #no_drg_lst = np.array(nodrags[chr][startin:endin])
+                nodrag_met = endin - startin
+                nodragcount += nodrag_met
+                startin = find_start(drags[chr], start)
+                endin = find_start(drags[chr], end)
+                #drg_lst = np.array(drags[chr][startin:endin])
+                drag_met = endin - startin
+                dragcount += drag_met
+                if nodrag_met - drag_met > 1 or nodrag_met - drag_met < -1:
+                    no_drg_avg = closest_to_peak(nodrags[chr], peak, start)
+                    drg_avg = closest_to_peak(drags[chr], peak, start)
+                    # line = [str(chr+1), str(start), str(end), str(no_drg_avg), str(drg_avg)]
+                    # df.append(pd.DataFrame(data=line))
+                    writer.writerow({"chr": str(chr+1), "start": str(start), "end": str(end),
+                                     "no drugs avg": str(no_drg_avg), "with drugs avg":  str(drg_avg)})
+                    # f.write(str(chr+1) + "\t" + str(start) + "\t" + str(end) + "\t" + str(no_drg_avg) + "\t" + str(drg_avg) + "\n")
+    # f.close()
+    # df.to_csv(name)
     print("no drags count :" + str(nodragcount) + "\nwith drags count : " + str(dragcount))
     print("the ratio :" + str(nodragcount - dragcount))
 
@@ -100,10 +149,10 @@ def main():
     filters = [0.1, 0.3, 0.5]
     for filter in filters:
         print("results for filter: " + str(filter))
-        ndrg, drg = read_gz_file(DMSO, DMC, filter)
-        nodrag = smooth_parse(ndrg, NODINFO)
-        drag = smooth_parse(drg, DINFO)
-        res = search(nodrag, drag, data, "change in filter " + str(filter))
+        ndrg, drg = read_gz_file(CONTROL, AFTER_TREATMENT, filter)
+        nodrag = smooth_parse(ndrg, DINFO)
+        drag = smooth_parse(drg, NODINFO)
+        res = search(nodrag, drag, data, "change in filter " + str(filter)+ ".csv")
     #     print(readin.head())
     #     chrom = lab.parse(readin,"chrom", "", chrom)
 
