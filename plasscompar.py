@@ -26,7 +26,6 @@ def closest_to_peak(lst, peak, start):
     :param lst:
     :param peak:
     :param start:
-    :param buffer:
     :return:
     """
     first = 0
@@ -72,39 +71,37 @@ def smooth_parse(data, name):
     return chrom
 
 
-def find_start(lst, start):
+def find_position(lst, location):
+    """
+    binary search to find the CTCF biding site's start and end
+    :param lst: the chromosome biding sits as we filtered from the data
+    :param location: the chromosome's start position
+    :return: the start or end position
+    """
     first = 0
     last = len(lst) - 1
     while first <= last:
         mid = (first + last) // 2
-        if start == lst[mid][0]:
+        if location == lst[mid][0]:
             return mid
         else:
-            if start < lst[mid][0]:
+            if location < lst[mid][0]:
                 last = mid - 1
             else:
                 first = mid + 1
     return mid
 
 
-def search(nodrags, drags, chip_data, name):
+def search(nodrags, drags, chip_data):
     """
     searching if prob is at the area of an peak +- the buffer.
-    :param parse_data: the probes
     :param chip_data: the data from the chip array experience
-    :param buffer: the buffer of bases we look at around the peak
     :return: the ratio between sum of probes are is the buffer to the total amount of probes
     """
     nodragcount = 0
     dragcount = 0
     head = ["chr", "start", "end", "no drugs avg", "with drugs avg"]
     lst = np.empty((1, len(head)))
-    # df = pd.DataFrame(columns=head)
-    # f = open(name, "w+")
-    # f.write("** chr ** \t ** start **\t ** end ** \t **no drugs avg** \t **with drugs avg** \n")
-    # with open(name, mode='w') as res_file:
-        # writer = csv.DictWriter(res_file, fieldnames=head)
-        # writer.writeheader()
     for i in range(len(chip_data)):
         for start, end, chr, peak in zip(chip_data[i]["chromStart"],
                                     chip_data[i]["chromEnd"],
@@ -116,40 +113,25 @@ def search(nodrags, drags, chip_data, name):
                 chr = 23
             else:
                 chr = int(chr[3:]) - 1
-            startin = find_start(nodrags[chr], start)
-            endin = find_start(nodrags[chr], end)
-            #no_drg_lst = np.array(nodrags[chr][startin:endin])
+            startin = find_position(nodrags[chr], start)
+            endin = find_position(nodrags[chr], end)
             nodrag_met = endin - startin
             nodragcount += nodrag_met
-            startin = find_start(drags[chr], start)
-            endin = find_start(drags[chr], end)
-            #drg_lst = np.array(drags[chr][startin:endin])
+            startin = find_position(drags[chr], start)
+            endin = find_position(drags[chr], end)
             drag_met = endin - startin
             dragcount += drag_met
-            # if nodrag_met - drag_met > 1 or nodrag_met - drag_met < -1:
             no_drg_avg = closest_to_peak(nodrags[chr], peak, start)
             drg_avg = closest_to_peak(drags[chr], peak, start)
-            # line = [str(chr+1), str(start), str(end), str(no_drg_avg), str(drg_avg)]
-            # df.append(pd.DataFrame(data=line))
             line = np.array([chr + 1, start, end, no_drg_avg, drg_avg])
             lst = np.vstack([lst, line])
 
-                # writer.writerow({"chr": str(chr+1), "start": str(start), "end": str(end),
-                #                  "no drugs avg": str(no_drg_avg), "with drugs avg":  str(drg_avg), "change": str(no_drg_avg- drg_avg)})
-                    # f.write(str(chr+1) + "\t" + str(start) + "\t" + str(end) + "\t" + str(no_drg_avg) + "\t" + str(drg_avg) + "\n")
-    # f.close()
-    # df.to_csv(name)
     change = np.subtract(lst[:, 3], lst[:, 4])[np.newaxis]
     change = change.T
     lst[:, :-1] = change
     head.append("change")
-    print(lst)
-    lst = lst[::, lst[5, ].argsort()]
-
-    pd.DataFrame(lst).to_csv("changes.csv", header=head)
-    # np.savetxt("changes.csv", int(lst.flatten()))
-    # fmt = ",".join(["%s"] + ["%10.6e"] * (lst.shape[1] - 1))
-    # np.savetxt("changes.csv", int(lst), fmt=fmt, header=str(head), comments='')
+    lst = lst[lst[:, 5].argsort()]
+    pd.DataFrame(data=lst, columns=head).to_csv("changes.csv")
     print("no drags count :" + str(nodragcount) + "\nwith drags count : " + str(dragcount))
     print("the ratio :" + str(nodragcount - dragcount))
 
@@ -166,9 +148,7 @@ def main():
     ndrg, drg = read_gz_file(CONTROL, AFTER_TREATMENT)
     nodrag = smooth_parse(ndrg, DINFO)
     drag = smooth_parse(drg, NODINFO)
-    res = search(nodrag, drag, data, "change with no filter.csv")
-    #     print(readin.head())
-    #     chrom = lab.parse(readin,"chrom", "", chrom)
+    search(nodrag, drag, data)
 
 
 main()
