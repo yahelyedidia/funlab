@@ -147,8 +147,8 @@ def search(nodrags, drags, chip_data):
     lst = lst[lst[:, 5].argsort()]
     #  writing the result
     pd.DataFrame(data=lst, columns=head).to_csv("changes.csv")
-    print("no drags count :" + str(nodragcount) + "\nwith drags count : " + str(dragcount))
-    print("the ratio :" + str(nodragcount - dragcount))
+    #  print("no drags count :" + str(nodragcount) + "\nwith drags count : " + str(dragcount))
+    #  print("the ratio :" + str(nodragcount - dragcount))
 
 
 def main():
@@ -166,6 +166,7 @@ def main():
     drag = smooth_parse(drg, NODINFO)
     print("done parsing")
     search(nodrag, drag, data)
+    print("F I N I S H !")
 
 
 main()
