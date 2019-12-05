@@ -1,6 +1,7 @@
 import pandas as pd
 import lab
 import numpy as np
+import matplotlib.pyplot as plt
 
 DINFO = "Smoothed_Methylation_Level_H2_DMSO"
 
@@ -101,14 +102,53 @@ def find_position(lst, location):
     return mid
 
 
+def make_box_plot(file):
+    lst = pd.read_csv(file)
+    lst = lst.drop(lst.index[[0]])
+    # lst = pd.DataFrame(data=lst, columns=head)
+    chroms = []
+    for i in range(1, 24):
+        this_chrom = lst[lst['chr'] == i]
+        this_chrom = this_chrom.drop(columns=["chr", "start", "end", "no drugs avg", "with drugs avg"])
+        this_chrom = this_chrom.drop(this_chrom.columns[0], axis=1)
+        chroms.append(np.array(this_chrom))
+    plt.boxplot(chroms)
+    plt.title("changes at the mthylation level after treatment by chromosomes")
+    plt.xlabel("chromosomes, 22 = X, 23 = Y")
+    plt.ylabel("change level")
+    plt.grid()
+    # plt.setp(plt, xticks=[c+1 for c in range(23)])
+    plt.legend()
+    plt.savefig("boxplot_res")
+    plt.show()
+
+    # num_chr = 1
+    # for chr in chroms:
+        # x = chr['start']
+        # start = int(min(x))
+        # end = int(max(x))
+        # no_d = chr['no drugs avg']
+        # with_d = chr['with drugs avg']
+        # # plt.xticks(range(start, end))
+        # x_asix = np.linspace(start, end, chr.shape[0])
+        # plt.plot(x_asix, no_d, label="No drug")
+        # plt.plot(x_asix, with_d, label="With drug")
+        # plt.title("change in matylation level at chromosome " + str(num_chr) + " after treatment")
+        # plt.grid()
+        # plt.legend()
+        # plt.savefig("chr " + str(num_chr))
+        # num_chr += 1
+        # plt.clf()
+
+
 def search(nodrags, drags, chip_data):
     """
     searching if prob is at the area of an peak +- the buffer.
     :param chip_data: the data from the chip array experience
     :return: the ratio between sum of probes are is the buffer to the total amount of probes
     """
-    nodragcount = 0
-    dragcount = 0
+    # nodragcount = 0
+    # dragcount = 0
     head = ["chr", "start", "end", "no drugs avg", "with drugs avg"]
     lst = np.empty((1, len(head)))
     for i in range(len(chip_data)):
@@ -122,33 +162,19 @@ def search(nodrags, drags, chip_data):
                 chr = 23
             else:
                 chr = int(chr[3:]) - 1
-            #  finding the start index of the methylation
-            # startin = find_position(nodrags[chr], start)
-            # endin = find_position(nodrags[chr], end)
-            # nodrag_met = endin - startin
-            # nodragcount += nodrag_met
-            #  finding the end index of the methylation
-            # startin = find_position(drags[chr], start)
-            # endin = find_position(drags[chr], end)
-            # drag_met = endin - startin
-            # dragcount += drag_met
-            #  calculation of the average
             no_drg_avg = closest_to_peak(nodrags[chr], peak, start)
             drg_avg = closest_to_peak(drags[chr], peak, start)
-            #  adding the result to the final file
             line = np.array([chr + 1, start, end, no_drg_avg, drg_avg])
             lst = np.vstack([lst, line])
 
     #  adding column with the difference between the average with out / with the drag
     change = np.subtract(lst[:, 3], lst[:, 4])[np.newaxis]
     change = change.T
-    lst[:, :-1] = change
+    lst = np.hstack([lst, change])
     head.append("change")
-    lst = lst[lst[:, 5].argsort()]
+    lst = lst[lst[:, 0].argsort()] #todo change to 5
     #  writing the result
-    pd.DataFrame(data=lst, columns=head).to_csv("changes.csv")
-    #  print("no drags count :" + str(nodragcount) + "\nwith drags count : " + str(dragcount))
-    #  print("the ratio :" + str(nodragcount - dragcount))
+    pd.DataFrame(data=lst, columns=head).to_csv("in_progress.csv")
 
 
 def main():
@@ -169,4 +195,19 @@ def main():
     print("F I N I S H !")
 
 
-main()
+make_box_plot("in_progress.csv")
+
+
+def no_use():
+    # finding the start index of the methylation
+    # startin = find_position(nodrags[chr], start)
+    # endin = find_position(nodrags[chr], end)
+    # nodrag_met = endin - startin
+    # nodragcount += nodrag_met
+    #  finding the end index of the methylation
+    # startin = find_position(drags[chr], start)
+    # endin = find_position(drags[chr], end)
+    # drag_met = endin - startin
+    # dragcount += drag_met
+    #  calculation of the average
+    return
