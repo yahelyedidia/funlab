@@ -17,6 +17,22 @@ PLASS2 = "ENCFF543VGD.bed"
 
 PLASS1 = "ENCFF401ONY.bed"
 
+B1_ACTIVE = "B1_activation.csv"
+
+B2_ACTIVE = "B2_activation.csv"
+
+B3_ACTIVE = "B3_activation.csv"
+
+B1_TRANSFOR = "B1_transformed.csv"
+
+B2_TRANSFOR = "B2_transformed.csv"
+
+B3_TRANSFOR = "B3_transformed.csv"
+
+CHIP_B_CELLS_ACTIVE = "ENCFF449NOT.bed"
+
+TF_TRANS = "ENCFF833FTF.bed"
+
 
 def closest_to_peak(lst, peak, start):
     """
@@ -47,18 +63,18 @@ def closest_to_peak(lst, peak, start):
     return max(lst[mid-1][1], lst[mid+1][1])
 
 
-def read_gz_file(file1, file2):
+def read_gz_file(file1, file2, sep):
     """
     reading the file's and filter it if needed
     :param file1: the first file
     :param file2: the second file
     :return: the files
     """
-    nodrag = pd.read_csv(file1, sep='\t', low_memory=False)
-    drag = pd.read_csv(file2, sep='\t', low_memory=False)
+    before = pd.read_csv(file1, sep=sep, low_memory=False)
+    after = pd.read_csv(file2, sep=sep, low_memory=False)
     # nodrag = nodrag[nodrag[DINFO] >= filter]
     # drag = drag[drag[NODINFO] >= filter]
-    return nodrag, drag
+    return before, after
 
 
 def smooth_parse(data, name):
@@ -69,13 +85,14 @@ def smooth_parse(data, name):
     :return: an array with the data parsed from the file
     """
     chrom = [[] for i in range(24)]
-    for index, loci, level in zip(data["Chromosome"], data["Start"], data[name]):
-        if index == 'X':
+    for index, loci, level in zip(data["chr"], data["pos"], data[name]):
+        if index == 'X' or index == "chrX":
             chrom[22].append([loci, level])
-        elif index == 'Y':
+        elif index == 'Y' or index == "chrY":
             chrom[23].append([loci, level])
         else:
-            chrom[int(index) - 1].append([loci, level])
+            index = int(''.join([s for s in list(index) if s.isdigit()]))
+            chrom[index - 1].append([loci, level])
     for i in chrom:
         i.sort()
     return chrom
@@ -122,6 +139,98 @@ def make_box_plot(file):
     plt.savefig("boxplot_res")
     plt.show()
 
+
+def search(before, after, chip_data, name="in_progress.csv"):
+    """
+    searching if prob is at the area of an peak +- the buffer.
+    :param before: the data before treatment
+    :param after: the data after treatment
+    :param chip_data: the data from the chip array experience
+    :return: the ratio between sum of probes are is the buffer to the total amount of probes
+    """
+    # nodragcount = 0
+    # dragcount = 0
+    head = ["chr", "start", "end", "no drugs avg", "with drugs avg"]
+    lst = np.empty((1, len(head)))
+    for i in range(len(chip_data)):
+        for row in chip_data.iterrows():
+            row = row[1]
+            if row["chrom"] == 'chrX':
+                chrom = 22
+            elif row["chrom"] == 'chrY':
+                chrom = 23
+            else:
+                chrom = int(row["chrom"][3:]) - 1
+            befor_avg = closest_to_peak(before[chrom], row["peak"], row["chromStart"])
+            after_avg = closest_to_peak(after[chrom], row["peak"], row["chromStart"])
+            line = np.array([chrom + 1, row["chromStart"], row["chromEnd"], befor_avg, after_avg])
+            lst = np.vstack([lst, line])
+            print("still alive" + str(row["chrom"]))
+
+    #  adding column with the difference between the average with out / with the drag
+    change = np.subtract(lst[:, 3], lst[:, 4])[np.newaxis]
+    change = change.T
+    lst = np.hstack([lst, change])
+    head.append("change")
+    lst = lst[lst[:, 0].argsort()] #todo change to 5
+    #  writing the result
+    pd.DataFrame(data=lst, columns=head).to_csv(name)
+
+
+def main_plass():
+    plass = [PLASS1, PLASS2, PLASS3]
+    data = []
+    for p in plass:
+        data.append(lab.read_chip_file(p, 100))
+    print("done append data")
+    # filters = [0.1, 0.3, 0.5]
+    # for filter in filters:
+    # print("results for filter: " + str(filter))
+    ndrg, drg = read_gz_file(CONTROL, AFTER_TREATMENT, '\t')
+    print("done reading the files")
+    nodrag = smooth_parse(ndrg, DINFO)
+    drag = smooth_parse(drg, NODINFO)
+    print("done parsing")
+    search(nodrag, drag, data)
+    print("F I N I S H !")
+
+
+def main_imm():
+    # imm = [CHIP_B_CELLS_ACTIVE, TF_TRANS]
+    b_active = lab.read_chip_file(CHIP_B_CELLS_ACTIVE, 100)
+    tf_trans = lab.read_chip_file(TF_TRANS, 100)
+    print("done append data")
+    act, trn = read_gz_file(B1_ACTIVE, B1_TRANSFOR, ',')  # only B1
+    print("done reading the files")
+    active = smooth_parse(act, "smoothSmall") # only small ! there is also large
+    transformed = smooth_parse(trn, "smoothSmall")
+    print("done parsing")
+    search(active, transformed, b_active, "active.csv")  # active file
+    search(active, transformed, tf_trans, "transformed.csv")  # transformed file
+    print("F I N I S H !")
+
+
+main_imm()
+
+
+#  make_box_plot("in_progress.csv")
+def no_use():
+    return
+
+    # procecess the files
+    # finding the start index of the methylation
+    # startin = find_position(nodrags[chr], start)
+    # endin = find_position(nodrags[chr], end)
+    # nodrag_met = endin - startin
+    # nodragcount += nodrag_met
+    #  finding the end index of the methylation
+    # startin = find_position(drags[chr], start)
+    # endin = find_position(drags[chr], end)
+    # drag_met = endin - startin
+    # dragcount += drag_met
+    #  calculation of the average
+
+    #creating graphs
     # num_chr = 1
     # for chr in chroms:
         # x = chr['start']
@@ -140,74 +249,8 @@ def make_box_plot(file):
         # num_chr += 1
         # plt.clf()
 
-
-def search(nodrags, drags, chip_data):
-    """
-    searching if prob is at the area of an peak +- the buffer.
-    :param chip_data: the data from the chip array experience
-    :return: the ratio between sum of probes are is the buffer to the total amount of probes
-    """
-    # nodragcount = 0
-    # dragcount = 0
-    head = ["chr", "start", "end", "no drugs avg", "with drugs avg"]
-    lst = np.empty((1, len(head)))
-    for i in range(len(chip_data)):
-        for start, end, chr, peak in zip(chip_data[i]["chromStart"],
-                                    chip_data[i]["chromEnd"],
-                                    chip_data[i]["chrom"],
-                                         chip_data[i]["peak"]):
-            if chr == 'chrX':
-                chr = 22
-            elif chr == 'chrY':
-                chr = 23
-            else:
-                chr = int(chr[3:]) - 1
-            no_drg_avg = closest_to_peak(nodrags[chr], peak, start)
-            drg_avg = closest_to_peak(drags[chr], peak, start)
-            line = np.array([chr + 1, start, end, no_drg_avg, drg_avg])
-            lst = np.vstack([lst, line])
-
-    #  adding column with the difference between the average with out / with the drag
-    change = np.subtract(lst[:, 3], lst[:, 4])[np.newaxis]
-    change = change.T
-    lst = np.hstack([lst, change])
-    head.append("change")
-    lst = lst[lst[:, 0].argsort()] #todo change to 5
-    #  writing the result
-    pd.DataFrame(data=lst, columns=head).to_csv("in_progress.csv")
-
-
-def main():
-    plass = [PLASS1, PLASS2, PLASS3]
-    data = []
-    for p in plass:
-        data.append(lab.read_chip_file(p, 100))
-    print("done append data")
-    # filters = [0.1, 0.3, 0.5]
-    # for filter in filters:
-    # print("results for filter: " + str(filter))
-    ndrg, drg = read_gz_file(CONTROL, AFTER_TREATMENT)
-    print("done reading the files")
-    nodrag = smooth_parse(ndrg, DINFO)
-    drag = smooth_parse(drg, NODINFO)
-    print("done parsing")
-    search(nodrag, drag, data)
-    print("F I N I S H !")
-
-
-make_box_plot("in_progress.csv")
-
-
-def no_use():
-    # finding the start index of the methylation
-    # startin = find_position(nodrags[chr], start)
-    # endin = find_position(nodrags[chr], end)
-    # nodrag_met = endin - startin
-    # nodragcount += nodrag_met
-    #  finding the end index of the methylation
-    # startin = find_position(drags[chr], start)
-    # endin = find_position(drags[chr], end)
-    # drag_met = endin - startin
-    # dragcount += drag_met
-    #  calculation of the average
-    return
+    #iter in sarceh
+# for chromStart, chromEnd, chrom, peak in zip(chip_data[i]["chromStart"],
+#                             chip_data[i]["chromEnd"],
+#                             chip_data[i]["chrom"],
+#                                  chip_data[i]["peak"]):

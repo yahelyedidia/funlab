@@ -35,7 +35,6 @@ def read_chip_file(file, score):
         data.columns = header[:len(data.columns)]
         peak = data['chromEnd'].sub(data['chromStart']).to_frame('peak')
         data.insert(3, "peak", peak//2)
-        data.drop_duplicates()
     else:
         header = ["chrom", "chromStart", "chromEnd", "name", "score", "strand",
                   "signalVal", "pVal", "qVal", "peak"]
@@ -43,10 +42,12 @@ def read_chip_file(file, score):
         #  check by score
         data = data[data['score'] >= score]
         # print(data["chromStart"])
-        data = data.drop_duplicates()
         data = data.drop(
             columns=["name", "score", "strand", "signalVal", "pVal", "qVal"])
         # data = data.sort_values(by=["chrom", "chromStart"])
+
+    data = data.dropna()
+    data = data.drop_duplicates()
     return data
 
 
