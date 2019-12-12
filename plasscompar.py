@@ -7,15 +7,15 @@ DINFO = "Smoothed_Methylation_Level_H2_DMSO"
 
 NODINFO = "Smoothed_Methylation_Level_H2_DAC"
 
-CONTROL = "GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+CONTROL = "PLASS/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
-AFTER_TREATMENT = "GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+AFTER_TREATMENT = "PLASS/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
-PLASS3 = "ENCFF032DEW.bed"
+PLASS3 = "PLASS/ENCFF032DEW.bed"
 
-PLASS2 = "ENCFF543VGD.bed"
+PLASS2 = "PLASS/ENCFF543VGD.bed"
 
-PLASS1 = "ENCFF401ONY.bed"
+PLASS1 = "PLASS/ENCFF401ONY.bed"
 
 B1_ACTIVE = "B1_activation.csv"
 
@@ -71,7 +71,9 @@ def read_gz_file(file1, file2, sep):
     :return: the files
     """
     before = pd.read_csv(file1, sep=sep, low_memory=False)
-    after = pd.read_csv(file2, sep=sep, low_memory=False)
+    after = pd.read_csv(file2, sep=sep, low_memory=False) # todo : change the "Chromosome" col to chr
+    # before = before.rename(columns={'Chromosome': 'chr'}, axis='columns')
+    # after = after.rename(columns={'Chromosome': 'chr'}, axis='columns')
     # nodrag = nodrag[nodrag[DINFO] >= filter]
     # drag = drag[drag[NODINFO] >= filter]
     return before, after
@@ -85,7 +87,7 @@ def smooth_parse(data, name):
     :return: an array with the data parsed from the file
     """
     chrom = [[] for i in range(24)]
-    for index, loci, level in zip(data["chr"], data["pos"], data[name]):
+    for index, loci, level in zip(data["Chromosome"], data["Start"], data[name]):
         if index == 'X' or index == "chrX":
             chrom[22].append([loci, level])
         elif index == 'Y' or index == "chrY":
@@ -128,7 +130,7 @@ def make_box_plot(file):
         this_chrom = lst[lst['chr'] == i]
         this_chrom = this_chrom.drop(columns=["chr", "start", "end", "no drugs avg", "with drugs avg"])
         this_chrom = this_chrom.drop(this_chrom.columns[0], axis=1)
-        chroms.append(np.array(this_chrom))
+        chroms.append(np.array(this_chrom) * -1)
     plt.boxplot(chroms)
     plt.title("changes at the mthylation level after treatment by chromosomes")
     plt.xlabel("chromosomes, 22 = X, 23 = Y")
@@ -160,10 +162,10 @@ def search(before, after, chip_data, name="in_progress.csv"):
             elif row["chrom"] == 'chrY':
                 chrom = 23
             else:
-                chrom = int(row["chrom"][3:]) - 1
-            befor_avg = closest_to_peak(before[chrom], row["peak"], row["chromStart"])
-            after_avg = closest_to_peak(after[chrom], row["peak"], row["chromStart"])
-            line = np.array([chrom + 1, row["chromStart"], row["chromEnd"], befor_avg, after_avg])
+                chrom = int(row["chrom"][3:])
+            befor_avg = closest_to_peak(before[chrom - 1], row["peak"], row["chromStart"])
+            after_avg = closest_to_peak(after[chrom - 1], row["peak"], row["chromStart"])
+            line = np.array([chrom, row["chromStart"], row["chromEnd"], befor_avg, after_avg])
             lst = np.vstack([lst, line])
             print("still alive" + str(row["chrom"]))
 
@@ -179,9 +181,11 @@ def search(before, after, chip_data, name="in_progress.csv"):
 
 def main_plass():
     plass = [PLASS1, PLASS2, PLASS3]
-    data = []
+    data1 = []
     for p in plass:
-        data.append(lab.read_chip_file(p, 100))
+        data1.append(lab.read_chip_file(p, 100))
+    data = pd.concat(data1)
+    data = data.drop_duplicates()
     print("done append data")
     # filters = [0.1, 0.3, 0.5]
     # for filter in filters:
@@ -210,10 +214,9 @@ def main_imm():
     print("F I N I S H !")
 
 
-main_imm()
+main_plass()
 
-
-#  make_box_plot("in_progress.csv")
+# make_box_plot("in_progress.csv")
 def no_use():
     return
 
