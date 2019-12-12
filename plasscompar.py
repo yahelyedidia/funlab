@@ -154,20 +154,20 @@ def search(before, after, chip_data, name="in_progress.csv"):
     # dragcount = 0
     head = ["chr", "start", "end", "no drugs avg", "with drugs avg"]
     lst = np.empty((1, len(head)))
-    for i in range(len(chip_data)):
-        for row in chip_data.iterrows():
-            row = row[1]
-            if row["chrom"] == 'chrX':
-                chrom = 22
-            elif row["chrom"] == 'chrY':
-                chrom = 23
-            else:
-                chrom = int(row["chrom"][3:])
-            befor_avg = closest_to_peak(before[chrom - 1], row["peak"], row["chromStart"])
-            after_avg = closest_to_peak(after[chrom - 1], row["peak"], row["chromStart"])
-            line = np.array([chrom, row["chromStart"], row["chromEnd"], befor_avg, after_avg])
-            lst = np.vstack([lst, line])
-            print("still alive" + str(row["chrom"]))
+    # for i in range(len(chip_data)):
+    for start, end, chr, peak in zip(chip_data["chromStart"],
+                                     chip_data["chromEnd"], chip_data["chrom"], chip_data["peak"]):
+        if chr == 'chrX':
+            chrom = 22
+        elif chr == 'chrY':
+            chrom = 23
+        else:
+            chrom = int(chr[3:])
+        befor_avg = closest_to_peak(before[chrom - 1], peak, start)
+        after_avg = closest_to_peak(after[chrom - 1], peak, start)
+        line = np.array([chrom, start, end, befor_avg, after_avg])
+        lst = np.vstack([lst, line])
+        print("still alive" + str(chr))
 
     #  adding column with the difference between the average with out / with the drag
     change = np.subtract(lst[:, 3], lst[:, 4])[np.newaxis]

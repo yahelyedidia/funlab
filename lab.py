@@ -31,12 +31,12 @@ def read_chip_file(file, score):
     data = pd.read_csv(file, sep='\t', comment='t', header=None)
     if file == GES:
         data = data.drop([i for i in range(3, 6)], axis=1)
-        header = ["chr", "chromStart", "chromEnd"]
+        header = ["chrom", "chromStart", "chromEnd"]
         data.columns = header[:len(data.columns)]
         peak = data['chromEnd'].sub(data['chromStart']).to_frame('peak')
         data.insert(3, "peak", peak//2)
     else:
-        header = ["chr", "chromStart", "chromEnd", "name", "score", "strand",
+        header = ["chrom", "chromStart", "chromEnd", "name", "score", "strand",
                   "signalVal", "pVal", "qVal", "peak"]
         data.columns = header[:len(data.columns)]
         #  check by score
