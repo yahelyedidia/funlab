@@ -2,15 +2,26 @@ import pandas as pd
 import lab
 import numpy as np
 import matplotlib.pyplot as plt
-import analyze_data
 
 DINFO = "Smoothed_Methylation_Level_H2_DMSO"
 
 NODINFO = "Smoothed_Methylation_Level_H2_DAC"
 
+PREVENT_INFO = "Smoothed_Methylation_Level_H2_SB939"
+
+DAC_INFO = "Smoothed_Methylation_Level_H2_DAC_plus_SB939"
+
 CONTROL = "PLASS/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
 AFTER_TREATMENT = "PLASS/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+
+DAC_AND_HDAC = "PLASS/GSM2150387_H2_DAC_plus_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+
+HDAC_PREVENT = "PLASS/GSM2150389_H2_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+
+P3_control = "PLASS/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+
+P1_after_treatment = "PLASS/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
 PLASS3 = "PLASS/ENCFF032DEW.bed"
 
@@ -133,7 +144,7 @@ def make_box_plot(file):
         this_chrom = this_chrom.drop(this_chrom.columns[0], axis=1)
         chroms.append(np.array(this_chrom) * -1)
     plt.boxplot(chroms)
-    plt.title("changes at the mthylation level after treatment by chromosomes")
+    plt.title("changes at the mthylation level after treatment by DAC")
     plt.xlabel("chromosomes, 22 = X, 23 = Y")
     plt.ylabel("change level")
     plt.grid()
@@ -187,17 +198,16 @@ def main_plass():
         data1.append(lab.read_chip_file(p, 100))
     data = pd.concat(data1)
     data = data.drop_duplicates()
-    # data =
     print("done append data")
     # filters = [0.1, 0.3, 0.5]
     # for filter in filters:
     # print("results for filter: " + str(filter))
-    ndrg, drg = read_gz_file(CONTROL, AFTER_TREATMENT, '\t')
+    ndrg, drg = read_gz_file(CONTROL, DAC_AND_HDAC, '\t')
     print("done reading the files")
     nodrag = smooth_parse(ndrg, DINFO)
-    drag = smooth_parse(drg, NODINFO)
+    drag = smooth_parse(drg, DAC_INFO)
     print("done parsing")
-    search(nodrag, drag, data)
+    search(nodrag, drag, data, "no_treatment_vs_dac_and_hdac.csv")
     print("F I N I S H !")
 
 
@@ -208,17 +218,17 @@ def main_imm():
     print("done append data")
     act, trn = read_gz_file(B1_ACTIVE, B1_TRANSFOR, ',')  # only B1
     print("done reading the files")
-    active = smooth_parse(act, "smoothSmall") # only small ! there is also large
+    active = smooth_parse(act, "smoothSmall")  # only small ! there is also large
     transformed = smooth_parse(trn, "smoothSmall")
     print("done parsing")
     search(active, transformed, b_active, "active.csv")  # active file
     search(active, transformed, tf_trans, "transformed.csv")  # transformed file
     print("F I N I S H !")
 
-
-main_plass()
-
-# make_box_plot("in_progress.csv")
+# main_plass()
+# make_box_plot("no_treatment_vs_dac_and_hdac.csv")
+# make_box_plot("no_treatment_vs_hdac.csv")
+make_box_plot("in_progress.csv")
 def no_use():
     return
 

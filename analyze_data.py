@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn import preprocessing as p
+# from sklearn import preprocessing as p
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import islice
@@ -23,7 +23,7 @@ def filter_data(filter, d, col, name):
     pd.DataFrame(data=data).to_csv(name)
     return data
 
-def remove_duplicate(data, chr_col, start, end, change):
+def remove_duplicate(data, chr_col, start, end, change=""):
     """
     get data and remove the duplicate site
     :param data: the data to fix
@@ -36,12 +36,13 @@ def remove_duplicate(data, chr_col, start, end, change):
             if ind >= k:
                 continue
             if i[chr_col] == j[chr_col]:
-                if abs(i[start] - j[start]) <= 10 and abs(i[end] - j[end]) <=10:
+                if abs(i[start] - j[start]) <= 10 and abs(i[end] - j[end]) <= 10:
                     data = data.drop(k)
                     continue
-                if abs(i[start] - j[start]) <= 100 or abs(i[end] - j[end]) <=100:
-                    if i[change] == j[change]:
-                        data = data.drop(k)
+                if abs(i[start] - j[start]) <= 100 or abs(i[end] - j[end]) <= 100:
+                    if change != "":
+                        if i[change] == j[change]:
+                            data = data.drop(k)
             continue
     return data
 
