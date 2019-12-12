@@ -2,6 +2,7 @@ import pandas as pd
 import lab
 import numpy as np
 import matplotlib.pyplot as plt
+import analyze_data
 
 DINFO = "Smoothed_Methylation_Level_H2_DMSO"
 
@@ -186,6 +187,7 @@ def main_plass():
         data1.append(lab.read_chip_file(p, 100))
     data = pd.concat(data1)
     data = data.drop_duplicates()
+    # data =
     print("done append data")
     # filters = [0.1, 0.3, 0.5]
     # for filter in filters:
