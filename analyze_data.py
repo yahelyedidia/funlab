@@ -46,5 +46,5 @@ def remove_duplicate(data, chr_col, start, end, change=""):
             continue
     return data
 
-filter_data(0.6, "in_progress.csv", "change", "decrease_mthylation_plass")
-filter_data(-0.6, "in_progress.csv", "change", "increase_mthylation_plass")
+filter_data(0.6, "in_progress.csv", "change", "decrease_mthylation_plass_nodrug_vs_dac")
+filter_data(-0.6, "in_progress.csv", "change", "increase_mthylation_plass_nodrug_vs_dac")
