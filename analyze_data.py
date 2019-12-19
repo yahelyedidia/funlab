@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import islice
 
+
 def filter_data(filter, d, col, name):
     """
     A function that filter the data according do given arg and write it to new file
@@ -14,14 +15,21 @@ def filter_data(filter, d, col, name):
     :return: the data filters
     """
     data = pd.read_csv(d)
+    print("stop reading")
     data = data.drop(data.columns[0], axis=1)
+    print("stop drop")
     if filter >= 0:
         data = data[data[col] >= filter]
     else:
         data = data[data[col] <= filter]
+    print("done filter")
     data = remove_duplicate(data, "chr", "start", "end", "change")
+    print("no duplicate")
     pd.DataFrame(data=data).to_csv(name)
+    print("writing to file")
+
     return data
+
 
 def remove_duplicate(data, chr_col, start, end, change=""):
     """
@@ -46,5 +54,8 @@ def remove_duplicate(data, chr_col, start, end, change=""):
             continue
     return data
 
-filter_data(0.6, "in_progress.csv", "change", "decrease_mthylation_plass_nodrug_vs_dac")
-filter_data(-0.6, "in_progress.csv", "change", "increase_mthylation_plass_nodrug_vs_dac")
+
+filter_data(0.65, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "increase_mthylation_plass_hdac_n_dac.csv")
+print("done1")
+filter_data(-0.05, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "decrease_mthylation_plass_hdac_n_dac.csv")
+print("done")

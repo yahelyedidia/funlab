@@ -160,12 +160,16 @@ def search(before, after, chip_data, name="in_progress.csv"):
     :param before: the data before treatment
     :param after: the data after treatment
     :param chip_data: the data from the chip array experience
+    :param name: the output file name
     :return: the ratio between sum of probes are is the buffer to the total amount of probes
     """
     head = ["chr", "start", "end", "no drugs avg", "with drugs avg"]
+    strand_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
+    strand_col = np.vstack([strand_col, "."])
+    print(strand_col.shape[0], strand_col.shape[1])
     lst = np.empty((1, len(head)))
-    for start, end, chr, peak in zip(chip_data["chromStart"],
-                                     chip_data["chromEnd"], chip_data["chrom"], chip_data["peak"]):
+    for start, end, chr, peak in zip(chip_data["chromStart"], chip_data["chromEnd"],
+                                     chip_data["chrom"],  chip_data["peak"]):
         if chr == 'chrX':
             chrom = 22
         elif chr == 'chrY':
@@ -176,16 +180,18 @@ def search(before, after, chip_data, name="in_progress.csv"):
         after_avg = closest_to_peak(after[chrom - 1], peak, start)
         line = np.array([chrom, start, end, befor_avg, after_avg])
         lst = np.vstack([lst, line])
-        print("still alive" + str(chr))
+        print("still alive " + str(chr))
 
     #  adding column with the difference between the average with out / with the drag
     change = np.subtract(lst[:, 3], lst[:, 4])[np.newaxis]
     change = change.T
+    lst = np.hstack([lst, strand_col])
+    head.append("strand")
     lst = np.hstack([lst, change])
     head.append("change")
-    lst = lst[lst[:, 0].argsort()] #todo change to 5
+    lst = lst[lst[:, 0].argsort()]  # todo change to 5
     #  writing the result
-    pd.DataFrame(data=lst, columns=head).to_csv(name)
+    pd.DataFrame(data=lst, columns=head).to_csv(name, sep="\t")
 
 
 def main_plass():
@@ -204,7 +210,7 @@ def main_plass():
     nodrag = smooth_parse(ndrg, NODINFO)
     drag = smooth_parse(drg, DAC_INFO)
     print("done parsing")
-    search(nodrag, drag, data, "after_dac_vs_after_dac_and_hdac.csv")
+    search(nodrag, drag, data, "check_plass_with_strand.csv")
     print("F I N I S H !")
 
 
@@ -222,9 +228,12 @@ def main_imm():
     search(active, transformed, tf_trans, "transformed.csv")  # transformed file
     print("F I N I S H !")
     return
-# main_plass()
+
+
+main_plass()
 # make_box_plot("no_treatment_vs_dac_and_hdac.csv")
 # make_box_plot("no_treatment_vs_hdac.csv")
+# make_box_plot("Compares files/no_treatment_vs_hdac_only.csv")
 
 
 def no_use():
@@ -242,8 +251,7 @@ def no_use():
     # drag_met = endin - startin
     # dragcount += drag_met
     #  calculation of the average
-
-    #creating graphs
+    # creating graphs
     # num_chr = 1
     # for chr in chroms:
         # x = chr['start']
@@ -262,7 +270,7 @@ def no_use():
         # num_chr += 1
         # plt.clf()
 
-    #iter in sarceh
+    # iter in sarceh
 # for chromStart, chromEnd, chrom, peak in zip(chip_data[i]["chromStart"],
 #                             chip_data[i]["chromEnd"],
 #                             chip_data[i]["chrom"],

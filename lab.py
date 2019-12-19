@@ -43,7 +43,7 @@ def read_chip_file(file, score):
         data = data[data['score'] >= score]
         # print(data["chromStart"])
         data = data.drop(
-            columns=["name", "score", "strand", "signalVal", "pVal", "qVal"])
+            columns=["name", "score", "signalVal", "pVal", "qVal"])  # todo : added the strand col to the output
         # data = data.sort_values(by=["chrom", "chromStart"])
 
     data = data.dropna()
