@@ -7,9 +7,21 @@ DINFO = "Smoothed_Methylation_Level_H2_DMSO"
 
 NODINFO = "Smoothed_Methylation_Level_H2_DAC"
 
+PREVENT_INFO = "Smoothed_Methylation_Level_H2_SB939"
+
+DAC_INFO = "Smoothed_Methylation_Level_H2_DAC_plus_SB939"
+
 CONTROL = "PLASS/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
 AFTER_TREATMENT = "PLASS/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+
+DAC_AND_HDAC = "PLASS/GSM2150387_H2_DAC_plus_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+
+HDAC_PREVENT = "PLASS/GSM2150389_H2_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+
+P3_control = "PLASS/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+
+P1_after_treatment = "PLASS/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
 PLASS3 = "PLASS/ENCFF032DEW.bed"
 
@@ -132,13 +144,13 @@ def make_box_plot(file):
         this_chrom = this_chrom.drop(this_chrom.columns[0], axis=1)
         chroms.append(np.array(this_chrom) * -1)
     plt.boxplot(chroms)
-    plt.title("changes at the mthylation level after treatment by chromosomes")
+    plt.title("mthylation level's changes after treatment by DAC vs by DAC and HDAC")
     plt.xlabel("chromosomes, 22 = X, 23 = Y")
     plt.ylabel("change level")
     plt.grid()
     # plt.setp(plt, xticks=[c+1 for c in range(23)])
     plt.legend()
-    plt.savefig("boxplot_res")
+    plt.savefig("check")
     plt.show()
 
 
@@ -150,11 +162,8 @@ def search(before, after, chip_data, name="in_progress.csv"):
     :param chip_data: the data from the chip array experience
     :return: the ratio between sum of probes are is the buffer to the total amount of probes
     """
-    # nodragcount = 0
-    # dragcount = 0
     head = ["chr", "start", "end", "no drugs avg", "with drugs avg"]
     lst = np.empty((1, len(head)))
-    # for i in range(len(chip_data)):
     for start, end, chr, peak in zip(chip_data["chromStart"],
                                      chip_data["chromEnd"], chip_data["chrom"], chip_data["peak"]):
         if chr == 'chrX':
@@ -190,12 +199,12 @@ def main_plass():
     # filters = [0.1, 0.3, 0.5]
     # for filter in filters:
     # print("results for filter: " + str(filter))
-    ndrg, drg = read_gz_file(CONTROL, AFTER_TREATMENT, '\t')
+    ndrg, drg = read_gz_file(AFTER_TREATMENT, DAC_AND_HDAC, '\t')
     print("done reading the files")
-    nodrag = smooth_parse(ndrg, DINFO)
-    drag = smooth_parse(drg, NODINFO)
+    nodrag = smooth_parse(ndrg, NODINFO)
+    drag = smooth_parse(drg, DAC_INFO)
     print("done parsing")
-    search(nodrag, drag, data)
+    search(nodrag, drag, data, "after_dac_vs_after_dac_and_hdac.csv")
     print("F I N I S H !")
 
 
@@ -206,17 +215,18 @@ def main_imm():
     print("done append data")
     act, trn = read_gz_file(B1_ACTIVE, B1_TRANSFOR, ',')  # only B1
     print("done reading the files")
-    active = smooth_parse(act, "smoothSmall") # only small ! there is also large
+    active = smooth_parse(act, "smoothSmall")  # only small ! there is also large
     transformed = smooth_parse(trn, "smoothSmall")
     print("done parsing")
     search(active, transformed, b_active, "active.csv")  # active file
     search(active, transformed, tf_trans, "transformed.csv")  # transformed file
     print("F I N I S H !")
+    return
+# main_plass()
+# make_box_plot("no_treatment_vs_dac_and_hdac.csv")
+# make_box_plot("no_treatment_vs_hdac.csv")
 
 
-main_plass()
-
-# make_box_plot("in_progress.csv")
 def no_use():
     return
 
