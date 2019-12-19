@@ -22,13 +22,21 @@ def filter_data(filter, d, col, name):
     """
     data = pd.read_csv(d)
     data = data.drop(data.columns[0], axis=COLUMNS)
+    print("stop reading")
+    data = data.drop(data.columns[0], axis=1)
+    print("stop drop")
     if filter >= 0:
         data = data[data[col] >= filter]
     else:
         data = data[data[col] <= filter]
+    print("done filter")
     data = remove_duplicate(data, "chr", "start", "end", "change")
+    print("no duplicate")
     pd.DataFrame(data=data).to_csv(name)
+    print("writing to file")
+
     return data
+
 
 def remove_duplicate(data, chr_col, start, end, change=""):
     """
@@ -163,3 +171,9 @@ def print_top_values(num_to_print, d):
 
 
 check_with_change_filter([10000, 50000, 100000], 10)
+
+
+filter_data(0.65, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "increase_mthylation_plass_hdac_n_dac.csv")
+print("done1")
+filter_data(-0.05, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "decrease_mthylation_plass_hdac_n_dac.csv")
+print("done")
