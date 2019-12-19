@@ -29,6 +29,8 @@ def remove_duplicate(data, chr_col, start, end, change):
     :param data: the data to fix
     :param chr_col: a string that represent the name of the chrom column in the data
     :param start: the string that represent the name of the start column in the data
+    :param end: the string that represent the name of the end column in the data
+    :param change: the string that represent the name of the change column in the data
     :return: the fixed data
     """
     for ind, i in data.iterrows():
