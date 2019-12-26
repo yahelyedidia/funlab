@@ -41,7 +41,7 @@ def filter_data(filter, d, col, name):
 def remove_duplicate(data, chr_col, start, end, change=""):
     """
     get data and remove the duplicate site
-    :param data: the data to fix
+    :param data: the data to fix as pd
     :param chr_col: a string that represent the name of the chrom column in the data
     :param start: the string that represent the name of the start column in the data
     :param end: the string that represent the name of the end column in the data
@@ -84,7 +84,8 @@ def read_genes_data(file, num_open_line=5):
         line = line.split(";")[0]
         names.append(line)
     data['attribute'] = names
-    data.to_csv("genes" + os.path.sep + "genes.csv", sep="\t")
+    data['close_sites'] = [[] for i in range(data.shape[0])]
+    data.to_csv("genes" + os.path.sep + "genes.csv", sep="\t", compression='gzip')
     return data
 
 def create_gene_data(file):
@@ -100,7 +101,7 @@ def create_gene_data(file):
     return chroms
 
 
-def find_close_genes(filter, gene_data, site_file):
+def find_close_genes(filter, gene_data, site_file, name):
     """
     A function that finds which genes are close to the CTCF biding sites and count to how
     many site the gene is close.
@@ -126,13 +127,24 @@ def find_close_genes(filter, gene_data, site_file):
                     gene_dict[gene[1]['attribute']] += 1
                 else:
                     gene_dict[gene[1]['attribute']] = 1
+                gene[1]['close_sites'].append((chr, fs, fe))
         add_gene.append(genes)
     data_sites['close genes'] = add_gene
-    data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_filter_{0}.csv".format(filter),
+    data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name),
                       sep="\t")
+    merge_genes_data = pd.concat(gene_data)
+    # merge_genes_data = [merge_genes_data.close_site != []]
+    # merge_genes_data = merge_genes_data[len(merge_genes_data['close_sites']) != 0]
+    # merge_genes_data = merge_genes_data[[x not in r for x in merge_genes_data.close_site]]
+    # merge_genes_data = merge_genes_data.loc[merge_genes_data['close_sites'] != []]
+    # array = [[]]
+    # merge_genes_data = merge_genes_data.loc[~merge_genes_data['close_sites'].isin(array)]
+    merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name),
+                      sep="\t")
+
     return gene_dict
 
-def check_with_change_filter(list_of_filters, num_to_print):
+def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name):
     """
     A function that gets list of filter to look at, and print the most repetitive genes
     :param list_of_filters: the filters in list
@@ -141,9 +153,9 @@ def check_with_change_filter(list_of_filters, num_to_print):
     chroms = create_gene_data("Homo_sapiens.GRCh38.98.gtf.gz")
     print("yay data")
     for f in list_of_filters:
-        d = find_close_genes(f, chroms, "decrease_mthylation_plass")
+        d = find_close_genes(f, chroms, file_to_check, name)
         print("dictionary after filter {0}".format(f))
-        print(d)
+        # print(d)
         print("number of genes: {0}".format(len(d)))
         print_top_values(num_to_print, d)
 
@@ -156,24 +168,23 @@ def print_top_values(num_to_print, d):
     if num_to_print > len(d):
         num_to_print = len(d)
     counter = num_to_print
-    for i in range(num_to_print):
+    while counter > 0:
         max_value = max(d.values())  # maximum value
         max_keys = [k for k, v in d.items() if v == max_value]
+        if len(max_keys) > counter:
+            break
         print("value is: {0}, genes with that value: {1}". format(max_value, max_keys))
         counter -= len(max_keys)
         for key in max_keys:
             del d[key]
-            if counter == 0:
-                break
-        if counter == 0:
-            break
 
 
 
-check_with_change_filter([10000, 50000, 100000], 10)
+check_with_change_filter([10000, 50000, 100000], 30, "decrease_mthylation_plass", "plass_decrease")
 
 
-filter_data(0.65, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "increase_mthylation_plass_hdac_n_dac.csv")
-print("done1")
-filter_data(-0.05, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "decrease_mthylation_plass_hdac_n_dac.csv")
-print("done")
+
+# filter_data(0.65, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "increase_mthylation_plass_hdac_n_dac.csv")
+# print("done1")
+# filter_data(-0.05, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "decrease_mthylation_plass_hdac_n_dac.csv")
+# print("done")
