@@ -149,6 +149,9 @@ def find_peak(lst, peak, start, buffer):
 
 
 def create_graph(score, data):
+    """
+    not relevant, drawing bed graph
+    """
     for (k, v) in dict.items():
         chip = []
         # print("***** results for " + str(l) + ": ******")
