@@ -23,7 +23,9 @@ def filter_data(filter, d, col, name):
     data = pd.read_csv(d)
     data = data.drop(data.columns[0], axis=COLUMNS)
     print("stop reading")
-    data = data.drop(data.columns[0], axis=1)
+    header = data.columns.values.tolist()
+    if header[0] != "chr":
+        data = data.drop(data.columns[0], axis=1)
     print("stop drop")
     if filter >= 0:
         data = data[data[col] >= filter]
@@ -170,10 +172,9 @@ def print_top_values(num_to_print, d):
 
 
 
-check_with_change_filter([10000, 50000, 100000], 10)
+# check_with_change_filter([10000, 50000, 100000], 10)
 
-
-filter_data(0.65, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "increase_mthylation_plass_hdac_n_dac.csv")
+filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
 print("done1")
-filter_data(-0.05, "Compares files/no_treatment_vs_dac_and_hdac.csv", "change", "decrease_mthylation_plass_hdac_n_dac.csv")
+filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
 print("done")

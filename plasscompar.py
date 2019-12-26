@@ -29,21 +29,21 @@ PLASS2 = "PLASS/ENCFF543VGD.bed"
 
 PLASS1 = "PLASS/ENCFF401ONY.bed"
 
-B1_ACTIVE = "B1_activation.csv"
+B1_ACTIVE = "immortalization/B1_activation.csv"
 
-B2_ACTIVE = "B2_activation.csv"
+B2_ACTIVE = "immortalization/B2_activation.csv"
 
-B3_ACTIVE = "B3_activation.csv"
+B3_ACTIVE = "immortalization/B3_activation.csv"
 
-B1_TRANSFOR = "B1_transformed.csv"
+B1_TRANSFOR = "immortalization/B1_transformed.csv"
 
-B2_TRANSFOR = "B2_transformed.csv"
+B2_TRANSFOR = "immortalization/B2_transformed.csv"
 
-B3_TRANSFOR = "B3_transformed.csv"
+B3_TRANSFOR = "immortalization/B3_transformed.csv"
 
-CHIP_B_CELLS_ACTIVE = "ENCFF449NOT.bed"
+CHIP_B_CELLS_ACTIVE = "immortalization/ENCFF449NOT.bed"
 
-TF_TRANS = "ENCFF833FTF.bed"
+TF_TRANS = "immortalization/ENCFF833FTF.bed"
 
 
 def closest_to_peak(lst, peak, start):
@@ -134,6 +134,10 @@ def find_position(lst, location):
 
 
 def make_box_plot(file):
+    """
+    creating a box plot graph that shows the changes by chromosomes
+    :param file: the file with the changing rate to show as graph
+    """
     lst = pd.read_csv(file)
     lst = lst.drop(lst.index[[0]])
     # lst = pd.DataFrame(data=lst, columns=head)
@@ -195,6 +199,9 @@ def search(before, after, chip_data, name="in_progress.csv"):
 
 
 def main_plass():
+    """
+    main function to process plass files
+    """
     plass = [PLASS1, PLASS2, PLASS3]
     data1 = []
     for p in plass:
@@ -215,6 +222,9 @@ def main_plass():
 
 
 def main_imm():
+    """
+    main function to process immortalization files
+    """
     # imm = [CHIP_B_CELLS_ACTIVE, TF_TRANS]
     b_active = lab.read_chip_file(CHIP_B_CELLS_ACTIVE, 100)
     tf_trans = lab.read_chip_file(TF_TRANS, 100)
@@ -230,7 +240,8 @@ def main_imm():
     return
 
 
-main_plass()
+main_imm()
+# main_plass()
 # make_box_plot("no_treatment_vs_dac_and_hdac.csv")
 # make_box_plot("no_treatment_vs_hdac.csv")
 # make_box_plot("Compares files/no_treatment_vs_hdac_only.csv")
