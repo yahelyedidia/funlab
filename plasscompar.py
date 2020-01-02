@@ -61,18 +61,18 @@ def closest_to_peak(lst, peak, start):
     while first <= last:
         mid = (first + last) // 2
         if val == lst[mid][0]:
-            return lst[mid][1]
+            return lst[mid][1], lst[mid][2]
         else:
             if val < lst[mid][0]:
                 last = mid - 1
             else:
                 first = mid + 1
     if mid-1 < 0:
-        return lst[mid+1][1]
+        return lst[mid+1][1], lst[mid+1][2]
     elif mid+1 > last:
-        return lst[mid-1][1]
+        return lst[mid-1][1], lst[mid-1][2]
 
-    return max(lst[mid-1][1], lst[mid+1][1])
+    return max(lst[mid-1][1], lst[mid+1][1]), lst[mid-1][2]
 
 
 def read_gz_file(file1, file2, sep):
@@ -91,24 +91,25 @@ def read_gz_file(file1, file2, sep):
     return before, after
 
 
-def smooth_parse(data, name, chr_name, start):
+def smooth_parse(data, level, chr_name, start):
     """
     parsing the smoothing file
     :param data: the data's file
-    :param name: the file's name
+    :param level: the file's name
     :return: an array with the data parsed from the file
     """
     chrom = [[] for i in range(24)]
-    for index, loci, level in zip(data[chr_name], data[start], data[name]):
+    for index, loci, level, cov in zip(data[chr_name], data[start], data[level], data["Cov"]):
         if index == 'X' or index == "chrX":
-            chrom[22].append([loci, level])
+            chrom[22].append([loci, level, cov])
         elif index == 'Y' or index == "chrY":
-            chrom[23].append([loci, level])
+            chrom[23].append([loci, level, cov])
         else:
             index = int(''.join([s for s in list(index) if s.isdigit()]))
-            chrom[index - 1].append([loci, level])
+            chrom[index - 1].append([loci, level, cov])
     for i in chrom:
         i.sort()
+    x=2
     return chrom
 
 
@@ -133,29 +134,33 @@ def find_position(lst, location):
     return mid
 
 
-def make_box_plot(file, number, state):
+def make_box_plot(file, title, graph_name):
     """
     creating a box plot graph that shows the changes by chromosomes
     :param file: the file with the changing rate to show as graph
     """
-    lst = pd.read_csv(file, sep="\t")
+    lst = pd.read_csv(file, sep="\t")  # not always is sep by tubs
     lst = lst.drop(lst.index[[0]])
+    # lst = lst.drop(lst.index[[0]])
+
     # lst = pd.DataFrame(data=lst, columns=head)
     chroms = []
-    for i in range(1, 24):
+    for i in range(1, 25):  # todo 25 ?
         this_chrom = lst[lst["chr"] == i]
-        this_chrom = this_chrom.drop(columns=["chr", "start", "end", "no drugs avg", "with drugs avg"])
+        this_chrom = this_chrom.drop(columns=["chr", "start", "end", "strand", "no drugs avg", "with drugs avg", "cov"])
         this_chrom = this_chrom.drop(this_chrom.columns[0], axis=1)
-        chroms.append(np.array(this_chrom) * -1)
+        if not this_chrom.empty:
+            chroms.append(np.array(this_chrom))
     plt.boxplot(chroms)
-    plt.title("mthylation level's changes at b{0} {1} immortalization cells".format(number, state))
-    plt.xlabel("chromosomes, 22 = X, 23 = Y")
+    plt.title(title)
+    plt.xlabel("chromosomes, 23 = X, 24 = Y")
     plt.ylabel("change level")
     plt.grid()
     # plt.setp(plt, xticks=[c+1 for c in range(23)])
     plt.legend()
-    plt.savefig("immortalization/b{0}_{1}_graph.csv".format(number, state))
+    plt.savefig(graph_name)
     plt.show()
+
 
 
 def search(before, after, chip_data, name="in_progress.csv"):
@@ -167,7 +172,7 @@ def search(before, after, chip_data, name="in_progress.csv"):
     :param name: the output file name
     :return: the ratio between sum of probes are is the buffer to the total amount of probes
     """
-    head = ["chr", "start", "end", "no drugs avg", "with drugs avg"]
+    head = ["chr", "start", "end", "no drugs avg", "with drugs avg", "cov"]
     strand_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
     strand_col = np.vstack([strand_col, "."])
     print(strand_col.shape[0], strand_col.shape[1])
@@ -175,25 +180,27 @@ def search(before, after, chip_data, name="in_progress.csv"):
     for start, end, chr, peak in zip(chip_data["chromStart"], chip_data["chromEnd"],
                                      chip_data["chrom"],  chip_data["peak"]):
         if chr == 'chrX':
-            chrom = 22
-        elif chr == 'chrY':
             chrom = 23
+        elif chr == 'chrY':
+            chrom = 24
         else:
             chrom = int(chr[3:])
-        befor_avg = closest_to_peak(before[chrom - 1], peak, start)
-        after_avg = closest_to_peak(after[chrom - 1], peak, start)
-        line = np.array([chrom, start, end, befor_avg, after_avg])
+        befor_avg, cov1 = closest_to_peak(before[chrom - 1], peak, start)
+        after_avg, cov2 = closest_to_peak(after[chrom - 1], peak, start)
+        cov = min(cov1, cov2)
+        line = np.array([chrom, start, end, befor_avg, after_avg, cov])
         lst = np.vstack([lst, line])
         print("still alive " + str(chr))
 
+    x = 2
     #  adding column with the difference between the average with out / with the drag
-    change = np.subtract(lst[:, 3], lst[:, 4])[np.newaxis]
+    change = np.subtract(lst[:, 4], lst[:, 3])[np.newaxis]
     change = change.T
     lst = np.hstack([lst, strand_col])
     head.append("strand")
     lst = np.hstack([lst, change])
     head.append("change")
-    lst = lst[lst[:, 0].argsort()]  # todo change to 5
+    lst = lst[lst[:, 0].argsort()]  # sorting by chromosomes
     #  writing the result
     pd.DataFrame(data=lst, columns=head).to_csv(name, sep="\t")
 
@@ -208,17 +215,23 @@ def main_plass():
         data1.append(lab.read_chip_file(p, 100))
     data = pd.concat(data1)
     data = data.drop_duplicates()
+    plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
+                   (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
     print("done append data")
-    # filters = [0.1, 0.3, 0.5]
-    # for filter in filters:
-    # print("results for filter: " + str(filter))
-    ndrg, drg = read_gz_file(AFTER_TREATMENT, DAC_AND_HDAC, '\t')
-    print("done reading the files")
-    nodrag = smooth_parse(ndrg, NODINFO, "Chromosome", "Start")
-    drag = smooth_parse(drg, DAC_INFO, "Chromosome", "Start")
-    print("done parsing")
-    search(nodrag, drag, data, "check_plass_with_strand.csv")
-    print("F I N I S H !")
+    for i in range(len(plass_files) - 1):
+        for j in range(i + 1, len(plass_files)):
+            # filters = [0.1, 0.3, 0.5]
+            # for filter in filters:
+            # print("results for filter: " + str(filter))
+            ndrg, drg = read_gz_file(plass_files[i][0],plass_files[j][0], '\t')
+            print("done reading the files")
+            nodrag = smooth_parse(ndrg, plass_files[i][1], "Chromosome", "Start")
+            drag = smooth_parse(drg, plass_files[j][1], "Chromosome", "Start")
+            print("done parsing")
+            name = "{0}_vs_{1}".format(plass_files[i][2], plass_files[j][2])
+            search(nodrag, drag, data, name + ".csv")
+            make_box_plot(name + ".csv", "mthylation level's changes at " + name, name)
+            print("F I N I S H !")
 
 
 def main_imm():
@@ -229,24 +242,36 @@ def main_imm():
     b_active = lab.read_chip_file(CHIP_B_CELLS_ACTIVE, 100)
     tf_trans = lab.read_chip_file(TF_TRANS, 100)
     print("done append data")
-    act, trn = read_gz_file(B3_ACTIVE, B3_TRANSFOR, ',')  # only B1
-    print("done reading the files")
-    active = smooth_parse(act, "smoothSmall", "chr", "pos")  # only small ! there is also large
-    transformed = smooth_parse(trn, "smoothSmall", "chr", "pos")
-    print("done parsing")
-    search(active, transformed, b_active, "b3_active.csv")  # active file
-    search(active, transformed, tf_trans, "b3_trans.csv")  # transformed file
-    print("F I N I S H !")
-    return
+    imm_files = [(B1_ACTIVE, B1_TRANSFOR), (B2_ACTIVE, B2_TRANSFOR), (B3_ACTIVE, B3_TRANSFOR)]
+    for i in range(len(imm_files)):
+        act, trn = read_gz_file(imm_files[i][0], imm_files[i][1], ',')
+        print("done reading the files")
+        active = smooth_parse(act, "smoothSmall", "chr", "pos")  # only small ! there is also large
+        transformed = smooth_parse(trn, "smoothSmall", "chr", "pos")
+        print("done parsing")
+        output = "mthylation level's changes at b{0} {1} immortalization cells"
+        name = "b{0}_{1}"
+        search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
+        search(active, transformed, tf_trans, name.format(i+1, "trans") + ".csv")  # transformed file
+        make_box_plot(name.format(i+1, "active") + ".csv", output.format(i+1, "active"), name.format(i+1, "active") + "_graph")
+        make_box_plot(name.format(i+1, "trans") + ".csv", output.format(i+1, "transformed"), name.format(i+1, "transformed") + "_graph")
+
+        print("F I N I S H !")
 
 
-# main_imm()
 # main_plass()
-make_box_plot("immortalization/b1_active.csv", "1", "active")
-make_box_plot("immortalization/b1_trans.csv", "1", "transformed")
+main_imm()
+# make_box_plot("immortalization/b3_active.csv", "3", "active_test_original")
+# make_box_plot("b3_active_test2.csv", "3", "active_test2_no_cov")
+# make_box_plot("b3_trans_test2.csv", "3", "trans_test2_no_cov")
 
-# make_box_plot("no_treatment_vs_hdac.csv")
-# make_box_plot("Compares files/no_treatment_vs_hdac_only.csv")
+# make_box_plot("immortalization/b1_trans.csv", "3", "transformed")
+
+# make_box_plot("Compares files/no_treatment_vs_hdac_only.csv", "1", "a")
+# make_box_plot("test.csv", "1", "test1")
+# t = "mthylation level's changes at b{0} {1} immortalization cells".format(number, state)
+# g = "immortalization/b{0}_{1}_graph".format(number, state)
+
 
 
 def no_use():

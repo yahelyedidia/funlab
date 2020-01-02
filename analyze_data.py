@@ -8,7 +8,7 @@ import os
 COLUMNS = 1
 
 """number of cromosomes"""
-NUM_OF_CHR = 23
+NUM_OF_CHR = 24
 
 
 def filter_data(filter, d, col, name):
@@ -90,6 +90,7 @@ def read_genes_data(file, num_open_line=5):
     data['close_sites'] = [[] for i in range(data.shape[0])]
     data.to_csv("genes" + os.path.sep + "genes.csv", sep="\t", compression='gzip')
     return data
+
 
 def create_gene_data(file):
     data = read_genes_data(file)
