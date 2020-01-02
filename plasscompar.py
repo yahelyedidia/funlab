@@ -215,9 +215,9 @@ def main_plass():
         data1.append(lab.read_chip_file(p, 100))
     data = pd.concat(data1)
     data = data.drop_duplicates()
+    print("done append data")
     plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
                    (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
-    print("done append data")
     for i in range(len(plass_files) - 1):
         for j in range(i + 1, len(plass_files)):
             # filters = [0.1, 0.3, 0.5]
@@ -241,22 +241,41 @@ def main_imm():
     # immortalization = [CHIP_B_CELLS_ACTIVE, TF_TRANS]
     b_active = lab.read_chip_file(CHIP_B_CELLS_ACTIVE, 100)
     tf_trans = lab.read_chip_file(TF_TRANS, 100)
+    data = pd.concat([b_active, tf_trans])
+    data = data.drop_duplicates()
     print("done append data")
     imm_files = [(B1_ACTIVE, B1_TRANSFOR), (B2_ACTIVE, B2_TRANSFOR), (B3_ACTIVE, B3_TRANSFOR)]
-    for i in range(len(imm_files)):
-        act, trn = read_gz_file(imm_files[i][0], imm_files[i][1], ',')
-        print("done reading the files")
-        active = smooth_parse(act, "smoothSmall", "chr", "pos")  # only small ! there is also large
-        transformed = smooth_parse(trn, "smoothSmall", "chr", "pos")
-        print("done parsing")
-        output = "mthylation level's changes at b{0} {1} immortalization cells"
-        name = "b{0}_{1}"
-        search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
-        search(active, transformed, tf_trans, name.format(i+1, "trans") + ".csv")  # transformed file
-        make_box_plot(name.format(i+1, "active") + ".csv", output.format(i+1, "active"), name.format(i+1, "active") + "_graph")
-        make_box_plot(name.format(i+1, "trans") + ".csv", output.format(i+1, "transformed"), name.format(i+1, "transformed") + "_graph")
-
-        print("F I N I S H !")
+    imm_active, imm_trans = [], []
+    for imm in imm_files:
+        a, b = read_gz_file(imm[0], imm[1], ',')
+        imm_active.append(a)
+        imm_trans.append(b)
+    imm_active = pd.concat(imm_active)
+    imm_trans = pd.concat(imm_trans)
+    imm_active = imm_active.drop_duplicates()
+    imm_trans = imm_trans.drop_duplicates()
+    print("done reading the files")
+    active = smooth_parse(imm_active, "smoothSmall", "chr", "pos")  # only small ! there is also large
+    transformed = smooth_parse(imm_trans, "smoothSmall", "chr", "pos")
+    print("done parsing")
+    output = "mthylation level's changes at b immortalization cells"
+    name = "b{0}"
+    # search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
+    search(active, transformed, data, "b_cells.csv")  # transformed file
+    make_box_plot("b_cells.csv", output, "b_cells_graph")
+    # for i in range(len(imm_files)):
+    #     act, trn = read_gz_file(imm_files[i][0], imm_files[i][1], ',')
+    #     print("done reading the files")
+    #     active = smooth_parse(act, "smoothSmall", "chr", "pos")  # only small ! there is also large
+    #     transformed = smooth_parse(trn, "smoothSmall", "chr", "pos")
+    #     print("done parsing")
+    #     output = "mthylation level's changes at b{0} immortalization cells"
+    #     name = "b{0}"
+    #     # search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
+    #     search(active, transformed, data, name.format(i+1) + ".csv")  # transformed file
+    #     make_box_plot(name.format(i+1) + ".csv", output.format(i+1), name.format(i+1) + "_graph")
+        # make_box_plot(name.format(i+1, "trans") + ".csv", output.format(i+1, "transformed"), name.format(i+1, "transformed") + "_graph")
+        # print("F I N I S H !")
 
 
 # main_plass()
