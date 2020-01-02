@@ -65,6 +65,7 @@ def remove_duplicate(data, chr_col, start, end, change=""):
             continue
     return data
 
+
 def read_genes_data(file, num_open_line=5):
     """
     A function that reads the genes DB and filter it to the genes data

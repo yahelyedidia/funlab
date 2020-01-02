@@ -175,7 +175,7 @@ if __name__ == '__main__':
         "all files": [IMM1, PLASS1, PLASS2,
              PLASS3, IMM2, GES],
         "Plass": [PLASS1, PLASS2, PLASS3],
-        "imm": [IMM1, IMM2],
+        "immortalization": [IMM1, IMM2],
         "GES-1": [GES]
     }
     data = parse(read_micro_info("normal.csv"), "CHR", "MAPINFO")
