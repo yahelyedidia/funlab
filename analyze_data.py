@@ -193,23 +193,32 @@ def convert_csv_to_cn(file, s):
     path = os.path.dirname(file)
     name = os.path.relpath(file)
     if name.endswith(".csv"):
-        name = path.replace(".csv", ".cn")
+        name = name.replace(".csv", ".cn")
     else:
-        name += ".cn"
-    cn_file = open(path + os.sep + name, 'w')
-    csv_file = open(file, 'r')
+        name = path + os.sep + name + ".cn"
+    cn_file = open(name, 'w')
+    # csv_file = open(file, 'r')
+    # csv_file.readline()
+    csv_file = pd.read_csv(file, sep=s)
+    csv_file = csv_file.drop(csv_file.columns[0], axis=1)
+    csv_file = csv_file.sort_values(by=['chr', 'start'])
+    csv_file = csv_file.drop(columns=['strand', 'cov'])
+    csv_file = csv_file.replace(23.0, 'X')
+    csv_file = csv_file.replace(24.0, 'Y')
+    csv_file.to_csv("temp.csv")
+    csv_file = open("temp.csv", 'r')
     csv_file.readline()
     cn_file.write("sSNP\tchrChromosome\tPhysicalPosition\tctcfEnd\tcontrol\twithChange\tchangeRate\n")
     for line in csv_file:
         x = line
-        y = x.replace(s , '\t')
-        cn_file.write(y)
+        x = x.replace(",", '\t')
+        cn_file.write(x)
     cn_file.close()
 
 
 # check_with_change_filter([10000, 50000, 100000], 30, "increase_mthylation_plass", "plass_increase")
 
-convert_csv_to_cn("/cs/usr/yahel.yed/PycharmProjects/iml/ex4/funlab/decrease_mthylation_plass", ",")
+convert_csv_to_cn("plass_result/no_treatment_vs_with_dac.csv", "\t")
 
 
 # filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
@@ -236,4 +245,4 @@ def create_genes_files():
 
 
 
-create_genes_files()
+# create_genes_files()
