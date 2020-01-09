@@ -233,16 +233,20 @@ convert_csv_to_cn("plass_result/no_treatment_vs_with_dac.csv", "\t")
 def create_genes_files():
     for file in os.listdir("plass_result"):
         if file.endswith(".csv"):
-            filter_data(0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/increase_" + file + "_0.6.csv")
-            print("done1")
-            filter_data(-0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/decrease_" + file + "_-0.6.csv")
-            print("done2")
-            check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_" + file + "_0.6.csv", file)
+            # filter_data(0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/increase_" + file + "_0.6.csv")
+            # print("done1")
+            # filter_data(-0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/decrease_" + file + "_-0.6.csv")
+            # print("done2")
+            check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_" + file + "_0.6.csv", "increase_" + file)
             print("done increase")
-            check_with_change_filter([10000, 50000, 100000], 30,  "plass_result/filtered/decrease_" + file + "_-0.6.csv", file)
+            check_with_change_filter([10000, 50000, 100000], 30,  "plass_result/filtered/decrease_" + file + "_-0.6.csv", "decrease_" + file)
             print("done decrease")
 
 
 
+
+# create_genes_files()
+
+check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 
 # create_genes_files()
