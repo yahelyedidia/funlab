@@ -3,9 +3,9 @@ import pandas as pd
 #import numpy as np
 import matplotlib.pyplot as plt
 
-IMM2 = "ENCFF833FTF.bed"
+IMM2 = "ENCFF833FTF.bed.gz"
 
-IMM1 = "ENCFF449NOT.bed"
+IMM1 = "ENCFF449NOT.bed.gz"
 
 PLASS3 = "ENCFF032DEW.bed"
 

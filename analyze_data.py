@@ -20,7 +20,7 @@ def filter_data(filter, d, col, name):
     :param name: the name of the filtered file
     :return: the data filters
     """
-    data = pd.read_csv(d)
+    data = pd.read_csv(d, sep="\t")
     data = data.drop(data.columns[0], axis=COLUMNS)
     print("stop reading")
     header = data.columns.values.tolist()
@@ -34,7 +34,7 @@ def filter_data(filter, d, col, name):
     print("done filter")
     data = remove_duplicate(data, "chr", "start", "end", "change")
     print("no duplicate")
-    pd.DataFrame(data=data).to_csv(name)
+    pd.DataFrame(data=data).to_csv(name, sep="\t")
     print("writing to file")
 
     return data
@@ -115,7 +115,7 @@ def find_close_genes(filter, gene_data, site_file, name):
     :return:
     """
     gene_dict = {}
-    data_sites = pd.read_csv(site_file, sep=",")
+    data_sites = pd.read_csv(site_file, sep="\t")
     add_gene = []
     for site in data_sites.iterrows():
         genes = []
@@ -163,6 +163,7 @@ def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name)
         print("number of genes: {0}".format(len(d)))
         print_top_values(num_to_print, d)
 
+
 def print_top_values(num_to_print, d):
     """
     A function that get dictionary and number of items to print and
@@ -184,11 +185,26 @@ def print_top_values(num_to_print, d):
 
 
 
-# check_with_change_filter([10000, 50000, 100000], 30, "decrease_mthylation_plass", "plass_decrease")
 
-
-
-# filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
+# filter_data(0.6, "plass_result/no_treatment_vs_with_dac.csv", "change", "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv")
 # print("done1")
-# filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
+# filter_data(-0.6, "plass_result/no_treatment_vs_with_dac.csv", "change", "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv")
 # print("done")
+
+# check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv", "increase_no_treatment_vs_dac")
+
+for file in os.listdir("plass_result"):
+    if file.endswith(".csv"):
+        filter_data(0.6, file, "change", "plass_result/filtered/increase_" + os.path.realpath(file) + "_0.6.csv")
+        print("done1")
+        filter_data(-0.6, file, "change", "plass_result/filtered/decrease_" + os.path.realpath(file) + "_-0.6.csv")
+        print("done2")
+        check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_" + os.path.realpath(file) + "_0.6.csv", "plass_result/filtered/increase_" + os.path.realpath(file))
+        print("done increase")
+        check_with_change_filter([10000, 50000, 100000], 30,  "plass_result/filtered/decrease_" + os.path.realpath(file) + "_-0.6.csv", "plass_result/filtered/decrease_" + os.path.realpath(file))
+        print("done decrease")
+
+
+
+
+

@@ -29,21 +29,21 @@ PLASS2 = "PLASS/ENCFF543VGD.bed"
 
 PLASS1 = "PLASS/ENCFF401ONY.bed"
 
-B1_ACTIVE = "immortalization/B1_activation.csv"
+B1_ACTIVE = "immortalization/B1_activation.csv.gz"
 
-B2_ACTIVE = "immortalization/B2_activation.csv"
+B2_ACTIVE = "immortalization/B2_activation.csv.gz"
 
-B3_ACTIVE = "immortalization/B3_activation.csv"
+B3_ACTIVE = "immortalization/B3_activation.csv.gz"
 
-B1_TRANSFOR = "immortalization/B1_transformed.csv"
+B1_TRANSFOR = "immortalization/B1_transformed.csv.gz"
 
-B2_TRANSFOR = "immortalization/B2_transformed.csv"
+B2_TRANSFOR = "immortalization/B2_transformed.csv.gz"
 
-B3_TRANSFOR = "immortalization/B3_transformed.csv"
+B3_TRANSFOR = "immortalization/B3_transformed.csv.gz"
 
 CHIP_B_CELLS_ACTIVE = "immortalization/ENCFF449NOT.bed"
 
-TF_TRANS = "immortalization/ENCFF833FTF.bed"
+TF_TRANS = "imm/ENCFF833FTF.bed.gz"
 
 
 def closest_to_peak(lst, peak, start):
@@ -83,7 +83,7 @@ def read_gz_file(file1, file2, sep):
     :return: the files
     """
     before = pd.read_csv(file1, sep=sep, low_memory=False)
-    after = pd.read_csv(file2, sep=sep, low_memory=False) # todo : change the "Chromosome" col to chr
+    after = pd.read_csv(file2, sep=sep, low_memory=False)  # todo : change the "Chromosome" col to chr
     # before = before.rename(columns={'Chromosome': 'chr'}, axis='columns')
     # after = after.rename(columns={'Chromosome': 'chr'}, axis='columns')
     # nodrag = nodrag[nodrag[DINFO] >= filter]
@@ -109,7 +109,6 @@ def smooth_parse(data, level, chr_name, start):
             chrom[index - 1].append([loci, level, cov])
     for i in chrom:
         i.sort()
-    x=2
     return chrom
 
 
@@ -160,7 +159,6 @@ def make_box_plot(file, title, graph_name):
     plt.legend()
     plt.savefig(graph_name)
     plt.show()
-
 
 
 def search(before, after, chip_data, name="in_progress.csv"):
