@@ -135,6 +135,10 @@ def find_close_genes(filter, gene_data, site_file, name):
                 gene[1]['close_sites'].append((chr, fs, fe))
         add_gene.append(genes)
     data_sites['close genes'] = add_gene
+    # header = data_sites.columns.values.tolist()
+    # data = np.array(data_sites.values())
+    # data = np.delete(data, np.argwhere(data[9] != []))
+    # data_sites = pd.DataFrame(data, index=header)
     data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name),
                       sep="\t")
     merge_genes_data = pd.concat(gene_data)
@@ -213,20 +217,23 @@ convert_csv_to_cn("/cs/usr/yahel.yed/PycharmProjects/iml/ex4/funlab/decrease_mth
 # filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done")
 
-# check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv", "increase_no_treatment_vs_dac")
 
-for file in os.listdir("plass_result"):
-    if file.endswith(".csv"):
-        filter_data(0.6, file, "change", "plass_result/filtered/increase_" + os.path.realpath(file) + "_0.6.csv")
-        print("done1")
-        filter_data(-0.6, file, "change", "plass_result/filtered/decrease_" + os.path.realpath(file) + "_-0.6.csv")
-        print("done2")
-        check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_" + os.path.realpath(file) + "_0.6.csv", "plass_result/filtered/increase_" + os.path.realpath(file))
-        print("done increase")
-        check_with_change_filter([10000, 50000, 100000], 30,  "plass_result/filtered/decrease_" + os.path.realpath(file) + "_-0.6.csv", "plass_result/filtered/decrease_" + os.path.realpath(file))
-        print("done decrease")
+# check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv", "test")
 
 
+def create_genes_files():
+    for file in os.listdir("plass_result"):
+        if file.endswith(".csv"):
+            filter_data(0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/increase_" + file + "_0.6.csv")
+            print("done1")
+            filter_data(-0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/decrease_" + file + "_-0.6.csv")
+            print("done2")
+            check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_" + file + "_0.6.csv", file)
+            print("done increase")
+            check_with_change_filter([10000, 50000, 100000], 30,  "plass_result/filtered/decrease_" + file + "_-0.6.csv", file)
+            print("done decrease")
 
 
 
+
+create_genes_files()
