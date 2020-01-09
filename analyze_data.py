@@ -4,11 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import islice
 import os
+import sys
 
 COLUMNS = 1
 
 """number of cromosomes"""
-NUM_OF_CHR = 24
+NUM_OF_CHR = 23
 
 
 def filter_data(filter, d, col, name):
@@ -184,11 +185,32 @@ def print_top_values(num_to_print, d):
             del d[key]
 
 
+def convert_csv_to_cn(file, s):
+    path = os.path.dirname(file)
+    name = os.path.relpath(file)
+    if name.endswith(".csv"):
+        name = path.replace(".csv", ".cn")
+    else:
+        name += ".cn"
+    cn_file = open(path + os.sep + name, 'w')
+    csv_file = open(file, 'r')
+    csv_file.readline()
+    cn_file.write("sSNP\tchrChromosome\tPhysicalPosition\tctcfEnd\tcontrol\twithChange\tchangeRate\n")
+    for line in csv_file:
+        x = line
+        y = x.replace(s , '\t')
+        cn_file.write(y)
+    cn_file.close()
 
 
-# filter_data(0.6, "plass_result/no_treatment_vs_with_dac.csv", "change", "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv")
+# check_with_change_filter([10000, 50000, 100000], 30, "increase_mthylation_plass", "plass_increase")
+
+convert_csv_to_cn("/cs/usr/yahel.yed/PycharmProjects/iml/ex4/funlab/decrease_mthylation_plass", ",")
+
+
+# filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done1")
-# filter_data(-0.6, "plass_result/no_treatment_vs_with_dac.csv", "change", "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv")
+# filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done")
 
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv", "increase_no_treatment_vs_dac")

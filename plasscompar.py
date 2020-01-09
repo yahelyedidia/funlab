@@ -173,6 +173,7 @@ def search(before, after, chip_data, name="in_progress.csv"):
     head = ["chr", "start", "end", "no drugs avg", "with drugs avg", "cov"]
     strand_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
     strand_col = np.vstack([strand_col, "."])
+    cov_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
     print(strand_col.shape[0], strand_col.shape[1])
     lst = np.empty((1, len(head)))
     for start, end, chr, peak in zip(chip_data["chromStart"], chip_data["chromEnd"],
@@ -276,6 +277,7 @@ def main_imm():
         # print("F I N I S H !")
 
 
+# main_imm()
 # main_plass()
 main_imm()
 # make_box_plot("immortalization/b3_active.csv", "3", "active_test_original")
@@ -330,3 +332,4 @@ def no_use():
 #                             chip_data[i]["chromEnd"],
 #                             chip_data[i]["chrom"],
 #                                  chip_data[i]["peak"]):
+
