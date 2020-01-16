@@ -1,9 +1,6 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from itertools import islice
 import os
-import sys
 
 BEDGRAPH_LINE_FORMAT = "s{i}\tchr{chr_name}\t{start}\t{number}\n"
 
@@ -138,12 +135,13 @@ def find_close_genes(filter, gene_data, site_file, name):
                     gene_dict[gene[1]['attribute']] = 1
                 gene[1]['close_sites'].append((chr, fs, fe))
         add_gene.append(genes)
-    data_sites['close genes'] = add_gene
+    data_sites['close_genes'] = add_gene
+    print()
     data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name),
                       sep="\t")
     merge_genes_data = pd.concat(gene_data)
     merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name),
-                      sep="\t")
+                            sep="\t")
 
     return gene_dict
 
@@ -154,12 +152,11 @@ def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name)
     :param list_of_filters: the filters in list
     :param num_to_print: the num of repetitive elements to print
     """
-    chroms = create_gene_data("Homo_sapiens.GRCh38.98.gtf.gz")
+    chroms = create_gene_data("genes/Homo_sapiens.GRCh38.98.gtf.gz")
     print("yay data")
     for f in list_of_filters:
         d = find_close_genes(f, chroms, file_to_check, name)
         print("dictionary after filter {0}".format(f))
-        # print(d)
         print("number of genes: {0}".format(len(d)))
         print_top_values(num_to_print, d)
 
@@ -269,15 +266,10 @@ def create_genes_files():
             print("done decrease")
 
 
-
-
-# create_genes_files()
-
+check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
-
 # create_genes_files()
-
-creat_cns("plass_result")
+# creat_cns("plass_result")
 
 # filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done1")
