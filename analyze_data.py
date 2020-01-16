@@ -80,7 +80,6 @@ def read_genes_data(file, num_open_line=5):
     data = pd.read_csv(file, sep="\t", skiprows=[i for i in range(num_open_line)],
                        compression='gzip', header=None)
     data.columns = header[:len(data.columns)]
-    # data = data.drop(data.columns[-1],axis=1)
     data = data[data['feature'] == 'gene']
     names = []
     for row in data.iterrows():
@@ -96,6 +95,11 @@ def read_genes_data(file, num_open_line=5):
 
 
 def create_gene_data(file):
+    """
+    creating an array of chromosomes with the genes data
+    :param file: the genes file
+    :return: an array with genes data sorted by chromosomes
+    """
     data = read_genes_data(file)
     chroms = []
     for chr in range(NUM_OF_CHR - 2):
@@ -125,9 +129,7 @@ def find_close_genes(filter, gene_data, site_file, name):
         fs = site[1]['start'] - filter
         fe = site[1]['end'] + filter
         chr = int(site[1]['chr'])
-        # strand = site[1]['strand']
         for gene in gene_data[chr - 1].iterrows():
-            # if gene[1]['strand'] == strand or gene[1]['strand'] == '.':
             if fs <= gene[1]['start'] and gene[1]['end'] <= fe:
                 genes.append(gene[1]['attribute'])
                 if gene[1]['attribute'] in gene_dict:
@@ -137,23 +139,14 @@ def find_close_genes(filter, gene_data, site_file, name):
                 gene[1]['close_sites'].append((chr, fs, fe))
         add_gene.append(genes)
     data_sites['close genes'] = add_gene
-    # header = data_sites.columns.values.tolist()
-    # data = np.array(data_sites.values())
-    # data = np.delete(data, np.argwhere(data[9] != []))
-    # data_sites = pd.DataFrame(data, index=header)
     data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name),
                       sep="\t")
     merge_genes_data = pd.concat(gene_data)
-    # merge_genes_data = [merge_genes_data.close_site != []]
-    # merge_genes_data = merge_genes_data[len(merge_genes_data['close_sites']) != 0]
-    # merge_genes_data = merge_genes_data[[x not in r for x in merge_genes_data.close_site]]
-    # merge_genes_data = merge_genes_data.loc[merge_genes_data['close_sites'] != []]
-    # array = [[]]
-    # merge_genes_data = merge_genes_data.loc[~merge_genes_data['close_sites'].isin(array)]
     merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name),
                       sep="\t")
 
     return gene_dict
+
 
 def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name):
     """
@@ -192,6 +185,9 @@ def print_top_values(num_to_print, d):
 
 
 def convert_csv_to_cn(file, s):
+    """
+    old function of converting csv files to IGV format
+    """
     path = os.path.dirname(file)
     name = os.path.relpath(file)
     if name.endswith(".csv"):
@@ -219,6 +215,10 @@ def convert_csv_to_cn(file, s):
 
 
 def convert_to_cn_2(file):
+    """
+    converting csv files to IGV files format
+    :param file: the file to convert
+    """
     path = os.path.dirname(file)
     name = os.path.relpath(file)
     if name.endswith(".csv"):
@@ -226,14 +226,11 @@ def convert_to_cn_2(file):
     else:
         name = path + os.sep + name + ".cn"
     csv_file = pd.read_csv(file, sep='\t')
-    csv_file = csv_file.drop(csv_file.columns[0], axis=1)
-    # csv_file = csv_file.drop(columns=['strand', 'no drugs avg', 'with drugs avg'])
+    csv_file = csv_file.drop(csv_file.columns[0], axis=1)  # removing the index column
     csv_file = csv_file.sort_values(by=['chr', 'start', 'end'])
-    csv_file = csv_file.iloc[1:]
-    # index = [f's{i}' for i in range(csv_file.shape[0])]
-    # csv_file = pd.merge(pd.DataFrame(index), csv_file)
-    csv_file = csv_file.replace(23.0, 'X')
-    csv_file = csv_file.replace(24.0, 'Y')
+    csv_file = csv_file.iloc[1:]  # removing the first row with small values
+    csv_file = csv_file.replace(23.0, 'X')  # replacing to X chromosome
+    csv_file = csv_file.replace(24.0, 'Y')  # replacing to Y chromosome
     i = 0
     with open(name, "w") as output_file:
         output_file.write("sSNP\tchrChromosome\tPhysicalPosition\tchangeRate\n")
@@ -252,23 +249,11 @@ def convert_to_cn_2(file):
             i += 1
 
 
-# check_with_change_filter([10000, 50000, 100000], 30, "increase_mthylation_plass", "plass_increase")
-# for file in
-
 def creat_cns(dir):
     for file in os.listdir(dir):
         if file.endswith(".csv"):
             convert_to_cn_2(dir+os.path.sep+file)
 
-creat_cns("plass_result")
-# convert_to_cn_2("plass_result/no_treatment_vs_with_dac.csv")
-# filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
-# print("done1")
-# filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
-# print("done")
-
-
-# check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv", "test")
 
 
 def create_genes_files():
@@ -291,3 +276,11 @@ def create_genes_files():
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 
 # create_genes_files()
+
+creat_cns("plass_result")
+
+# filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
+# print("done1")
+# filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
+# print("done")
+# check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv", "test")
