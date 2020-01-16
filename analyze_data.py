@@ -1,10 +1,12 @@
 import pandas as pd
-# from sklearn import preprocessing as p
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import islice
 import os
 import sys
+
+BEDGRAPH_LINE_FORMAT = "s{i}\tchr{chr_name}\t{start}\t{number}\n"
+
 
 COLUMNS = 1
 
@@ -197,18 +199,18 @@ def convert_csv_to_cn(file, s):
     else:
         name = path + os.sep + name + ".cn"
     cn_file = open(name, 'w')
-    # csv_file = open(file, 'r')
-    # csv_file.readline()
     csv_file = pd.read_csv(file, sep=s)
     csv_file = csv_file.drop(csv_file.columns[0], axis=1)
+    csv_file = csv_file.drop(columns=['strand', 'no drugs avg', 'with drugs avg'])
     csv_file = csv_file.sort_values(by=['chr', 'start'])
-    csv_file = csv_file.drop(columns=['strand', 'cov'])
+    index = [f's{i}' for i in range(csv_file.shape[0])]
+    csv_file = pd.merge(pd.DataFrame(index), csv_file)
     csv_file = csv_file.replace(23.0, 'X')
     csv_file = csv_file.replace(24.0, 'Y')
-    csv_file.to_csv("temp.csv")
+    csv_file.to_csv("temp.csv", index=False)
     csv_file = open("temp.csv", 'r')
     csv_file.readline()
-    cn_file.write("sSNP\tchrChromosome\tPhysicalPosition\tctcfEnd\tcontrol\twithChange\tchangeRate\n")
+    cn_file.write("sSNP\tchrChromosome\tPhysicalPosition\tctcfEnd\tcov\tchangeRate\n")
     for line in csv_file:
         x = line
         x = x.replace(",", '\t')
@@ -216,11 +218,50 @@ def convert_csv_to_cn(file, s):
     cn_file.close()
 
 
+def convert_to_cn_2(file):
+    path = os.path.dirname(file)
+    name = os.path.relpath(file)
+    if name.endswith(".csv"):
+        name = name.replace(".csv", ".cn")
+    else:
+        name = path + os.sep + name + ".cn"
+    csv_file = pd.read_csv(file, sep='\t')
+    csv_file = csv_file.drop(csv_file.columns[0], axis=1)
+    # csv_file = csv_file.drop(columns=['strand', 'no drugs avg', 'with drugs avg'])
+    csv_file = csv_file.sort_values(by=['chr', 'start', 'end'])
+    csv_file = csv_file.iloc[1:]
+    # index = [f's{i}' for i in range(csv_file.shape[0])]
+    # csv_file = pd.merge(pd.DataFrame(index), csv_file)
+    csv_file = csv_file.replace(23.0, 'X')
+    csv_file = csv_file.replace(24.0, 'Y')
+    i = 0
+    with open(name, "w") as output_file:
+        output_file.write("sSNP\tchrChromosome\tPhysicalPosition\tchangeRate\n")
+        for view in csv_file.iterrows():
+            view = view[1]
+            if view['chr'] != 'X' and view['chr'] != 'Y':
+                chromosome = str(int(view['chr']))
+            else:
+                chromosome = view['chr']
+            start = view['start']
+            end = view['end']
+            number = view['change']
+            line = BEDGRAPH_LINE_FORMAT.format(i=i, chr_name=chromosome, start=start,
+                                               number=number)
+            output_file.write(line)
+            i += 1
+
+
 # check_with_change_filter([10000, 50000, 100000], 30, "increase_mthylation_plass", "plass_increase")
+# for file in
 
-convert_csv_to_cn("plass_result/no_treatment_vs_with_dac.csv", "\t")
+def creat_cns(dir):
+    for file in os.listdir(dir):
+        if file.endswith(".csv"):
+            convert_to_cn_2(dir+os.path.sep+file)
 
-
+creat_cns("plass_result")
+# convert_to_cn_2("plass_result/no_treatment_vs_with_dac.csv")
 # filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done1")
 # filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
@@ -247,6 +288,6 @@ def create_genes_files():
 
 # create_genes_files()
 
-check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
+# check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 
 # create_genes_files()
