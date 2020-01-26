@@ -11,23 +11,23 @@ PREVENT_INFO = "Smoothed_Methylation_Level_H2_SB939"
 
 DAC_INFO = "Smoothed_Methylation_Level_H2_DAC_plus_SB939"
 
-CONTROL = "PLASS/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+CONTROL = "tehila/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-AFTER_TREATMENT = "PLASS/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+AFTER_TREATMENT = "tehila/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
 DAC_AND_HDAC = "PLASS/GSM2150387_H2_DAC_plus_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
 HDAC_PREVENT = "PLASS/GSM2150389_H2_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
-P3_control = "PLASS/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+P3_control = "tehila/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-P1_after_treatment = "PLASS/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+P1_after_treatment = "tehila/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-PLASS3 = "PLASS/ENCFF032DEW.bed"
+PLASS3 = "tehila/Plass/ENCFF032DEW.bed"
 
-PLASS2 = "PLASS/ENCFF543VGD.bed"
+PLASS2 = "tehila/Plass/ENCFF543VGD.bed.gz"
 
-PLASS1 = "PLASS/ENCFF401ONY.bed"
+PLASS1 = "tehila/Plass/ENCFF401ONY.bed.gz"
 
 B1_ACTIVE = "immortalization/B1_activation.csv.gz"
 
@@ -278,8 +278,8 @@ def main_imm():
 
 
 # main_imm()
-# main_plass()
-main_imm()
+main_plass()
+# main_imm()
 # make_box_plot("immortalization/b3_active.csv", "3", "active_test_original")
 # make_box_plot("b3_active_test2.csv", "3", "active_test2_no_cov")
 # make_box_plot("b3_trans_test2.csv", "3", "trans_test2_no_cov")

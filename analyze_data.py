@@ -8,7 +8,7 @@ BEDGRAPH_LINE_FORMAT = "s{i}\tchr{chr_name}\t{start}\t{number}\n"
 COLUMNS = 1
 
 """number of cromosomes"""
-NUM_OF_CHR = 23
+NUM_OF_CHR = 24
 
 
 def filter_data(filter, d, col, name):
@@ -152,7 +152,7 @@ def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name)
     :param list_of_filters: the filters in list
     :param num_to_print: the num of repetitive elements to print
     """
-    chroms = create_gene_data("genes/Homo_sapiens.GRCh38.98.gtf.gz")
+    chroms = create_gene_data("Homo_sapiens.GRCh38.98.gtf.gz")
     print("yay data")
     for f in list_of_filters:
         d = find_close_genes(f, chroms, file_to_check, name)
