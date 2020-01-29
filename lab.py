@@ -3,15 +3,15 @@ import pandas as pd
 #import numpy as np
 import matplotlib.pyplot as plt
 
-IMM2 = "ENCFF833FTF.bed.gz"
+IMM2 = "ENCFF833FTF.bed"
 
-IMM1 = "ENCFF449NOT.bed.gz"
+IMM1 = "ENCFF449NOT.bed"
 
-PLASS3 = "ENCFF032DEW.bed"
+PLASS3 = "Plass/ENCFF032DEW.bed.gz"
 
-PLASS2 = "ENCFF543VGD.bed"
+PLASS2 = "Plass/ENCFF543VGD.bed.gz"
 
-PLASS1 = "ENCFF401ONY.bed"
+PLASS1 = "Plass/ENCFF401ONY.bed.gz"
 
 GES = "ges1_ctcf_12_fp-stylefactor.bed"
 

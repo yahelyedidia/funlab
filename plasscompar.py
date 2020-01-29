@@ -11,23 +11,23 @@ PREVENT_INFO = "Smoothed_Methylation_Level_H2_SB939"
 
 DAC_INFO = "Smoothed_Methylation_Level_H2_DAC_plus_SB939"
 
-CONTROL = "tehila/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+CONTROL = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-AFTER_TREATMENT = "tehila/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+AFTER_TREATMENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-DAC_AND_HDAC = "PLASS/GSM2150387_H2_DAC_plus_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+DAC_AND_HDAC = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150387_H2_DAC_plus_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
-HDAC_PREVENT = "PLASS/GSM2150389_H2_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+HDAC_PREVENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150389_H2_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
-P3_control = "tehila/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+P3_control = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-P1_after_treatment = "tehila/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+P1_after_treatment = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-PLASS3 = "tehila/Plass/ENCFF032DEW.bed"
+PLASS3 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/ENCFF032DEW.bed.gz"
 
-PLASS2 = "tehila/Plass/ENCFF543VGD.bed.gz"
+PLASS2 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/ENCFF543VGD.bed.gz"
 
-PLASS1 = "tehila/Plass/ENCFF401ONY.bed.gz"
+PLASS1 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/ENCFF401ONY.bed.gz"
 
 B1_ACTIVE = "immortalization/B1_activation.csv.gz"
 
@@ -61,7 +61,8 @@ def closest_to_peak(lst, peak, start):
     while first <= last:
         mid = (first + last) // 2
         if val == lst[mid][0]:
-            return lst[mid][1], lst[mid][2]
+            cov = calc_cov(mid, lst)
+            return lst[mid][1], cov
         else:
             if val < lst[mid][0]:
                 last = mid - 1
@@ -70,9 +71,19 @@ def closest_to_peak(lst, peak, start):
     if mid-1 < 0:
         return lst[mid+1][1], lst[mid+1][2]
     elif mid+1 > last:
-        return lst[mid-1][1], lst[mid-1][2]
+        cov = calc_cov(mid-1, lst)
+        return lst[mid-1][1], cov
 
-    return max(lst[mid-1][1], lst[mid+1][1]), lst[mid-1][2]
+    cov = calc_cov(mid-1, lst)
+    return max(lst[mid-1][1], lst[mid+1][1]), cov
+
+
+def calc_cov(mid, chr_lst):
+    new_lst = [item[2] for item in chr_lst if mid - 50 <= item[0] <= mid + 50]
+    if len(new_lst) != 0:
+        cov = sum(new_lst) / len(new_lst)
+        return cov
+    return 0
 
 
 def read_gz_file(file1, file2, sep):
