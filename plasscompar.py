@@ -2,6 +2,9 @@ import pandas as pd
 import lab
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
+COV = "cov"
 
 DINFO = "Smoothed_Methylation_Level_H2_DMSO"
 
@@ -11,23 +14,23 @@ PREVENT_INFO = "Smoothed_Methylation_Level_H2_SB939"
 
 DAC_INFO = "Smoothed_Methylation_Level_H2_DAC_plus_SB939"
 
-CONTROL = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+CONTROL = "tehila/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-AFTER_TREATMENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+AFTER_TREATMENT = "tehila/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
 DAC_AND_HDAC = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150387_H2_DAC_plus_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
 HDAC_PREVENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150389_H2_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
-P3_control = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+P3_control = "tehila/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-P1_after_treatment = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+P1_after_treatment = "tehila/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-PLASS3 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/ENCFF032DEW.bed.gz"
+PLASS3 = "tehila/Plass/ENCFF032DEW.bed.gz"
 
-PLASS2 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/ENCFF543VGD.bed.gz"
+PLASS2 = "tehila/Plass/ENCFF543VGD.bed.gz"
 
-PLASS1 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/ENCFF401ONY.bed.gz"
+PLASS1 = "tehila/Plass/ENCFF401ONY.bed.gz"
 
 B1_ACTIVE = "immortalization/B1_activation.csv.gz"
 
@@ -93,8 +96,8 @@ def read_gz_file(file1, file2, sep):
     :param file2: the second file
     :return: the files
     """
-    before = pd.read_csv(file1, sep=sep, low_memory=False)
-    after = pd.read_csv(file2, sep=sep, low_memory=False)  # todo : change the "Chromosome" col to chr
+    before = pd.read_csv(file1, sep=sep, low_memory=False, compression='gzip')
+    after = pd.read_csv(file2, sep=sep, low_memory=False, compression='gzip')  # todo : change the "Chromosome" col to chr
     # before = before.rename(columns={'Chromosome': 'chr'}, axis='columns')
     # after = after.rename(columns={'Chromosome': 'chr'}, axis='columns')
     # nodrag = nodrag[nodrag[DINFO] >= filter]
@@ -118,6 +121,8 @@ def smooth_parse(data, level, chr_name, start):
         else:
             index = int(''.join([s for s in list(index) if s.isdigit()]))
             chrom[index - 1].append([loci, level, cov])
+        print(index)
+    print("before sorting")
     for i in chrom:
         i.sort()
     return chrom
@@ -142,6 +147,72 @@ def find_position(lst, location):
             else:
                 first = mid + 1
     return mid
+
+
+def plot_cov(dir, graph_name, data, file=None):
+    if file:
+        data = pd.read_csv(file, sep='\t', low_memory=False, skiprows=[1])
+    cov_data = data[COV]
+    cov_dict = {}
+    for i in cov_data:
+        if i in cov_dict:
+            cov_dict[i] += 1
+        else:
+            cov_dict[i] = 1
+    # create coverage vs change graph
+    xy = sorted(list(cov_dict.items()))
+    x = list(map(lambda tup: tup[0], xy))
+    y = list(map(lambda tup: tup[1], xy))
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+    g = graph_name + "_coverage_vs_num_of_site"
+    plt.title(g)
+    plt.xlabel('coverage')
+    plt.ylabel('number of sites')
+    plt.show()
+    plt.savefig(dir + os.path.sep + g)
+    fig, ax = plt.subplots()
+
+    # create small coverage vs change graph
+    sxy = list(filter(lambda tup: tup[0] < 50, xy))
+    sx = list(map(lambda tup: tup[0], sxy))
+    sy = list(map(lambda tup: tup[1], sxy))
+    ax.plot(sx, sy)
+    plt.xlim(0, 50)
+    g = graph_name + "small_coverage_vs_num_of_site"
+    plt.title(g)
+    plt.xlabel('coverage')
+    plt.ylabel('number of sites')
+    plt.show()
+    plt.savefig(dir + os.path.sep + graph_name + g)
+
+    # create scatter graph of change vs coverage
+    change_data = data["change"]
+    colors = np.random.rand(153924)
+    plt.scatter(cov_data, change_data, c=colors)
+    g = graph_name + "_coverage_vs_change"
+    plt.title(g)
+    plt.xlabel('coverage')
+    plt.ylabel('change')
+    plt.show()
+    plt.savefig(dir + os.path.sep + graph_name + g)
+
+    # create histogram of change distribution by different coverage value
+    filter_range = [0, 5, 7, 10, 15]
+    for f in filter_range:
+        d = data[data[COV] > f]
+        cd = d["change"]
+        plt.hist(cd, histtype='step', label="sorted from coverage {0}".format(f), density=True, stacked=True)
+    plt.legend()
+    g = graph_name + "change_distribution"
+    plt.title(g)
+    plt.xlabel("change rate")
+    plt.ylabel("num of sites")
+    plt.show()
+    plt.savefig(dir + os.path.sep + graph_name + g)
+    #todo: check how the get the probability of this
+    return
+
 
 
 def make_box_plot(file, title, graph_name):
@@ -226,8 +297,9 @@ def main_plass():
     data = pd.concat(data1)
     data = data.drop_duplicates()
     print("done append data")
-    plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
-                   (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
+    # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
+    #                (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
+    plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac")] #to check cov
     for i in range(len(plass_files) - 1):
         for j in range(i + 1, len(plass_files)):
             # filters = [0.1, 0.3, 0.5]
@@ -240,6 +312,7 @@ def main_plass():
             print("done parsing")
             name = "{0}_vs_{1}".format(plass_files[i][2], plass_files[j][2])
             search(nodrag, drag, data, name + ".csv")
+            plot_cov("", "{0}_covarge_histogram".format(name), data)
             make_box_plot(name + ".csv", "mthylation level's changes at " + name, name)
             print("F I N I S H !")
 
@@ -289,7 +362,7 @@ def main_imm():
 
 
 # main_imm()
-main_plass()
+# main_plass()
 # main_imm()
 # make_box_plot("immortalization/b3_active.csv", "3", "active_test_original")
 # make_box_plot("b3_active_test2.csv", "3", "active_test2_no_cov")
@@ -344,3 +417,5 @@ def no_use():
 #                             chip_data[i]["chrom"],
 #                                  chip_data[i]["peak"]):
 
+if __name__ == '__main__':
+    plot_cov("plass_result", "with_dac_vs_with_dac_and_hdac", None, "plass_result/with_dac_vs_with_dac_and_hdac.csv")

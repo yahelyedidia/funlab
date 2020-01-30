@@ -254,19 +254,22 @@ def creat_cns(dir):
 
 
 def create_genes_files():
-    for file in os.listdir("plass_result"):
+    for file in os.listdir("immortalization_result"):
         if file.endswith(".csv"):
+            f = os.path.abspath(file)
             # filter_data(0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/increase_" + file + "_0.6.csv")
             # print("done1")
             # filter_data(-0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/decrease_" + file + "_-0.6.csv")
             # print("done2")
-            check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_" + file + "_0.6.csv", "increase_" + file)
+            check_with_change_filter([10000, 50000, 100000], 30,"immortalization_result" + os.path.sep + file, os.path.splitext(os.path.basename(file))[0])
             print("done increase")
-            check_with_change_filter([10000, 50000, 100000], 30,  "plass_result/filtered/decrease_" + file + "_-0.6.csv", "decrease_" + file)
-            print("done decrease")
+            # check_with_change_filter([10000, 50000, 100000], 30,  "immoralization_result/"+ file, os.path.splitext(os.path.basename(file))[0])
+            # print("done decrease")
+            # immortalization_result/b1_active.csv
 
 
-check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
+create_genes_files()
+# check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 # create_genes_files()
 # creat_cns("plass_result")

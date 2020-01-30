@@ -3,15 +3,19 @@ import pandas as pd
 #import numpy as np
 import matplotlib.pyplot as plt
 
-IMM2 = "ENCFF833FTF.bed"
+Y_CHR = 23
 
-IMM1 = "ENCFF449NOT.bed"
+X_CHR = 22
 
-PLASS3 = "Plass/ENCFF032DEW.bed.gz"
+IMM2 = "ENCFF833FTF.bed.gz"
 
-PLASS2 = "Plass/ENCFF543VGD.bed.gz"
+IMM1 = "ENCFF449NOT.bed.gz"
 
-PLASS1 = "Plass/ENCFF401ONY.bed.gz"
+PLASS3 = "ENCFF032DEW.bed"
+
+PLASS2 = "ENCFF543VGD.bed"
+
+PLASS1 = "ENCFF401ONY.bed"
 
 GES = "ges1_ctcf_12_fp-stylefactor.bed"
 
@@ -78,19 +82,22 @@ def read_micro_info(file):
 # def search(data, length):
 
 
-def parse(data, charname, value, chrom=None): # todo : args doc
+def parse(data, charname, value, chrom=None):
     """
     parsing the data by the micro array test.
     :param data: the probes information
+    :param charname: the number of chromosome to parse by
+    :param value:
+    :param chrom: list of data arrange
     :return: array with the locations sorted by chromosomes
     """
     if (chrom == None):
         chrom = [[] for i in range(24)]
     for index, info in zip(data[charname], data[value]):
         if index == 'X':
-            chrom[22].append(info)
+            chrom[X_CHR].append(info)
         elif index == 'Y':
-            chrom[23].append(info)
+            chrom[Y_CHR].append(info)
         else:
             chrom[int(index) - 1].append(info)
     for i in chrom:
