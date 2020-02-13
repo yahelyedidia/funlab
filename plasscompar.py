@@ -64,14 +64,18 @@ def closest_to_peak(lst, peak, start):
     while first <= last:
         mid = (first + last) // 2
         if val == lst[mid][0]:
-            cov = calc_cov(mid, lst)
-            return lst[mid][1], cov
+            break
         else:
             if val < lst[mid][0]:
                 last = mid - 1
             else:
                 first = mid + 1
-    if mid-1 < 0:
+
+    if val == lst[mid][0]:
+        cov = calc_cov(mid, lst)
+        return lst[mid][1], cov
+
+    elif mid-1 < 0:
         cov = calc_cov(mid+1, lst)
         return lst[mid+1][1], cov
 
@@ -84,9 +88,12 @@ def closest_to_peak(lst, peak, start):
 
 
 def calc_cov(mid, chr_lst):
-    new_lst = [item[2] for item in chr_lst if mid - 50 <= item[0] <= mid + 50]
-    if len(new_lst) != 0:
-        cov = sum(new_lst) / len(new_lst)
+    # new_lst = [item[2] for item in chr_lst if chr_lst[mid][0] - 50 <= item[0] <= chr_lst[mid][0] + 50]
+    l = np.array(chr_lst)
+    l = l[(l[:, 0] >= chr_lst[mid][0] - 50) & (l[:, 0] <= chr_lst[mid][0] + 50)]
+    if len(l) != 0:
+        cov = np.mean(l[:, 2])
+        # cov2 = sum(new_lst) / len(new_lst)
         print("current cov: " + str(cov))
         return cov
     print("current cov: 0")
@@ -100,8 +107,8 @@ def read_gz_file(file1, file2, sep):
     :param file2: the second file
     :return: the files
     """
-    before = pd.read_csv(file1, sep=sep, low_memory=False, compression='gzip')
-    after = pd.read_csv(file2, sep=sep, low_memory=False, compression='gzip')  # todo : change the "Chromosome" col to chr
+    before = pd.read_csv(file1, sep=sep, low_memory=False, compression="gzip")
+    after = pd.read_csv(file2, sep=sep, low_memory=False, compression="gzip")  # todo : change to compress gzip
     # before = before.rename(columns={'Chromosome': 'chr'}, axis='columns')
     # after = after.rename(columns={'Chromosome': 'chr'}, axis='columns')
     # nodrag = nodrag[nodrag[DINFO] >= filter]
@@ -125,8 +132,8 @@ def smooth_parse(data, level, chr_name, start):
         else:
             index = int(''.join([s for s in list(index) if s.isdigit()]))
             chrom[index - 1].append([loci, level, cov])
-        print(index)
-    print("before sorting")
+    #     print(index)
+    # print("before sorting")
     for i in chrom:
         i.sort()
     return chrom
@@ -270,7 +277,11 @@ def search(before, after, chip_data, name="in_progress.csv"):
             chrom = 24
         else:
             chrom = int(chr[3:])
-        befor_avg, cov1 = closest_to_peak(before[chrom - 1], peak, start)
+        if before[chrom-1] == []:
+            line = np.array([chrom, start, end, 0, 0, -1])
+            lst = np.vstack([lst, line])
+            continue
+        before_avg, cov1 = closest_to_peak(before[chrom - 1], peak, start)
         after_avg, cov2 = closest_to_peak(after[chrom - 1], peak, start)
         cov = min(cov1, cov2)
         line = np.array([chrom, start, end, before_avg, after_avg, cov])
@@ -370,7 +381,6 @@ def main_imm():
         # print("F I N I S H !")
 
 
-main_imm()
 # main_plass()
 # main_imm()
 # main_plass()
@@ -429,4 +439,6 @@ def no_use():
 #                                  chip_data[i]["peak"]):
 
 if __name__ == '__main__':
-    plot_cov("plass_result", "with_dac_vs_with_dac_and_hdac", None, "plass_result/with_dac_vs_with_dac_and_hdac.csv")
+    main_imm()
+
+    # plot_cov("plass_result", "with_dac_vs_with_dac_and_hdac", None, "plass_result/with_dac_vs_with_dac_and_hdac.csv")
