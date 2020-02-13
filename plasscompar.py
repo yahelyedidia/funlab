@@ -14,39 +14,39 @@ PREVENT_INFO = "Smoothed_Methylation_Level_H2_SB939"
 
 DAC_INFO = "Smoothed_Methylation_Level_H2_DAC_plus_SB939"
 
-CONTROL = "tehila/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+CONTROL = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-AFTER_TREATMENT = "tehila/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+AFTER_TREATMENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
 DAC_AND_HDAC = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150387_H2_DAC_plus_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
 HDAC_PREVENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150389_H2_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
 
-P3_control = "tehila/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+P3_control = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-P1_after_treatment = "tehila/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
+P1_after_treatment = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-PLASS3 = "tehila/Plass/ENCFF032DEW.bed.gz"
+PLASS3 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/ENCFF032DEW.bed.gz"
 
-PLASS2 = "tehila/Plass/ENCFF543VGD.bed.gz"
+PLASS2 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/ENCFF543VGD.bed.gz"
 
-PLASS1 = "tehila/Plass/ENCFF401ONY.bed.gz"
+PLASS1 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/ENCFF401ONY.bed.gz"
 
-B1_ACTIVE = "immortalization/B1_activation.csv.gz"
+B1_ACTIVE = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/GSM1202804_B1_activation.csv.gz"
 
-B2_ACTIVE = "immortalization/B2_activation.csv.gz"
+B2_ACTIVE = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/GSM1202805_B2_activation.csv.gz"
 
-B3_ACTIVE = "immortalization/B3_activation.csv.gz"
+B3_ACTIVE = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/GSM1202806_B3_activation.csv.gz"
 
-B1_TRANSFOR = "immortalization/B1_transformed.csv.gz"
+B1_TRANSFOR = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/GSM1202810_B1_transformed.csv.gz"
 
-B2_TRANSFOR = "immortalization/B2_transformed.csv.gz"
+B2_TRANSFOR = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/GSM1202811_B2_transformed.csv.gz"
 
-B3_TRANSFOR = "immortalization/B3_transformed.csv.gz"
+B3_TRANSFOR = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/GSM1202812_B3_transformed.csv.gz"
 
-CHIP_B_CELLS_ACTIVE = "immortalization/ENCFF449NOT.bed"
+CHIP_B_CELLS_ACTIVE = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/ENCFF449NOT.bed"
 
-TF_TRANS = "imm/ENCFF833FTF.bed.gz"
+TF_TRANS = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/ENCFF833FTF.bed"
 
 
 def closest_to_peak(lst, peak, start):
@@ -72,7 +72,9 @@ def closest_to_peak(lst, peak, start):
             else:
                 first = mid + 1
     if mid-1 < 0:
-        return lst[mid+1][1], lst[mid+1][2]
+        cov = calc_cov(mid+1, lst)
+        return lst[mid+1][1], cov
+
     elif mid+1 > last:
         cov = calc_cov(mid-1, lst)
         return lst[mid-1][1], cov
@@ -85,7 +87,9 @@ def calc_cov(mid, chr_lst):
     new_lst = [item[2] for item in chr_lst if mid - 50 <= item[0] <= mid + 50]
     if len(new_lst) != 0:
         cov = sum(new_lst) / len(new_lst)
+        print("current cov: " + str(cov))
         return cov
+    print("current cov: 0")
     return 0
 
 
@@ -128,25 +132,25 @@ def smooth_parse(data, level, chr_name, start):
     return chrom
 
 
-def find_position(lst, location):
-    """
-    binary search to find the CTCF biding site's start and end
-    :param lst: the chromosome biding sits as we filtered from the data
-    :param location: the chromosome's start position
-    :return: the start or end position
-    """
-    first = 0
-    last = len(lst) - 1
-    while first <= last:
-        mid = (first + last) // 2
-        if location == lst[mid][0]:
-            return mid
-        else:
-            if location < lst[mid][0]:
-                last = mid - 1
-            else:
-                first = mid + 1
-    return mid
+# def find_position(lst, location):
+#     """
+#     binary search to find the CTCF biding site's start and end
+#     :param lst: the chromosome biding sits as we filtered from the data
+#     :param location: the chromosome's start position
+#     :return: the start or end position
+#     """
+#     first = 0
+#     last = len(lst) - 1
+#     while first <= last:
+#         mid = (first + last) // 2
+#         if location == lst[mid][0]:
+#             return mid
+#         else:
+#             if location < lst[mid][0]:
+#                 last = mid - 1
+#             else:
+#                 first = mid + 1
+#     return mid
 
 
 def plot_cov(dir, graph_name, data, file=None):
@@ -269,9 +273,9 @@ def search(before, after, chip_data, name="in_progress.csv"):
         befor_avg, cov1 = closest_to_peak(before[chrom - 1], peak, start)
         after_avg, cov2 = closest_to_peak(after[chrom - 1], peak, start)
         cov = min(cov1, cov2)
-        line = np.array([chrom, start, end, befor_avg, after_avg, cov])
+        line = np.array([chrom, start, end, before_avg, after_avg, cov])
         lst = np.vstack([lst, line])
-        print("still alive " + str(chr))
+        print("still alive at chr " + str(chr) + ", start site at " + str(start))
 
     x = 2
     #  adding column with the difference between the average with out / with the drag
@@ -299,13 +303,16 @@ def main_plass():
     print("done append data")
     # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
     #                (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
+    plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac")]
+    # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
+    #                (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
     plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac")] #to check cov
     for i in range(len(plass_files) - 1):
         for j in range(i + 1, len(plass_files)):
             # filters = [0.1, 0.3, 0.5]
             # for filter in filters:
             # print("results for filter: " + str(filter))
-            ndrg, drg = read_gz_file(plass_files[i][0],plass_files[j][0], '\t')
+            ndrg, drg = read_gz_file(plass_files[i][0], plass_files[j][0], '\t')
             print("done reading the files")
             nodrag = smooth_parse(ndrg, plass_files[i][1], "Chromosome", "Start")
             drag = smooth_parse(drg, plass_files[j][1], "Chromosome", "Start")
@@ -327,7 +334,9 @@ def main_imm():
     data = pd.concat([b_active, tf_trans])
     data = data.drop_duplicates()
     print("done append data")
-    imm_files = [(B1_ACTIVE, B1_TRANSFOR), (B2_ACTIVE, B2_TRANSFOR), (B3_ACTIVE, B3_TRANSFOR)]
+    # imm_files = [(B1_ACTIVE, B1_TRANSFOR), (B2_ACTIVE, B2_TRANSFOR), (B3_ACTIVE, B3_TRANSFOR)]
+    imm_files = [(B1_ACTIVE, B1_TRANSFOR)]
+
     imm_active, imm_trans = [], []
     for imm in imm_files:
         a, b = read_gz_file(imm[0], imm[1], ',')
@@ -361,6 +370,8 @@ def main_imm():
         # print("F I N I S H !")
 
 
+main_imm()
+# main_plass()
 # main_imm()
 # main_plass()
 # main_imm()
