@@ -94,9 +94,9 @@ def calc_cov(mid, chr_lst):
     if len(l) != 0:
         cov = np.mean(l[:, 2])
         # cov2 = sum(new_lst) / len(new_lst)
-        print("current cov: " + str(cov))
+        # print("current cov: " + str(cov))
         return cov
-    print("current cov: 0")
+    # print("current cov: 0")
     return 0
 
 
@@ -104,7 +104,8 @@ def read_gz_file(file1, file2, sep):
     """
     reading the file's and filter it if needed
     :param file1: the first file
-    :param file2: the second file
+    :param file2: the second fil
+    e
     :return: the files
     """
     before = pd.read_csv(file1, sep=sep, low_memory=False, compression="gzip")
@@ -181,7 +182,10 @@ def plot_cov(dir, graph_name, data, file=None):
     plt.xlabel('coverage')
     plt.ylabel('number of sites')
     plt.show()
-    plt.savefig(dir + os.path.sep + g)
+    if dir != "":
+        plt.savefig(dir + os.path.sep + g)
+    else:
+        plt.savefig(g)
     fig, ax = plt.subplots()
 
     # create small coverage vs change graph
@@ -195,18 +199,25 @@ def plot_cov(dir, graph_name, data, file=None):
     plt.xlabel('coverage')
     plt.ylabel('number of sites')
     plt.show()
-    plt.savefig(dir + os.path.sep + graph_name + g)
+    if dir != "":
+        plt.savefig(dir + os.path.sep + graph_name + g)
+    else:
+        plt.savefig(graph_name + g)
 
     # create scatter graph of change vs coverage
     change_data = data["change"]
-    colors = np.random.rand(153924)
+    colors = np.random.rand(change_data.size)
     plt.scatter(cov_data, change_data, c=colors)
     g = graph_name + "_coverage_vs_change"
     plt.title(g)
     plt.xlabel('coverage')
     plt.ylabel('change')
     plt.show()
-    plt.savefig(dir + os.path.sep + graph_name + g)
+    if dir != "":
+        plt.savefig(dir + os.path.sep + graph_name + g)
+    else:
+        plt.savefig(graph_name + g)
+
 
     # create histogram of change distribution by different coverage value
     filter_range = [0, 5, 7, 10, 15]
@@ -220,7 +231,10 @@ def plot_cov(dir, graph_name, data, file=None):
     plt.xlabel("change rate")
     plt.ylabel("num of sites")
     plt.show()
-    plt.savefig(dir + os.path.sep + graph_name + g)
+    if dir != "":
+        plt.savefig(dir + os.path.sep + graph_name + g)
+    else:
+        plt.savefig(graph_name + g)
     #todo: check how the get the probability of this
     return
 
@@ -314,10 +328,10 @@ def main_plass():
     print("done append data")
     # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
     #                (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
-    plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac")]
-    # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
-    #                (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
-    plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac")] #to check cov
+    # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac")]
+    plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
+                   (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
+    # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac")] #to check cov
     for i in range(len(plass_files) - 1):
         for j in range(i + 1, len(plass_files)):
             # filters = [0.1, 0.3, 0.5]
@@ -330,8 +344,8 @@ def main_plass():
             print("done parsing")
             name = "{0}_vs_{1}".format(plass_files[i][2], plass_files[j][2])
             search(nodrag, drag, data, name + ".csv")
-            plot_cov("", "{0}_covarge_histogram".format(name), data)
-            make_box_plot(name + ".csv", "mthylation level's changes at " + name, name)
+            # plot_cov("", "{0}_covarge_histogram".format(name), data)
+            # make_box_plot(name + ".csv", "mthylation level's changes at " + name, name)
             print("F I N I S H !")
 
 
@@ -361,11 +375,10 @@ def main_imm():
     active = smooth_parse(imm_active, "smoothSmall", "chr", "pos")  # only small ! there is also large
     transformed = smooth_parse(imm_trans, "smoothSmall", "chr", "pos")
     print("done parsing")
-    output = "mthylation level's changes at b immortalization cells"
-    name = "b{0}"
+    # output = "mthylation level's changes at b immortalization cells"
     # search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
-    search(active, transformed, data, "b_cells.csv")  # transformed file
-    make_box_plot("b_cells.csv", output, "b_cells_graph")
+    search(active, transformed, data, "imm_result_b1.csv")  # transformed file
+    # make_box_plot("imm_result_b1.csv", output, "imm_result_graph_b1")
     # for i in range(len(imm_files)):
     #     act, trn = read_gz_file(imm_files[i][0], imm_files[i][1], ',')
     #     print("done reading the files")
@@ -439,6 +452,8 @@ def no_use():
 #                                  chip_data[i]["peak"]):
 
 if __name__ == '__main__':
-    main_imm()
-
-    # plot_cov("plass_result", "with_dac_vs_with_dac_and_hdac", None, "plass_result/with_dac_vs_with_dac_and_hdac.csv")
+    # print("hi")
+    # main_imm()
+    # print("done")
+    # main_plass()
+    plot_cov("", "b3_active_vs_trans", None, "imm_result_b3.csv")
