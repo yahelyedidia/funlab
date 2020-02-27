@@ -3,7 +3,7 @@ import lab
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-import scipy
+import lowess
 
 COV = "cov"
 
@@ -274,13 +274,40 @@ def plot_cov(dir, graph_name, data, file=None):
 
 
     # create histogram of change distribution by different coverage value
+    # filter_range = [0, 5, 7, 10, 15]
+    # for f in range(len(filter_range) - 1):
+    #     d = data[data[COV] > filter_range[f]]
+    #     d = d[data[COV] < filter_range[f+1]]
+    #     cd = d["change"]
+    #     plt.hist(cd, histtype='step', label="{0} - {1}".format(filter_range[f], filter_range[f+1]), density=True, stacked=True)
+    # plt.legend(title="coverage area")
+    # g = graph_name + "change_distribution"
+    # plt.title(g)
+    # plt.xlabel("change rate")
+    # plt.ylabel("num of sites")
+    # if dir != "":
+    #     plt.savefig(dir + os.path.sep + graph_name + g)
+    # else:
+    #     plt.savefig(graph_name + g)
+    # plt.show()
+    #todo: check how the get the probability of this
+
+
+
+
+
     filter_range = [0, 5, 7, 10, 15]
-    for f in range(len(filter_range) - 1):
-        d = data[data[COV] > filter_range[f]]
-        d = d[data[COV] < filter_range[f+1]]
-        cd = d["change"]
-        plt.hist(cd, histtype='step', label="{0} - {1}".format(filter_range[f], filter_range[f+1]), density=True, stacked=True)
-    plt.legend(title="coverage area")
+    # for f in range(len(filter_range) - 1):
+    #     d = data[data[COV] > filter_range[f]]
+    #     d = d[data[COV] < filter_range[f+1]]
+    #     cd = d["change"]
+    #     plt.hist(cd, histtype='step', label="{0} - {1}".format(filter_range[f], filter_range[f+1]), density=True, stacked=True)
+    # plt.legend(title="coverage area")
+    x = pd.DataFrame(cov_data)
+    x = x.join(data["change"])
+    x = x.set_index("change")
+    y = lowess.Lowess(x)
+    plt.plot(y)
     g = graph_name + "change_distribution"
     plt.title(g)
     plt.xlabel("change rate")
@@ -290,7 +317,6 @@ def plot_cov(dir, graph_name, data, file=None):
     else:
         plt.savefig(graph_name + g)
     plt.show()
-    #todo: check how the get the probability of this
     return
 
 
