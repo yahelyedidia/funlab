@@ -162,34 +162,34 @@ def smooth_parse(data, level, chr_name, start):
 
 
 def plot_cov(dir, graph_name, data, file=None):
-    if file:
-        data = pd.read_csv(file, sep='\t', low_memory=False, skiprows=[1])
-    cov_data = data[COV]
-    cov_dict = {}
-    for i in cov_data:
-        if i in cov_dict:
-            cov_dict[i] += 1
-        else:
-            cov_dict[i] = 1
-    # create coverage vs change graph
-    xy = sorted(list(cov_dict.items()))
-    x = list(map(lambda tup: tup[0], xy))
-    y = list(map(lambda tup: tup[1], xy))
-    fig, ax = plt.subplots()
-    ax.plot(x, y)
-    g = graph_name + "_coverage_vs_num_of_site"
-    plt.title(g)
-    plt.xlabel('coverage')
-    plt.ylabel('number of sites')
-    plt.show()
-    if dir != "":
-        plt.savefig(dir + os.path.sep + g)
-    else:
-        plt.savefig(g)
-    fig, ax = plt.subplots()
+    # if file:
+    #     data = pd.read_csv(file, sep='\t', low_memory=False, skiprows=[1])
+    # cov_data = data[COV]
+    # cov_dict = {}
+    # for i in cov_data:
+    #     if i in cov_dict:
+    #         cov_dict[i] += 1
+    #     else:
+    #         cov_dict[i] = 1
+    # # create coverage vs change graph
+    # xy = sorted(list(cov_dict.items()))
+    # x = list(map(lambda tup: tup[0], xy))
+    # y = list(map(lambda tup: tup[1], xy))
+    # fig, ax = plt.subplots()
+    # ax.plot(x, y)
+    # g = graph_name + "_coverage_vs_num_of_site"
+    # plt.title(g)
+    # plt.xlabel('coverage')
+    # plt.ylabel('number of sites')
+    # if dir != "":
+    #     plt.savefig(dir + os.path.sep + g)
+    # else:
+    #     plt.savefig(g)
+    # plt.show()
+    # fig, ax = plt.subplots()
 
     # create small coverage vs change graph
-    sxy = list(filter(lambda tup: tup[0] < 50, xy))
+    sxy = list(filter(lambda tup: tup[0] < 20, xy))
     sx = list(map(lambda tup: tup[0], sxy))
     sy = list(map(lambda tup: tup[1], sxy))
     ax.plot(sx, sy)
@@ -198,11 +198,11 @@ def plot_cov(dir, graph_name, data, file=None):
     plt.title(g)
     plt.xlabel('coverage')
     plt.ylabel('number of sites')
-    plt.show()
     if dir != "":
         plt.savefig(dir + os.path.sep + graph_name + g)
     else:
         plt.savefig(graph_name + g)
+    plt.show()
 
     # create scatter graph of change vs coverage
     change_data = data["change"]
@@ -212,11 +212,11 @@ def plot_cov(dir, graph_name, data, file=None):
     plt.title(g)
     plt.xlabel('coverage')
     plt.ylabel('change')
-    plt.show()
     if dir != "":
         plt.savefig(dir + os.path.sep + graph_name + g)
     else:
         plt.savefig(graph_name + g)
+    plt.show()
 
 
     # create histogram of change distribution by different coverage value
@@ -230,11 +230,11 @@ def plot_cov(dir, graph_name, data, file=None):
     plt.title(g)
     plt.xlabel("change rate")
     plt.ylabel("num of sites")
-    plt.show()
     if dir != "":
         plt.savefig(dir + os.path.sep + graph_name + g)
     else:
         plt.savefig(graph_name + g)
+    plt.show()
     #todo: check how the get the probability of this
     return
 
@@ -455,5 +455,5 @@ if __name__ == '__main__':
     # print("hi")
     # main_imm()
     # print("done")
-    # main_plass()
-    plot_cov("", "b3_active_vs_trans", None, "imm_result_b3.csv")
+    main_plass()
+    # plot_cov("", "b1_active_vs_trans", None, "imm_result_b1.csv")
