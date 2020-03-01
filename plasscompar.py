@@ -508,13 +508,13 @@ def no_use():
 
 def cut_by_filter(file):
     data = pd.read_csv(file, sep="\t")
-    data = data[data["cov"] >= 5]
-    print("hi")
-    data.to_csv("imm_b1_filtered.csv", sep="\t")
-    print("bye")
+    data = data[data["cov"] >= 7]
+    data.to_csv("imm_b1_filtered_try.csv", sep="\t", index=False)
+
 
 if __name__ == '__main__':
-    cut_by_filter("imm_result_b1.csv")
+    cut_by_filter("immortalization_result/imm_result_b1.csv")
+    make_box_plot("imm_b1_filtered_try.csv", "b1_changes_after_filter", "immortalization_result/changes_after_filter_b1_try")
     # main_imm(3)
     # print("done")
     # main_plass()
