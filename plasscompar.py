@@ -272,42 +272,14 @@ def plot_cov(dir, graph_name, data, file=None):
     plt.show()
 
 
-
     # create histogram of change distribution by different coverage value
-    # filter_range = [0, 5, 7, 10, 15]
-    # for f in range(len(filter_range) - 1):
-    #     d = data[data[COV] > filter_range[f]]
-    #     d = d[data[COV] < filter_range[f+1]]
-    #     cd = d["change"]
-    #     plt.hist(cd, histtype='step', label="{0} - {1}".format(filter_range[f], filter_range[f+1]), density=True, stacked=True)
-    # plt.legend(title="coverage area")
-    # g = graph_name + "change_distribution"
-    # plt.title(g)
-    # plt.xlabel("change rate")
-    # plt.ylabel("num of sites")
-    # if dir != "":
-    #     plt.savefig(dir + os.path.sep + graph_name + g)
-    # else:
-    #     plt.savefig(graph_name + g)
-    # plt.show()
-    #todo: check how the get the probability of this
-
-
-
-
-
     filter_range = [0, 5, 7, 10, 15]
-    # for f in range(len(filter_range) - 1):
-    #     d = data[data[COV] > filter_range[f]]
-    #     d = d[data[COV] < filter_range[f+1]]
-    #     cd = d["change"]
-    #     plt.hist(cd, histtype='step', label="{0} - {1}".format(filter_range[f], filter_range[f+1]), density=True, stacked=True)
-    # plt.legend(title="coverage area")
-    x = pd.DataFrame(cov_data)
-    x = x.join(data["change"])
-    x = x.set_index("change")
-    y = lowess.Lowess(x)
-    plt.plot(y)
+    for f in range(len(filter_range) - 1):
+        d = data[data[COV] > filter_range[f]]
+        d = d[data[COV] < filter_range[f+1]]
+        cd = d["change"]
+        plt.hist(cd, histtype='step', label="{0} - {1}".format(filter_range[f], filter_range[f+1]), density=True, stacked=True)
+    plt.legend(title="coverage area")
     g = graph_name + "change_distribution"
     plt.title(g)
     plt.xlabel("change rate")
@@ -317,6 +289,7 @@ def plot_cov(dir, graph_name, data, file=None):
     else:
         plt.savefig(graph_name + g)
     plt.show()
+    #todo: check how the get the probability of this
     return
 
 
@@ -383,7 +356,6 @@ def search(before, after, chip_data, name="in_progress.csv"):
         lst = np.vstack([lst, line])
         print("still alive at chr " + str(chr) + ", start site at " + str(start))
 
-    x = 2
     #  adding column with the difference between the average with out / with the drag
     change = np.subtract(lst[:, 4], lst[:, 3])[np.newaxis]
     change = change.T
@@ -534,7 +506,9 @@ def no_use():
 
 if __name__ == '__main__':
     # print("hi")
+
+
     # main_imm()
     # print("done")
     # main_plass()
-    plot_cov("", "b1_active_vs_trans", None, "imm_result_b1.csv")
+    plot_cov("", "b3_active_vs_trans", None, "imm_result_b3.csv")
