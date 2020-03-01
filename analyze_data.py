@@ -1,3 +1,4 @@
+import numpy
 import pandas as pd
 from itertools import islice
 import os
@@ -32,8 +33,8 @@ def filter_data(filter, d, col, name):
     else:
         data = data[data[col] <= filter]
     print("done filter")
-    data = remove_duplicate(data, "chr", "start", "end", "change")
-    print("no duplicate")
+    # data = remove_duplicate(data, "chr", "start", "end", "change")
+    # print("no duplicate")
     pd.DataFrame(data=data).to_csv(name, sep="\t")
     print("writing to file")
 
@@ -152,7 +153,7 @@ def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name)
     :param list_of_filters: the filters in list
     :param num_to_print: the num of repetitive elements to print
     """
-    chroms = create_gene_data("Homo_sapiens.GRCh38.98.gtf.gz")
+    chroms = create_gene_data("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Homo_sapiens.GRCh38.98.gtf.gz")
     print("yay data")
     for f in list_of_filters:
         d = find_close_genes(f, chroms, file_to_check, name)
@@ -252,23 +253,22 @@ def creat_cns(dir):
             convert_to_cn_2(dir+os.path.sep+file)
 
 
-
-def create_genes_files():
+def create_genes_files(up, down):
     for file in os.listdir("immortalization_result"):
         if file.endswith(".csv"):
-            f = os.path.abspath(file)
-            # filter_data(0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/increase_" + file + "_0.6.csv")
-            # print("done1")
-            # filter_data(-0.6, "plass_result" + os.sep + file, "change", "plass_result/filtered/decrease_" + file + "_-0.6.csv")
-            # print("done2")
-            check_with_change_filter([10000, 50000, 100000], 30,"immortalization_result" + os.path.sep + file, os.path.splitext(os.path.basename(file))[0])
+            # f = os.path.abspath(file)
+            # file = "imm_b1_filtered.csv"
+            filter_data(up, "immortalization_result" + os.sep + file, "change", "immortalization_result/filtered/increase_" + file + "_{0}.csv".format(up))
+            print("done1")
+            filter_data(down, "immortalization_result" + os.sep + file, "change", "immortalization_result/filtered/decrease_" + file + "_{0}.csv".format(down))
+            print("done2")
+            check_with_change_filter([10000, 50000, 100000], 30, "immortalization_result/filtered/increase_" + file + "_{0}.csv".format(up), os.path.splitext(os.path.basename(file))[0])
             print("done increase")
-            # check_with_change_filter([10000, 50000, 100000], 30,  "immoralization_result/"+ file, os.path.splitext(os.path.basename(file))[0])
-            # print("done decrease")
-            # immortalization_result/b1_active.csv
+            check_with_change_filter([10000, 50000, 100000], 30,  "immortalization_result/filtered/decrease_" + file + "_{0}.csv".format(down), os.path.splitext(os.path.basename(file))[0])
+            print("done decrease")
 
 
-create_genes_files()
+create_genes_files(0.2, -0.4)
 # check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 # create_genes_files()

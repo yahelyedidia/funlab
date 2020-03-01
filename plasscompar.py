@@ -3,6 +3,7 @@ import lab
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import math
 import lowess
 
 COV = "cov"
@@ -91,7 +92,7 @@ def closest_to_peak(lst, peak, start):
 def calc_cov(mid, chr_lst):
     # new_lst = [item[2] for item in chr_lst if chr_lst[mid][0] - 50 <= item[0] <= chr_lst[mid][0] + 50]
     l = np.array(chr_lst)
-    l = l[(l[:, 0] >= chr_lst[mid][0] - 50) & (l[:, 0] <= chr_lst[mid][0] + 50)]
+    l = l[(l[:, 0] >= chr_lst[mid][0] - 250) & (l[:, 0] <= chr_lst[mid][0] + 250)]
     if len(l) != 0:
         cov = np.mean(l[:, 2])
         # cov2 = sum(new_lst) / len(new_lst)
@@ -167,7 +168,9 @@ def plot_cov(dir, graph_name, data, file=None):
         data = pd.read_csv(file, sep='\t', low_memory=False, skiprows=[1])
     cov_data = data[COV]
     cov_dict = {}
+    g = lambda x: int(x) + 0.5 if math.ceil(x) - x > 0.5 else int(x) - 0.5
     for i in cov_data:
+        i = g(i)
         if i in cov_dict:
             cov_dict[i] += 1
         else:
@@ -261,7 +264,7 @@ def plot_cov(dir, graph_name, data, file=None):
     plt.xlim(0, 20)
 
     plt.scatter(x2, y2, c=z2, cmap='jet', marker='.')
-    g = graph_name + "_coverage_vs_change_try_gauss"
+    g = graph_name + "_coverage_vs_change"
     plt.title(g)
     plt.xlabel('coverage')
     plt.ylabel('change')
@@ -271,9 +274,8 @@ def plot_cov(dir, graph_name, data, file=None):
         plt.savefig(graph_name + g)
     plt.show()
 
-
     # create histogram of change distribution by different coverage value
-    filter_range = [0, 5, 7, 10, 15]
+    filter_range = [0, 2, 4, 6, 8, 10, 12, 14]
     for f in range(len(filter_range) - 1):
         d = data[data[COV] > filter_range[f]]
         d = d[data[COV] < filter_range[f+1]]
@@ -291,7 +293,6 @@ def plot_cov(dir, graph_name, data, file=None):
     plt.show()
     #todo: check how the get the probability of this
     return
-
 
 
 def make_box_plot(file, title, graph_name):
@@ -334,7 +335,7 @@ def search(before, after, chip_data, name="in_progress.csv"):
     head = ["chr", "start", "end", "no drugs avg", "with drugs avg", "cov"]
     strand_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
     strand_col = np.vstack([strand_col, "."])
-    cov_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
+    # cov_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
     print(strand_col.shape[0], strand_col.shape[1])
     lst = np.empty((1, len(head)))
     for start, end, chr, peak in zip(chip_data["chromStart"], chip_data["chromEnd"],
@@ -402,7 +403,7 @@ def main_plass():
             print("F I N I S H !")
 
 
-def main_imm():
+def main_imm(i):
     """
     main function to process immortalization files
     """
@@ -412,14 +413,14 @@ def main_imm():
     data = pd.concat([b_active, tf_trans])
     data = data.drop_duplicates()
     print("done append data")
-    # imm_files = [(B1_ACTIVE, B1_TRANSFOR), (B2_ACTIVE, B2_TRANSFOR), (B3_ACTIVE, B3_TRANSFOR)]
-    imm_files = [(B1_ACTIVE, B1_TRANSFOR)]
-
+    imm_files = [(B1_ACTIVE, B1_TRANSFOR), (B2_ACTIVE, B2_TRANSFOR), (B3_ACTIVE, B3_TRANSFOR)]
+    # imm_files = [(B1_ACTIVE, B1_TRANSFOR)]
     imm_active, imm_trans = [], []
-    for imm in imm_files:
-        a, b = read_gz_file(imm[0], imm[1], ',')
-        imm_active.append(a)
-        imm_trans.append(b)
+    # for imm in imm_files[i-1]:
+    imm = imm_files[i-1]
+    a, b = read_gz_file(imm[0], imm[1], ',')
+    imm_active.append(a)
+    imm_trans.append(b)
     imm_active = pd.concat(imm_active)
     imm_trans = pd.concat(imm_trans)
     imm_active = imm_active.drop_duplicates()
@@ -430,7 +431,7 @@ def main_imm():
     print("done parsing")
     # output = "mthylation level's changes at b immortalization cells"
     # search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
-    search(active, transformed, data, "imm_result_b1.csv")  # transformed file
+    search(active, transformed, data, "imm_result_b{0}_w_500.csv".format(i))  # transformed file
     # make_box_plot("imm_result_b1.csv", output, "imm_result_graph_b1")
     # for i in range(len(imm_files)):
     #     act, trn = read_gz_file(imm_files[i][0], imm_files[i][1], ',')
@@ -504,11 +505,17 @@ def no_use():
 #                             chip_data[i]["chrom"],
 #                                  chip_data[i]["peak"]):
 
+
+def cut_by_filter(file):
+    data = pd.read_csv(file, sep="\t")
+    data = data[data["cov"] >= 7]
+    data.to_csv("imm_b1_filtered_try.csv", sep="\t", index=False)
+
+
 if __name__ == '__main__':
-    # print("hi")
-
-
-    # main_imm()
+    cut_by_filter("immortalization_result/imm_result_b1.csv")
+    make_box_plot("imm_b1_filtered_try.csv", "b1_changes_after_filter", "immortalization_result/changes_after_filter_b1_try")
+    # main_imm(3)
     # print("done")
     # main_plass()
-    plot_cov("", "b3_active_vs_trans", None, "imm_result_b3.csv")
+    # plot_cov("", "b1_active_vs_trans", None, "imm_result_b1.csv")
