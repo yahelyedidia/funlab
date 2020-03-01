@@ -335,7 +335,7 @@ def search(before, after, chip_data, name="in_progress.csv"):
     head = ["chr", "start", "end", "no drugs avg", "with drugs avg", "cov"]
     strand_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
     strand_col = np.vstack([strand_col, "."])
-    cov_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
+    # cov_col = chip_data.drop(columns=["chromStart", "chromEnd", "chrom", "peak"])
     print(strand_col.shape[0], strand_col.shape[1])
     lst = np.empty((1, len(head)))
     for start, end, chr, peak in zip(chip_data["chromStart"], chip_data["chromEnd"],
@@ -416,10 +416,11 @@ def main_imm(i):
     imm_files = [(B1_ACTIVE, B1_TRANSFOR), (B2_ACTIVE, B2_TRANSFOR), (B3_ACTIVE, B3_TRANSFOR)]
     # imm_files = [(B1_ACTIVE, B1_TRANSFOR)]
     imm_active, imm_trans = [], []
-    for imm in imm_files[i-1]:
-        a, b = read_gz_file(imm[0], imm[1], ',')
-        imm_active.append(a)
-        imm_trans.append(b)
+    # for imm in imm_files[i-1]:
+    imm = imm_files[i-1]
+    a, b = read_gz_file(imm[0], imm[1], ',')
+    imm_active.append(a)
+    imm_trans.append(b)
     imm_active = pd.concat(imm_active)
     imm_trans = pd.concat(imm_trans)
     imm_active = imm_active.drop_duplicates()
@@ -503,15 +504,18 @@ def no_use():
 #                             chip_data[i]["chromEnd"],
 #                             chip_data[i]["chrom"],
 #                                  chip_data[i]["peak"]):
-def galtry(i,j):
-    print(i)
+
+
+def cut_by_filter(file):
+    data = pd.read_csv(file, sep="\t")
+    data = data[data["cov"] >= 5]
     print("hi")
-    print(j)
+    data.to_csv("imm_b1_filtered.csv", sep="\t")
+    print("bye")
 
 if __name__ == '__main__':
-    galtry(1,2)
-    # print("hi")
-    # main_imm()
+    cut_by_filter("imm_result_b1.csv")
+    # main_imm(3)
     # print("done")
     # main_plass()
     # plot_cov("", "b1_active_vs_trans", None, "imm_result_b1.csv")
