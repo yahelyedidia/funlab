@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import math
-import lowess
 
 COV = "cov"
 
@@ -508,13 +507,84 @@ def no_use():
 
 def cut_by_filter(file):
     data = pd.read_csv(file, sep="\t")
-    data = data[data["cov"] >= 7]
+    data = data[data["cov"] >= 5]
     data.to_csv("imm_b1_filtered_try.csv", sep="\t", index=False)
 
 
+def remove_empty_sites(dir):
+    for file in os.listdir(dir):
+        if file.startswith("genes_"):
+            df = pd.read_csv(dir + os.sep + file, sep="\t")
+            df = df[df.astype(str)['close_genes'] != '[]']
+            df.to_csv(dir + os.sep + file, index=False, sep="\t")
+
+
+def sort_by_len(dir):
+    for file in os.listdir(dir):
+        if file.startswith("sites_"):
+            df = pd.read_csv(dir + os.sep + file, sep="\t")
+            count = [i.count(")") for i in df["close_sites"]]
+            df = df.assign(count=count)
+            df = df.sort_values(["count", "chr"])
+            df = df.drop(columns=['count'])
+            df.to_csv(dir + os.sep + file, index=False, sep="\t")
+
+
+def get_index(index):
+    if index == "chrX":
+        return 22
+    elif index == "chrY":
+        return 23
+    else:
+        return int(''.join([s for s in list(index) if s.isdigit()])) - 1
+
+
+def biding_vs_methylation(score=0):
+    range_dict = {(0, 0.2): 0, (0.2, 0.4): 0, (0.4, 0.6): 0, (0.6, 0.8): 0, (0.8, 1): 0}
+    bed = pd.read_csv("/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/ENCFF449NOT.bed", sep='\t', comment='t', header=None)
+    header = ["chrom", "chromStart", "chromEnd", "name", "score", "strand",
+              "signalVal", "pVal", "qVal", "peak"]
+    bed.columns = header[:len(bed.columns)]
+    #  optional : check by score
+    # bed = bed[bed['score'] >= score]
+    bed = bed.drop(columns=["name", "score", "strand", "signalVal", "pVal", "qVal", "peak"])
+    chip = pd.read_csv(B1_ACTIVE, sep=",", low_memory=False, compression="gzip")
+    chip = chip.drop(columns=["M", "Cov", "smoothLarge"])
+    chip = chip.sort_values(["chr", "pos"])
+    bed = bed.sort_values(["chrom", "chromStart"])
+
+    chrom = []
+    for i in range(1, 23):
+        temp = bed[bed["chrom"] == "chr{0}".format(i)]
+        chrom.append(temp)
+    temp = bed[bed["chrom"] == "chrX"]
+    chrom.append(temp)
+    temp = bed[bed["chrom"] == "chrY"]
+    chrom.append(temp)
+
+    for row_data in chip.iterrows():
+        inx = get_index(row_data[1]["chr"])
+        for site in chrom[inx].iterrows():
+            if site[1]["chromStart"] <= row_data[1]["pos"] <= site[1]["chromEnd"]:
+                for key in range_dict:
+                    if key[0] <= row_data[1]["smoothSmall"] < key[1]:
+                        range_dict[key] += 1
+                        break
+
+    total = chip.shape()[0]
+    total_range = {k: v / total for k, v in range_dict.keys(), range_dict.values()}
+
+    print(range_dict)
+    print(total_range)
+
+
+    print("yay")
+
 if __name__ == '__main__':
-    cut_by_filter("immortalization_result/imm_result_b1.csv")
-    make_box_plot("imm_b1_filtered_try.csv", "b1_changes_after_filter", "immortalization_result/changes_after_filter_b1_try")
+    # cut_by_filter("immortalization_result/imm_result_b1.csv")
+    # make_box_plot("imm_b1_filtered_try.csv", "b1_changes_after_filter", "immortalization_result/changes_after_filter_b1_try")
+    # remove_empty_sites("genes/imm")
+    biding_vs_methylation()
     # main_imm(3)
     # print("done")
     # main_plass()
