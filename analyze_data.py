@@ -3,6 +3,8 @@ import pandas as pd
 from itertools import islice
 import os
 
+TAB = "\t"
+
 BEDGRAPH_LINE_FORMAT = "s{i}\tchr{chr_name}\t{start}\t{number}\n"
 
 
@@ -21,7 +23,7 @@ def filter_data(filter, d, col, name):
     :param name: the name of the filtered file
     :return: the data filters
     """
-    data = pd.read_csv(d, sep="\t")
+    data = pd.read_csv(d, sep=TAB)
     data = data.drop(data.columns[0], axis=COLUMNS)
     print("stop reading")
     header = data.columns.values.tolist()
@@ -33,9 +35,9 @@ def filter_data(filter, d, col, name):
     else:
         data = data[data[col] <= filter]
     print("done filter")
-    # data = remove_duplicate(data, "chr", "start", "end", "change")
-    # print("no duplicate")
-    pd.DataFrame(data=data).to_csv(name, sep="\t")
+    data = remove_duplicate(data, "chr", "start", "end", "change")
+    print("no duplicate")
+    pd.DataFrame(data=data).to_csv(name, sep=TAB)
     print("writing to file")
 
     return data

@@ -24,7 +24,7 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 10000)
 
 
-def read_chip_file(file, score):
+def read_chip_file(file, score, is_commpress=False):
     """
     A function that gets ChipSeq and convert the file to csv file while
     remove the row that ander the score treshold
@@ -32,7 +32,10 @@ def read_chip_file(file, score):
     :param score: the treshold
     :return: the file in csv format
     """
-    data = pd.read_csv(file, sep='\t', comment='t', header=None)
+    if is_commpress:
+        data = pd.read_csv(file, sep='\t', comment='t', header=None, compression="gzip")
+    else:
+        data = pd.read_csv(file, sep='\t', comment='t', header=None)
     if file == GES:
         data = data.drop([i for i in range(3, 6)], axis=1)
         header = ["chrom", "chromStart", "chromEnd"]
@@ -82,30 +85,41 @@ def read_micro_info(file):
 # def search(data, length):
 
 
-def parse(data, charname, value, chrom=None):
+def parse(data, charname, value, chrom=None, id=False):
     """
     parsing the data by the micro array test.
     :param data: the probes information
-    :param charname: the number of chromosome to parse by
+    :param charname: the number of name of chromosome column to parse by
     :param value:
     :param chrom: list of data arrange
     :return: array with the locations sorted by chromosomes
     """
     if (chrom == None):
         chrom = [[] for i in range(24)]
-    for index, info in zip(data[charname], data[value]):
-        if index == 'X':
-            chrom[X_CHR].append(info)
-        elif index == 'Y':
-            chrom[Y_CHR].append(info)
-        else:
-            chrom[int(index) - 1].append(info)
+    if id:
+        for index, info, id in zip(data[charname], data[value], data["IlmnID"]):
+            if index == 'X':
+                chrom[X_CHR].append((info, id))
+            elif index == 'Y':
+                chrom[Y_CHR].append((info, id))
+            else:
+                if pd.notna(index) and pd.notna(info):
+                    chrom[int(index) - 1].append((info, id))
+    else:
+        for index, info, id in zip(data[charname], data[value]):
+            if index == 'X':
+                chrom[X_CHR].append(info)
+            elif index == 'Y':
+                chrom[Y_CHR].append(info)
+            else:
+                if pd.notna(index) and pd.notna(info):
+                    chrom[int(index) - 1].append(info)
     for i in chrom:
         i.sort()
     return chrom
 
 
-def search(parse_data, chip_data, buffer):
+def search(parse_data, chip_data, buffer, to_write=False):
     """
     searching if prob is at the area of an peak +- the buffer.
     :param parse_data: the probes
@@ -115,23 +129,33 @@ def search(parse_data, chip_data, buffer):
     """
     row_num = 0
     counter = 0
+    id_to_select = []
+    ind = []
     for i in range(len(chip_data)):
-        for start, peak, chr in zip(chip_data[i]["chromStart"],
+        for start, end, peak, chr in zip(chip_data[i]["chromStart"], chip_data[i]["chromEnd"],
                                     chip_data[i]["peak"],
                                     chip_data[i]["chrom"]):
             if chr == 'chrX':
-                chr = 22
+                c = 22
+                chr = 'X'
             elif chr == 'chrY':
-                chr = 23
+                c = 23
+                chr = 'Y'
             else:
-                chr = int(chr[3:]) - 1
-            if find_peak(parse_data[chr], peak, start, buffer):
+                chr = chr[3:]
+                c = int(chr) - 1
+            id =  find_peak(parse_data[c], peak, start, buffer, to_write)
+            if id:
+                id_to_select.append(id)
+                ind.append([id, chr, start, end])
                 counter += 1
             row_num += 1
+    if to_write:
+        return id_to_select, ind
     return counter / row_num
 
 
-def find_peak(lst, peak, start, buffer):
+def find_peak(lst, peak, start, buffer, id=False):
     """
     find in list of probes i
     :param lst:
@@ -145,13 +169,22 @@ def find_peak(lst, peak, start, buffer):
     val = start + peak
     while first <= last:
         mid = (first + last) // 2
-        if val - buffer <= lst[mid] <= val + buffer:
-            return True
-        else:
-            if val - buffer < lst[mid]:
-                last = mid - 1
+        if id:
+            if val - buffer <= lst[mid][0] <= val + buffer:
+                return lst[mid][1]
             else:
-                first = mid + 1
+                if val - buffer < lst[mid][0]:
+                    last = mid - 1
+                else:
+                    first = mid + 1
+        else:
+            if val - buffer <= lst[mid] <= val + buffer:
+                return mid
+            else:
+                if val - buffer < lst[mid]:
+                    last = mid - 1
+                else:
+                    first = mid + 1
     return False
 
 
