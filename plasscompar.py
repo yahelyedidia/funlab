@@ -91,7 +91,7 @@ def closest_to_peak(lst, peak, start):
 def calc_cov(mid, chr_lst):
     # new_lst = [item[2] for item in chr_lst if chr_lst[mid][0] - 50 <= item[0] <= chr_lst[mid][0] + 50]
     l = np.array(chr_lst)
-    l = l[(l[:, 0] >= chr_lst[mid][0] - 250) & (l[:, 0] <= chr_lst[mid][0] + 250)]
+    l = l[(l[:, 0] >= chr_lst[mid][0] - 500) & (l[:, 0] <= chr_lst[mid][0] + 500)]
     if len(l) != 0:
         cov = np.mean(l[:, 2])
         # cov2 = sum(new_lst) / len(new_lst)
@@ -430,7 +430,7 @@ def main_imm(i):
     print("done parsing")
     # output = "mthylation level's changes at b immortalization cells"
     # search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
-    search(active, transformed, data, "imm_result_b{0}_w_500.csv".format(i))  # transformed file
+    search(active, transformed, data, "imm_result_b{0}_w_1000.csv".format(i))  # transformed file
     # make_box_plot("imm_result_b1.csv", output, "imm_result_graph_b1")
     # for i in range(len(imm_files)):
     #     act, trn = read_gz_file(imm_files[i][0], imm_files[i][1], ',')
@@ -540,6 +540,9 @@ def get_index(index):
 
 
 def biding_vs_methylation(score=0):
+    f = open("biding_vs_methylation.txt", 'w')
+    f.write("starting")
+    print("starting")
     range_dict = {(0, 0.2): 0, (0.2, 0.4): 0, (0.4, 0.6): 0, (0.6, 0.8): 0, (0.8, 1): 0}
     bed = pd.read_csv("/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/ENCFF449NOT.bed", sep='\t', comment='t', header=None)
     header = ["chrom", "chromStart", "chromEnd", "name", "score", "strand",
@@ -547,6 +550,8 @@ def biding_vs_methylation(score=0):
     bed.columns = header[:len(bed.columns)]
     #  optional : check by score
     # bed = bed[bed['score'] >= score]
+    f.write("process data")
+    print("process data")
     bed = bed.drop(columns=["name", "score", "strand", "signalVal", "pVal", "qVal", "peak"])
     chip = pd.read_csv(B1_ACTIVE, sep=",", low_memory=False, compression="gzip")
     chip = chip.drop(columns=["M", "Cov", "smoothLarge"])
@@ -561,7 +566,10 @@ def biding_vs_methylation(score=0):
     chrom.append(temp)
     temp = bed[bed["chrom"] == "chrY"]
     chrom.append(temp)
-
+    f.write("done process data")
+    print("done process data")
+    f.write("start checking")
+    print("start checking")
     for row_data in chip.iterrows():
         inx = get_index(row_data[1]["chr"])
         for site in chrom[inx].iterrows():
@@ -570,22 +578,26 @@ def biding_vs_methylation(score=0):
                     if key[0] <= row_data[1]["smoothSmall"] < key[1]:
                         range_dict[key] += 1
                         break
-
+    f.write("done checking")
+    print("done checking")
     total = chip.shape()[0]
-    total_range = {k: v / total for k, v in (range_dict.keys(), range_dict.values())}
-
+    total_range = {k[0]: k[1] / total for k in range_dict.items()}
+    f.write("result:")
+    f.write("range dict: " + str(range_dict))
+    f.write("total range: " + str(total_range))
+    f.close()
+    print("result:")
     print(range_dict)
     print(total_range)
-
-
     print("yay")
 
 if __name__ == '__main__':
     # cut_by_filter("immortalization_result/imm_result_b1.csv")
     # make_box_plot("imm_b1_filtered_try.csv", "b1_changes_after_filter", "immortalization_result/changes_after_filter_b1_try")
     # remove_empty_sites("genes/imm")
-    biding_vs_methylation()
+    # biding_vs_methylation()
     # main_imm(3)
     # print("done")
-    # main_plass()
+    main_plass()
     # plot_cov("", "b1_active_vs_trans", None, "imm_result_b1.csv")
+    # print("hi")
