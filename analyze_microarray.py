@@ -3,6 +3,7 @@ import lab
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from plasscompar import make_box_plot
 
 NUM_OF_FIRST_ROWS_AT_PROBS_FILE = 7
 
@@ -18,7 +19,10 @@ M15_REP1 = ["GSM2711830", "GSM2711831", "control_vs_csc_after_15_month_rep1"]
 M15_REP2 = ["GSM2711838", "GSM2711839", "control_vs_csc_after_15_month_rep2"]
 
 LST_CSC = [M1_REP1, M1_REP2, M6_REP1, M6_REP2, M10_REP1, M10_REP2, M15_REP1, M15_REP2]
-
+REP_LST = [("CSC/control_vs_csc_after_1_month_rep1", "CSC/control_vs_csc_after_1_month_rep2", "control_vs_csc_after_1_month"),
+           ("CSC/control_vs_csc_after_6_month_rep1", "CSC/control_vs_csc_after_6_month_rep2", "control_vs_csc_after_6_month"),
+           ("CSC/control_vs_csc_after_10_month_rep1", "CSC/control_vs_csc_after_10_month_rep2", "control_vs_csc_after_10_month"),
+           ("CSC/control_vs_csc_after_15_month_rep1", "CSC/control_vs_csc_after_15_month_rep2", "control_vs_csc_after_15_month")]
 
 def read_micro_data(f_data, f_probs, num_of_open_line_data=NUM_OF_FIRST_ROWS_AT_CSC,
                     num_of_open_line_probs=NUM_OF_FIRST_ROWS_AT_PROBS_FILE, score=0, buffer=250):
@@ -59,22 +63,58 @@ def read_micro_data(f_data, f_probs, num_of_open_line_data=NUM_OF_FIRST_ROWS_AT_
     sites = pd.DataFrame(sites).sort_values(by=0)
     sites = sites.drop_duplicates()
     for lst in LST_CSC:
-        control = array_data[lst[0]]
-        treatment = array_data[lst[1]]
-        change = control - treatment
-        temp = sites.loc[sites[0].isin(array_data["ID_REF"])].sort_values(by=0)
-        chr = temp[1]
-        start = temp[2]
-        end = temp[3]
+        build_micro_file(array_data, lst, sites)
+
+
+def build_micro_file(array_data, lst, sites):
+    control = array_data[lst[0]]
+    treatment = array_data[lst[1]]
+    change = control - treatment
+    temp = sites.loc[sites[0].isin(array_data["ID_REF"])].sort_values(by=0)
+    chr = temp[1]
+    start = temp[2]
+    end = temp[3]
+    result = pd.concat([chr, start, end], axis=1)
+    result = pd.concat([result.set_index(temp[0]), pd.DataFrame(control).set_index(array_data["ID_REF"])], axis=1)
+    result = pd.concat([result.set_index(temp[0]), pd.DataFrame(treatment).set_index(array_data["ID_REF"])], axis=1)
+    result['cov'] = '.'
+    result["strand"] = '.'
+    result = pd.concat([result, pd.DataFrame(change).set_index(array_data["ID_REF"])], axis=1, ignore_index=True)
+    result.columns = ["chr", "start", "end", "control", "treatment", "cov", "strand", "change"]
+    result.to_csv(lst[2], sep="\t")
+
+
+# chromosomes = lab.parse()
+
+def deal_with_replications():
+    for tup in REP_LST:
+        rep1 = pd.read_csv(tup[0], sep="\t")
+        rep2 = pd.read_csv(tup[1], sep="\t")
+        id = rep1["ID_REF"]
+        change = (rep1["change"] + rep2["change"]) / 2
+        control = (rep1["control"] + rep2["control"]) / 2
+        treatment = (rep1["treatment"] + rep2["treatment"]) / 2
+        chr = rep1["chr"]
+        start = rep1["start"]
+        end = rep1["end"]
         result = pd.concat([chr, start, end], axis=1)
-        result = pd.concat([result.set_index(temp[0]), pd.DataFrame(control).set_index(array_data["ID_REF"])], axis=1)
-        result = pd.concat([result.set_index(temp[0]), pd.DataFrame(treatment).set_index(array_data["ID_REF"])], axis=1)
+        result = pd.concat([result.set_index(id), pd.DataFrame(control).set_index(id)], axis=1)
+        result = pd.concat([result.set_index(id), pd.DataFrame(treatment).set_index(id)], axis=1)
         result['cov'] = '.'
         result["strand"] = '.'
-        result = pd.concat([result, pd.DataFrame(change).set_index(array_data["ID_REF"])], axis=1, ignore_index=True)
-        result.columns = ["chr", "start", "end", "control", "treatment", "cov", "strand" ,"change"]
-        result.to_csv(lst[2], sep="\t")
-    # chromosomes = lab.parse()
+        result = pd.concat([result, pd.DataFrame(change).set_index(id)], axis=1, ignore_index=True)
+        result.columns = ["chr", "start", "end", "control", "treatment", "cov", "strand", "change"]
+        result.to_csv(tup[2], sep="\t")
 
 
-read_micro_data("tehila/CSC/GSE101673_series_matrix.txt", "tehila/CSC/GPL13534_HumanMethylation450_15017482_v.1.1.csv.gz")
+
+def display_data(dir):
+    for f in os.listdir(dir):
+        title = os.path.basename(f)
+        make_box_plot(dir + os.sep + f, title, title, "control", "treatment")
+
+# read_micro_data("tehila/CSC/GSE101673_series_matrix.txt", "tehila/CSC/GPL13534_HumanMethylation450_15017482_v.1.1.csv.gz")
+
+# deal_with_replications()
+
+display_data("CSC/replications")
