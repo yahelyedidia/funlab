@@ -91,7 +91,7 @@ def closest_to_peak(lst, peak, start):
 def calc_cov(mid, chr_lst):
     # new_lst = [item[2] for item in chr_lst if chr_lst[mid][0] - 50 <= item[0] <= chr_lst[mid][0] + 50]
     l = np.array(chr_lst)
-    l = l[(l[:, 0] >= chr_lst[mid][0] - 500) & (l[:, 0] <= chr_lst[mid][0] + 500)]
+    l = l[(l[:, 0] >= chr_lst[mid][0] - 250) & (l[:, 0] <= chr_lst[mid][0] + 250)]
     if len(l) != 0:
         cov = np.mean(l[:, 2])
         # cov2 = sum(new_lst) / len(new_lst)
@@ -430,7 +430,8 @@ def main_imm(i):
     print("done parsing")
     # output = "mthylation level's changes at b immortalization cells"
     # search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
-    search(active, transformed, data, "imm_result_b{0}_w_1000.csv".format(i))  # transformed file
+    search(active, transformed, data, "imm_result_b{0}_w_500.csv".format(i))  # transformed file
+    print("D O N E")
     # make_box_plot("imm_result_b1.csv", output, "imm_result_graph_b1")
     # for i in range(len(imm_files)):
     #     act, trn = read_gz_file(imm_files[i][0], imm_files[i][1], ',')
@@ -508,7 +509,7 @@ def no_use():
 def cut_by_filter(file):
     data = pd.read_csv(file, sep="\t")
     data = data[data["cov"] >= 5]
-    data.to_csv("imm_b1_filtered_try.csv", sep="\t", index=False)
+    data.to_csv("{0}_filtered.csv".format(file), sep="\t", index=False)
 
 
 def remove_empty_sites(dir):
@@ -591,13 +592,66 @@ def biding_vs_methylation(score=0):
     print(total_range)
     print("yay")
 
+
+def create_avg_file(b1, b2, b3):
+    b1['source'] = 1
+    b2['source'] = 2
+    b3['source'] = 3
+    all = pd.concat([b1, b2], ignore_index=True)
+    all = pd.concat([all, b3], ignore_index=True)
+    all = all.sort_values(by=['start', 'end', 'source'])
+    all = all.reset_index(drop=True)
+    all = all.drop(columns=['Unnamed: 0', 'strand'])
+    inx = all.columns
+    new_data = pd.DataFrame(columns=inx).T
+    i = 0
+    print("#starting")
+    while i < len(all.index) - 2:
+        if all['source'][i] != all['source'][i+1]:
+            sum, count = -1, -1
+            if all['start'][i] - 50 <= all['start'][i+1] <= all['start'][i] + 50 and all['end'][i] - 50 <= all['end'][i+1] <= all['end'][i] + 50:
+                sum = all['change'][i+1] + all['change'][i]
+                count = 2
+                # print("we have the same !")
+            if all['source'][i] != all['source'][i+2] and all['source'][i+1] != all['source'][i+2]:
+                if all['start'][i] - 50 <= all['start'][i+2] <= all['start'][i] + 50 and all['end'][i] - 50 <= all['end'][i+2] <= all['end'][i] + 50:
+                    sum += all['change'][i+2]
+                    count += 1
+            if sum != -1 and count != -1:
+                avg = sum / count
+                temp = pd.DataFrame(all.iloc[i]).T
+                temp['change'] = avg
+                # print("new line, before: i = {0}, data = \n{1}".format(i, new_data))
+                new_data = pd.concat([temp, new_data], ignore_index=True, sort=False)
+                # print("new line, after: i = {0}, data = \n{1}".format(i, new_data))
+                i += count
+                continue
+
+        #add the old line
+        # print("old line, before: i = {0}, data = \n{1}".format(i, new_data))
+        new_data = pd.concat([pd.DataFrame(all.iloc[i]).T, new_data], ignore_index=True, sort=False)
+        # print("old line, after: i = {0}, data = \n{1}".format(i, new_data))
+        i += 1
+    new_data = new_data.dropna()
+    new_data.to_csv("imm_combine_with_avg.csv", sep='\t')
+    print("done !")
+
+
+
+
 if __name__ == '__main__':
-    # cut_by_filter("immortalization_result/imm_result_b1.csv")
-    # make_box_plot("imm_b1_filtered_try.csv", "b1_changes_after_filter", "immortalization_result/changes_after_filter_b1_try")
+    # for file in os.listdir("immortalization_result/by_window"):
+    #     make_box_plot("immortalization_result/by_window" + os.path.sep + file, file, "immortalization_result/by_window" +os.path.sep + file + "_boxplot.png")
+        # print("startin " + file)
+        # cut_by_filter("immortalization_result/unfiltered_by_window" + os.path.sep + file)
+        # print("done " + file)
     # remove_empty_sites("genes/imm")
     # biding_vs_methylation()
-    # main_imm(3)
+    # main_imm(1)
     # print("done")
-    main_plass()
+    # main_plass()
     # plot_cov("", "b1_active_vs_trans", None, "imm_result_b1.csv")
     # print("hi")
+    create_avg_file(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_1000_filtered.csv", sep='\t'),
+                    pd.read_csv("immortalization_result/by_window/imm_result_b2_w_1000_filtered.csv", sep='\t'),
+                    pd.read_csv("immortalization_result/by_window/imm_result_b3_w_1000_filtered.csv", sep='\t'))
