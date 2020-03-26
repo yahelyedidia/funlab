@@ -8,14 +8,14 @@ NUM_OF_FIRST_ROWS_AT_PROBS_FILE = 7
 
 NUM_OF_FIRST_ROWS_AT_CSC = 72
 
-M1_REP1 = ["GSM2711824", "GSM2711825"]
-M1_REP2 = ["GSM2711832", "GSM2711833"]
-M6_REP1 = ["GSM2711826", "GSM2711827"]
-M6_REP2 = ["GSM2711834", "GSM2711835"]
-M10_REP1 = ["GSM2711828", "GSM2711829"]
-M10_REP2 = ["GSM2711836", "GSM2711837"]
-M15_REP1 = ["GSM2711830", "GSM2711831"]
-M15_REP2 = ["GSM2711838", "GSM2711839"]
+M1_REP1 = ["GSM2711824", "GSM2711825", "control_vs_csc_after_1_month_rep1"]
+M1_REP2 = ["GSM2711832", "GSM2711833", "control_vs_csc_after_1_month_rep2"]
+M6_REP1 = ["GSM2711826", "GSM2711827", "control_vs_csc_after_6_month_rep1"]
+M6_REP2 = ["GSM2711834", "GSM2711835", "control_vs_csc_after_6_month_rep2"]
+M10_REP1 = ["GSM2711828", "GSM2711829", "control_vs_csc_after_10_month_rep1"]
+M10_REP2 = ["GSM2711836", "GSM2711837", "control_vs_csc_after_10_month_rep2"]
+M15_REP1 = ["GSM2711830", "GSM2711831", "control_vs_csc_after_15_month_rep1"]
+M15_REP2 = ["GSM2711838", "GSM2711839", "control_vs_csc_after_15_month_rep2"]
 
 LST_CSC = [M1_REP1, M1_REP2, M6_REP1, M6_REP2, M10_REP1, M10_REP2, M15_REP1, M15_REP2]
 
@@ -47,7 +47,6 @@ def read_micro_data(f_data, f_probs, num_of_open_line_data=NUM_OF_FIRST_ROWS_AT_
     ids, inds = lab.search(chromosomes, chip, buffer, True)
     new_data = probs_data.loc[probs_data["IlmnID"].isin(ids)]
     array_data = array_data.loc[array_data["ID_REF"].isin(ids)]
-
     array_data = array_data.sort_values(by="ID_REF")
     inds = pd.DataFrame(inds).sort_values(by=0)
     sites = []
@@ -67,13 +66,14 @@ def read_micro_data(f_data, f_probs, num_of_open_line_data=NUM_OF_FIRST_ROWS_AT_
         chr = temp[1]
         start = temp[2]
         end = temp[3]
-        result = pd.concat([chr, start, end], axis=1, keys=["chr", "start", "end"])
+        result = pd.concat([chr, start, end], axis=1)
         result = pd.concat([result.set_index(temp[0]), pd.DataFrame(control).set_index(array_data["ID_REF"])], axis=1)
+        result = pd.concat([result.set_index(temp[0]), pd.DataFrame(treatment).set_index(array_data["ID_REF"])], axis=1)
         result['cov'] = '.'
-        result = pd.concat([result, pd.DataFrame(change).set_index(array_data["ID_REF"])], axis=1, ignore_index=True,
-                           keys=["chr", "start", "end", "control", "treatment", "cov", "change"])
-        result.to_csv() #todo: add the other columns and save it to file
-
+        result["strand"] = '.'
+        result = pd.concat([result, pd.DataFrame(change).set_index(array_data["ID_REF"])], axis=1, ignore_index=True)
+        result.columns = ["chr", "start", "end", "control", "treatment", "cov", "strand" ,"change"]
+        result.to_csv(lst[2], sep="\t")
     # chromosomes = lab.parse()
 
 
