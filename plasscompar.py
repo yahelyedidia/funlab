@@ -305,9 +305,9 @@ def make_box_plot(file, title, graph_name):
 
     # lst = pd.DataFrame(data=lst, columns=head)
     chroms = []
-    for i in range(1, 25):  # todo 25 ?
+    for i in range(1, 25):
         this_chrom = lst[lst["chr"] == i]
-        this_chrom = this_chrom.drop(columns=["chr", "start", "end", "strand", "no drugs avg", "with drugs avg", "cov"])
+        this_chrom = this_chrom.drop(columns=["chr", "start", "end", "no drugs avg", "with drugs avg", "cov"])
         this_chrom = this_chrom.drop(this_chrom.columns[0], axis=1)
         if not this_chrom.empty:
             chroms.append(np.array(this_chrom))
@@ -633,13 +633,15 @@ def create_avg_file(b1, b2, b3):
         # print("old line, after: i = {0}, data = \n{1}".format(i, new_data))
         i += 1
     new_data = new_data.dropna()
-    new_data.to_csv("imm_combine_with_avg.csv", sep='\t')
+    new_data = new_data.drop(columns=['source'])
+    new_data.to_csv("imm_combine_with_avg_w500.csv", sep='\t')
     print("done !")
 
 
 
 
 if __name__ == '__main__':
+    # cut_by_filter("immortalization_result/by_window/imm_result_b1_w_500.csv")
     # for file in os.listdir("immortalization_result/by_window"):
     #     make_box_plot("immortalization_result/by_window" + os.path.sep + file, file, "immortalization_result/by_window" +os.path.sep + file + "_boxplot.png")
         # print("startin " + file)
@@ -652,6 +654,8 @@ if __name__ == '__main__':
     # main_plass()
     # plot_cov("", "b1_active_vs_trans", None, "imm_result_b1.csv")
     # print("hi")
-    create_avg_file(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_1000_filtered.csv", sep='\t'),
-                    pd.read_csv("immortalization_result/by_window/imm_result_b2_w_1000_filtered.csv", sep='\t'),
-                    pd.read_csv("immortalization_result/by_window/imm_result_b3_w_1000_filtered.csv", sep='\t'))
+    make_box_plot("imm_combine_with_avg_w500.csv", "immortalization average with window 500", "imm_avg_w500")
+    # create_avg_file(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep='\t'),
+    #                 pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep='\t'),
+    #                 pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep='\t'))
+    print("done")
