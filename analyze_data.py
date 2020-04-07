@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import pandas as pd
 from itertools import islice
 import os
@@ -256,17 +256,17 @@ def creat_cns(dir):
 
 
 def create_genes_files(up, down):
-    for file in os.listdir("immortalization_result"):
+    for file in os.listdir("immortalization_result/by_window"):
         if file.endswith(".csv"):
             # f = os.path.abspath(file)
             # file = "imm_b1_filtered.csv"
-            filter_data(up, "immortalization_result" + os.sep + file, "change", "immortalization_result/filtered/increase_" + file + "_{0}.csv".format(up))
+            filter_data(up, "immortalization_result/by_window" + os.sep + file, "change", "immortalization_result/by_window/increase_" + file + "_{0}.csv".format(up))
             print("done1")
-            filter_data(down, "immortalization_result" + os.sep + file, "change", "immortalization_result/filtered/decrease_" + file + "_{0}.csv".format(down))
+            filter_data(down, "immortalization_result/by_window" + os.sep + file, "change", "immortalization_result/by_window/decrease_" + file + "_{0}.csv".format(down))
             print("done2")
-            check_with_change_filter([10000, 50000, 100000], 30, "immortalization_result/filtered/increase_" + file + "_{0}.csv".format(up), os.path.splitext(os.path.basename(file))[0])
+            check_with_change_filter([10000, 50000, 100000], 30, "immortalization_result/by_window/increase_" + file + "_{0}.csv".format(up), os.path.splitext(os.path.basename(file))[0])
             print("done increase")
-            check_with_change_filter([10000, 50000, 100000], 30,  "immortalization_result/filtered/decrease_" + file + "_{0}.csv".format(down), os.path.splitext(os.path.basename(file))[0])
+            check_with_change_filter([10000, 50000, 100000], 30,  "immortalization_result/by_window/decrease_" + file + "_{0}.csv".format(down), os.path.splitext(os.path.basename(file))[0])
             print("done decrease")
 
 
