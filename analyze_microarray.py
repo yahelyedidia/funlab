@@ -113,8 +113,43 @@ def display_data(dir):
         title = os.path.basename(f)
         make_box_plot(dir + os.sep + f, title, title, "control", "treatment")
 
-# read_micro_data("tehila/CSC/GSE101673_series_matrix.txt", "tehila/CSC/GPL13534_HumanMethylation450_15017482_v.1.1.csv.gz")
+
+def chack_probs(f_probs, num_of_open_line_data=NUM_OF_FIRST_ROWS_AT_CSC,
+                num_of_open_line_probs=NUM_OF_FIRST_ROWS_AT_PROBS_FILE, score=0, buffer=250):
+    probs_data = pd.read_csv(f_probs, sep=",", compression="gzip", skiprows=[i for i in range(num_of_open_line_probs)],
+                             header=0)
+    chromosomes = lab.parse(probs_data, "CHR", "MAPINFO", None, True)
+    # remove unnecessary probes
+    plass = ["tehila/Plass/ENCFF032DEW.bed.gz", "tehila/Plass/ENCFF401ONY.bed.gz", "tehila/Plass/ENCFF543VGD.bed.gz"]
+    imm = ["tehila/immortalization/ENCFF449NOT.bed", "tehila/immortalization/ENCFF833FTF.bed"]
+    chip = []
+    for val in imm:
+        chip.append(lab.read_chip_file(val, score))
+    for val in plass:
+        chip.append(lab.read_chip_file(val, score, True))
+    visited = []
+    for df in chip:
+        for site in df.iterrows():
+            ind = site[1]["chrom"][3:]
+            if ind == 'X':
+                ind = 22
+            elif ind == 'Y':
+                ind = 23
+            else:
+                ind = int(ind) - 1
+            for item in chromosomes[ind]:
+                if site[1]["chromStart"] < item[0] < site[1]["chromEnd"]:
+                    if item[1] in visited:
+                        print(str(item[1])+"\nchr: " + str(site[1]["chrom"]) + "\nstart: " +
+                              str(site[1]["chromStart"]) + "\nend: " + str(site[1]["chromEnd"]) + "\n")
+                    else:
+                        visited.append(item[1])
+    print("done!")
+
+
+if __name__ == '__main__':
+    chack_probs("tehila/CSC/GPL13534_HumanMethylation450_15017482_v.1.1.csv.gz")
 
 # deal_with_replications()
 
-display_data("CSC/replications")
+# display_data("CSC/replications")
