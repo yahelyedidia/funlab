@@ -270,7 +270,7 @@ def create_genes_files(up, down):
             print("done decrease")
 
 
-create_genes_files(0.2, -0.4)
+# create_genes_files(0.2, -0.4)
 # check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 # create_genes_files()
@@ -281,3 +281,4 @@ create_genes_files(0.2, -0.4)
 # filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv", "test")
+remove_duplicate(pd.read_csv("probs_sort_and_uniq", sep='\t', header=None), 0, 1, 2)

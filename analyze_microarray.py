@@ -146,9 +146,33 @@ def chack_probs(f_probs, num_of_open_line_data=NUM_OF_FIRST_ROWS_AT_CSC,
                         visited.append(item[1])
     print("done!")
 
+def edit_file(prob_file):
+    p = open(prob_file, 'r')
+    ep = open("probs_edit_file", 'w')
+    lines = p.readlines()
+    new_l = []
+    prob = ''
+    chr = ''
+    start = ''
+    end = ''
+    for line in lines:
+        if line.startswith("cg"):
+            prob = line
+        elif line.startswith("chr:"):
+            chr = line[5:-1] + "\t"
+        elif line.startswith("start:"):
+            start = line[7:-1] + "\t"
+        elif line.startswith("end:"):
+            end = line[5:-1] + "\t"
+        else:
+            new_l.append(chr + start + end + prob)
+    ep.writelines(new_l)
+    p.close()
+    ep.close()
 
 if __name__ == '__main__':
-    chack_probs("tehila/CSC/GPL13534_HumanMethylation450_15017482_v.1.1.csv.gz")
+    # chack_probs("tehila/CSC/GPL13534_HumanMethylation450_15017482_v.1.1.csv.gz")
+    edit_file("prob_check")
 
 # deal_with_replications()
 

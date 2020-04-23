@@ -29,3 +29,8 @@ def create_avg(file):
 
 
 # print(create_avg("GES/GSE89269_series_matrix.txt.gz").head())
+def try_on_file(file):
+    c = pd.read_csv(file, sep="\t", skiprows=[0], headr=None)
+    x=1
+
+try_on_file("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/GSM1010981_UCSD.Adrenal_Gland.Bisulfite-Seq.STL003.wig")
