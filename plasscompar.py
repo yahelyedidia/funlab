@@ -6,7 +6,7 @@ import os
 import math
 
 COV = "cov"
-
+T1 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/adrenal_cells_try.txt"
 DINFO = "Smoothed_Methylation_Level_H2_DMSO"
 
 NODINFO = "Smoothed_Methylation_Level_H2_DAC"
@@ -110,11 +110,7 @@ def read_gz_file(file1, file2, sep):
     :return: the files
     """
     before = pd.read_csv(file1, sep=sep, low_memory=False, compression="gzip")
-    after = pd.read_csv(file2, sep=sep, low_memory=False, compression="gzip")  # todo : change to compress gzip
-    # before = before.rename(columns={'Chromosome': 'chr'}, axis='columns')
-    # after = after.rename(columns={'Chromosome': 'chr'}, axis='columns')
-    # nodrag = nodrag[nodrag[DINFO] >= filter]
-    # drag = drag[drag[NODINFO] >= filter]
+    after = pd.read_csv(file2, sep=sep, low_memory=False, compression="gzip")
     return before, after
 
 
@@ -638,9 +634,17 @@ def create_avg_file(b1, b2, b3):
     print("done !")
 
 
+def read_methylation_file(file):
+    print("a")
+    f = pd.read_fwf(file)
+    print("b")
+    f.to_csv("try.csv")
+    print("c")
+    x = 0
 
 
 if __name__ == '__main__':
+    read_methylation_file(T1)
     # cut_by_filter("immortalization_result/by_window/imm_result_b1_w_500.csv")
     # for file in os.listdir("immortalization_result/by_window"):
     #     make_box_plot("immortalization_result/by_window" + os.path.sep + file, file, "immortalization_result/by_window" +os.path.sep + file + "_boxplot.png")
@@ -654,7 +658,7 @@ if __name__ == '__main__':
     # main_plass()
     # plot_cov("", "b1_active_vs_trans", None, "imm_result_b1.csv")
     # print("hi")
-    make_box_plot("imm_combine_with_avg_w500.csv", "immortalization average with window 500", "imm_avg_w500")
+    # make_box_plot("imm_combine_with_avg_w500.csv", "immortalization average with window 500", "imm_avg_w500")
     # create_avg_file(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep='\t'),
     #                 pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep='\t'),
     #                 pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep='\t'))
