@@ -95,7 +95,7 @@ def parse(data, charname, value, chrom=None, id=False):
     :return: array with the locations sorted by chromosomes
     """
     if (chrom == None):
-        chrom = [[] for i in range(24)]
+        chrom = [[] for i in range(25)]
     if id:
         for index, info, id in zip(data[charname], data[value], data["IlmnID"]):
             if index == 'X':
