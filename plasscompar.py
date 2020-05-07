@@ -4,6 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import math
+from scipy import stats
+import matplotlib.cm as cm
+import sys
+
 
 COV = "cov"
 T1 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/adrenal_cells_try.txt"
@@ -19,9 +23,9 @@ CONTROL = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150388_H2
 
 AFTER_TREATMENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150386_H2_DAC_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-DAC_AND_HDAC = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150387_H2_DAC_plus_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+DAC_AND_HDAC = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150387_H2_DAC_plus_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
-HDAC_PREVENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150389_H2_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv"
+HDAC_PREVENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150389_H2_SB939_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
 P3_control = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Plass/GSM2150388_H2_DMSO_2lanes_merged.CG.ALL.call.gz.BSmooth.csv.gz"
 
@@ -364,7 +368,7 @@ def search(before, after, chip_data, name="in_progress.csv"):
     pd.DataFrame(data=lst, columns=head).to_csv(name, sep="\t")
 
 
-def main_plass():
+def main_plass(i, j):
     """
     main function to process plass files
     """
@@ -375,27 +379,23 @@ def main_plass():
     data = pd.concat(data1)
     data = data.drop_duplicates()
     print("done append data")
-    # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
-    #                (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
-    # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac")]
     plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac"),
                    (DAC_AND_HDAC, DAC_INFO, "with_dac_and_hdac"), (HDAC_PREVENT, PREVENT_INFO, "with_hdac")]
-    # plass_files = [(CONTROL, DINFO, "no_treatment"), (AFTER_TREATMENT, NODINFO, "with_dac")] #to check cov
-    for i in range(len(plass_files) - 1):
-        for j in range(i + 1, len(plass_files)):
+    # for i in range(len(plass_files) - 1):
+    #     for j in range(i + 1, len(plass_files)):
             # filters = [0.1, 0.3, 0.5]
             # for filter in filters:
             # print("results for filter: " + str(filter))
-            ndrg, drg = read_gz_file(plass_files[i][0], plass_files[j][0], '\t')
-            print("done reading the files")
-            nodrag = smooth_parse(ndrg, plass_files[i][1], "Chromosome", "Start")
-            drag = smooth_parse(drg, plass_files[j][1], "Chromosome", "Start")
-            print("done parsing")
-            name = "{0}_vs_{1}".format(plass_files[i][2], plass_files[j][2])
-            search(nodrag, drag, data, name + ".csv")
-            # plot_cov("", "{0}_covarge_histogram".format(name), data)
-            # make_box_plot(name + ".csv", "mthylation level's changes at " + name, name)
-            print("F I N I S H !")
+    ndrg, drg = read_gz_file(plass_files[i][0], plass_files[j][0], '\t')
+    print("done reading the files")
+    nodrag = smooth_parse(ndrg, plass_files[i][1], "Chromosome", "Start")
+    drag = smooth_parse(drg, plass_files[j][1], "Chromosome", "Start")
+    print("done parsing")
+    name = "{0}_vs_{1}".format(plass_files[i][2], plass_files[j][2])
+    search(nodrag, drag, data, name + ".csv")
+    # plot_cov("", "{0}_covarge_histogram".format(name), data)
+    # make_box_plot(name + ".csv", "mthylation level's changes at " + name, name)
+    print("F I N I S H !")
 
 
 def main_imm(i):
@@ -442,23 +442,6 @@ def main_imm(i):
     #     make_box_plot(name.format(i+1) + ".csv", output.format(i+1), name.format(i+1) + "_graph")
         # make_box_plot(name.format(i+1, "trans") + ".csv", output.format(i+1, "transformed"), name.format(i+1, "transformed") + "_graph")
         # print("F I N I S H !")
-
-
-# main_plass()
-# main_imm()
-# main_plass()
-# main_imm()
-# make_box_plot("immortalization/b3_active.csv", "3", "active_test_original")
-# make_box_plot("b3_active_test2.csv", "3", "active_test2_no_cov")
-# make_box_plot("b3_trans_test2.csv", "3", "trans_test2_no_cov")
-
-# make_box_plot("immortalization/b1_trans.csv", "3", "transformed")
-
-# make_box_plot("Compares files/no_treatment_vs_hdac_only.csv", "1", "a")
-# make_box_plot("test.csv", "1", "test1")
-# t = "mthylation level's changes at b{0} {1} immortalization cells".format(number, state)
-# g = "immortalization/b{0}_{1}_graph".format(number, state)
-
 
 
 def no_use():
@@ -642,24 +625,111 @@ def read_methylation_file(file):
     print("c")
     x = 0
 
+def plot_change(b1, b2, b3):
+    x1, y1 = get_uniq_rate(b1)
+    x2, y2 = get_uniq_rate(b2)
+    x3, y3 = get_uniq_rate(b3)
+    # x1 = b1['start']
+    # x2 = b2['start']
+    # x3 = b3['start']
+    # y1 = b1['change']
+    # y2 = b2['change']
+    # y3 = b3['change']
+    # round = np.around(np.array(y1), 1)
+    # unique_elements, counts_elements = np.unique(round, return_counts=True)
+    plt.scatter(x1, y1, label='b1')
+    plt.scatter(x2, y2, label='b2')
+    plt.scatter(x3, y3, label='b3')
+    # plt.hist(y1, alpha=0.5, label='b1')
+    # plt.hist(y2, alpha=0.5, label='b2')
+    # plt.hist(y3, alpha=0.5, label='b3')
+    plt.xlabel("methylation rate")
+    plt.ylabel("Amount of performances")
+    plt.title("the diffrence of methylation rates by repeats, window :1000")
+    plt.savefig("diffrence_in_repeats_scatter_2_points_w_1000")
+    plt.legend()
+    plt.show()
+
+
+def get_uniq_rate(b):
+    round = np.around(np.array(b['change']), 2)
+    return np.unique(round, return_counts=True)
+
+
+def t_test(b1, b2, b3):
+    b1['source'] = 1
+    b2['source'] = 2
+    b3['source'] = 3
+    all = pd.concat([b1, b2], ignore_index=True)
+    all = pd.concat([all, b3], ignore_index=True)
+    all = all.sort_values(by=['chr', 'start', 'end', 'source'])
+    all = all.reset_index(drop=True)
+    all = all.drop(columns=['Unnamed: 0', 'strand'])
+    i = 0
+    sites = np.empty((1, 7))
+    print("#starting")
+    while i < len(all.index) - 2:
+        if all['source'][i] != all['source'][i+1]:
+            if all['start'][i] - 50 <= all['start'][i+1] <= all['start'][i] + 50 and all['end'][i] - 50 <= all['end'][i+1] <= all['end'][i] + 50:
+                if all['source'][i] != all['source'][i+2] and all['source'][i+1] != all['source'][i+2]:
+                    if all['start'][i] - 50 <= all['start'][i+2] <= all['start'][i] + 50 and all['end'][i] - 50 <= all['end'][i+2] <= all['end'][i] + 50:
+                        before = all['no drugs avg'][i:i+3]
+                        after = all['with drugs avg'][i:i+3]
+                        t_test = stats.ttest_ind(before, after, equal_var=False)
+                        # if t_test.pvalue <= 0.05:
+                        sites = np.vstack([sites, np.array([all['chr'][i], all['start'][i], all['end'][i], t_test.pvalue,
+                                                                all['change'][i:i+3].mean(), np.array(before), np.array(after)])])
+                        # sites = np.vstack([sites, np.array([int(all['chr'][i]), int(all['start'][i]), t_test.pvalue])])
+                        # print("we have the same !")
+                        i += 3
+                        continue
+        i += 1
+
+    pd.DataFrame(sites, columns=['chr', 'start', 'end', 'p value','metylation change', 'control', 'after treatment']).to_csv("t_test_by_site_with_population_all_w_1000.csv", sep="\t")
+    # pd.DataFrame(sites, columns=['chr', 'start', 'p value']).to_csv("t_test_by_site_with_population_all_w_500.csv", sep="\t")
+    print(sites.shape)
+    print("yay we finished")
+
+
+def create_plot(t_file):
+    x,ys,c = [],[],[]
+    t = pd.read_csv(t_file, sep='\t')
+    for row in t.iterrows():
+        if row[1]['close_genes'] != '[]':
+            gene = row[1]['close_genes'].split("'")
+            for g in gene:
+                if g != '[' and g != ']':
+                    x.append(g)
+                    ys.append(row[1]['metylation change'])
+                    c.append(row[1]['chr'])
+    d = pd.DataFrame({'chr': c, 'genes': x, 'met': ys})
+    # sns.scatterplot(data=d, x='genes', y='met', hue='chr')
+    print(d.head())
+    # plt.scatter(x, y,edgecolors=c)
+    # plt.xticks(rotation=90)
+    # plt.show()
+
+
+def filter_final_data(dir):
+    for file in os.listdir(dir):
+        if file.endswith(".csv"):
+            data = pd.read_csv(dir + os.sep + file, sep="\t")
+            # print("file : " + file)
+            # print("max corrected p_value: " + str(max(data['correct_p'])))
+            data['abs_met'] = data['metylation change'].abs()
+            data = data[data['abs_met'] >= 0.2]
+            data = data.drop(columns=['abs_met'])
+            # data = data[data['metylation change'] <= 0.2]
+            # data = data[data['metylation change'] >= -0.2]
+            # data = data[data['correct_p'] <= 0.1]
+            data.to_csv("genes/corrected/filtered" + os.sep + file, sep="\t", index=False)
+
+
+
 
 if __name__ == '__main__':
-    read_methylation_file(T1)
-    # cut_by_filter("immortalization_result/by_window/imm_result_b1_w_500.csv")
-    # for file in os.listdir("immortalization_result/by_window"):
-    #     make_box_plot("immortalization_result/by_window" + os.path.sep + file, file, "immortalization_result/by_window" +os.path.sep + file + "_boxplot.png")
-        # print("startin " + file)
-        # cut_by_filter("immortalization_result/unfiltered_by_window" + os.path.sep + file)
-        # print("done " + file)
-    # remove_empty_sites("genes/imm")
-    # biding_vs_methylation()
-    # main_imm(1)
-    # print("done")
-    # main_plass()
-    # plot_cov("", "b1_active_vs_trans", None, "imm_result_b1.csv")
-    # print("hi")
-    # make_box_plot("imm_combine_with_avg_w500.csv", "immortalization average with window 500", "imm_avg_w500")
-    # create_avg_file(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep='\t'),
-    #                 pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep='\t'),
-    #                 pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep='\t'))
+    i = int(sys.argv[1])
+    j = int(sys.argv[2])
+    print(i,j)
+    main_plass(i, j)
     print("done")

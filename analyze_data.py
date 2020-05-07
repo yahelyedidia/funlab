@@ -270,7 +270,12 @@ def create_genes_files(up, down):
             print("done decrease")
 
 
-create_genes_files(0.2, -0.4)
+def get_genes(file):
+    check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_500")
+
+get_genes("corrected_t_test/t_test_by_site_with_population_all_w_500.csv")
+
+# create_genes_files(0.2, -0.4)
 # check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 # create_genes_files()
