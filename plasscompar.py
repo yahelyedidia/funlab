@@ -294,7 +294,7 @@ def plot_cov(dir, graph_name, data, file=None):
     return
 
 
-def make_box_plot(file, title, graph_name):
+def make_box_plot(file, title, graph_name, control="no drugs avg", treatment="with drugs avg" ):
     """
     creating a box plot graph that shows the changes by chromosomes
     :param file: the file with the changing rate to show as graph
@@ -307,7 +307,7 @@ def make_box_plot(file, title, graph_name):
     chroms = []
     for i in range(1, 25):
         this_chrom = lst[lst["chr"] == i]
-        this_chrom = this_chrom.drop(columns=["chr", "start", "end", "no drugs avg", "with drugs avg", "cov"])
+        this_chrom = this_chrom.drop(columns=["chr", "start", "end", "strand", control, treatment, "cov"])
         this_chrom = this_chrom.drop(this_chrom.columns[0], axis=1)
         if not this_chrom.empty:
             chroms.append(np.array(this_chrom))
