@@ -9,6 +9,8 @@ NUM_OF_FIRST_ROWS_AT_PROBS_FILE = 7
 
 NUM_OF_FIRST_ROWS_AT_CSC = 72
 
+NUM_OF_FIRST_ROWS_AT_GES = 67
+
 M1_REP1 = ["GSM2711824", "GSM2711825", "control_vs_csc_after_1_month_rep1"]
 M1_REP2 = ["GSM2711832", "GSM2711833", "control_vs_csc_after_1_month_rep2"]
 M6_REP1 = ["GSM2711826", "GSM2711827", "control_vs_csc_after_6_month_rep1"]
@@ -24,7 +26,23 @@ REP_LST = [("CSC/control_vs_csc_after_1_month_rep1", "CSC/control_vs_csc_after_1
            ("CSC/control_vs_csc_after_10_month_rep1", "CSC/control_vs_csc_after_10_month_rep2", "control_vs_csc_after_10_month"),
            ("CSC/control_vs_csc_after_15_month_rep1", "CSC/control_vs_csc_after_15_month_rep2", "control_vs_csc_after_15_month")]
 
-def read_micro_data(f_data, f_probs, num_of_open_line_data=NUM_OF_FIRST_ROWS_AT_CSC,
+GES_EBV_DAY8 = ["GSM2363415", "GSM2363416", "wt_vs_ges1_rEBV+_8_days"]
+GES_EBV_DAY11 = ["GSM2363415", "GSM2363417", "wt_vs_ges1_rEBV+_11_days"]
+GES_EBV_DAY14 = ["GSM2363415", "GSM2363418", "wt_vs_ges1_rEBV+_14_days"]
+GES_EBV_DAY17 = ["GSM2363415", "GSM2363419", "wt_vs_ges1_rEBV+_17_days"]
+GES_EBV_DAY19 = ["GSM2363415", "GSM2363420", "wt_vs_ges1_rEBV+_19_days"]
+GES_EBV_DAY21 = ["GSM2363415", "GSM2363421", "wt_vs_ges1_rEBV+_21_days"]
+GES_EBV_DAY23 = ["GSM2363415", "GSM2363422", "wt_vs_ges1_rEBV+_23_days"]
+GES_EBV_DAY28 = ["GSM2363415", "GSM2363423", "wt_vs_ges1_rEBV+_28_days"]
+MKN7_EBV_DAY1 = ["GSM2363424", "GSM2363425", "wt_vs_mkn7_rEBV+_1_days"]
+MKN7_EBV_DAY8 = ["GSM2363424", "GSM2363426", "wt_vs_mkn7_rEBV+_8_days"]
+MKN7_EBV_DAY17 = ["GSM2363424", "GSM2363427", "wt_vs_mkn7_rEBV+_17_days"]
+MKN7_EBV_DAY28 = ["GSM2363424", "GSM2363428", "wt_vs_mkn7_rEBV+_28_days"]
+
+LST_GES = [GES_EBV_DAY8, GES_EBV_DAY11, GES_EBV_DAY14, GES_EBV_DAY17, GES_EBV_DAY19, GES_EBV_DAY21, GES_EBV_DAY23,
+           GES_EBV_DAY28, MKN7_EBV_DAY1, MKN7_EBV_DAY8, MKN7_EBV_DAY17, MKN7_EBV_DAY28]
+
+def read_micro_data(f_data, f_probs, num_of_open_line_data=NUM_OF_FIRST_ROWS_AT_CSC, L=LST_CSC,
                     num_of_open_line_probs=NUM_OF_FIRST_ROWS_AT_PROBS_FILE, score=0, buffer=250):
                     #todo: decide the buffer and score sizes
     """
@@ -62,7 +80,7 @@ def read_micro_data(f_data, f_probs, num_of_open_line_data=NUM_OF_FIRST_ROWS_AT_
         sites.append([id, c, start, end])
     sites = pd.DataFrame(sites).sort_values(by=0)
     sites = sites.drop_duplicates()
-    for lst in LST_CSC:
+    for lst in L:
         build_micro_file(array_data, lst, sites)
 
 
@@ -172,8 +190,9 @@ def edit_file(prob_file):
 
 if __name__ == '__main__':
     # chack_probs("tehila/CSC/GPL13534_HumanMethylation450_15017482_v.1.1.csv.gz")
-    edit_file("prob_check")
-
+    # edit_file("prob_check")
+    read_micro_data("tehila/GES/GSE89269_series_matrix.txt", "tehila/CSC/GPL13534_HumanMethylation450_15017482_v.1.1.csv.gz",
+                    NUM_OF_FIRST_ROWS_AT_GES, LST_GES)
 # deal_with_replications()
 
 # display_data("CSC/replications")
