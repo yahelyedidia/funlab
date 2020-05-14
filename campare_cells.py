@@ -1,8 +1,7 @@
-import lab
 import pandas as pd
 import numpy as np
-import time
 import os
+from cells_dict import *
 
 #genome build 38
 START = "start"
@@ -13,20 +12,9 @@ COV = 3
 METHYLATION = 4
 MATRIX_SOURCE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/CTCF.fimocentered200bpwherefound.min50.hg38.bed"
 CHR_I = 3
-MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/site_matrix"
+MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/site_matrix.tsv"
 COLUMNS = ["chr", "start", "end"]
 THRESHOLD = 50
-PANCREAS_SITE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/pancreas/ENCFF994QQT.bed"
-PANCREAS_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/pancreas/chrs_t"
-STOMACH = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/stomach/edit_stomach"
-STOMACH_SITE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/stomach/ENCFF933XOI.bed"
-t_file = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/chr1_test"
-SPLEEN_SITE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/spleen/ENCFF250RMB.bed"
-SPLEEN_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/spleen/edit_spleen_met"
-TEST_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/spleen/test_data"
-TEST_BIND = SPLEEN_SITE
-
-
 
 
 def build_matrix():
@@ -135,7 +123,15 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
 
 if __name__ == '__main__':
     print("start runing")
-    start = time.process_time()
-    add_cell(SPLEEN_MET, TEST_BIND, "time_test", False, True)
+    build_matrix()
+    first = True
+    matrix = None
+    for name, cell in cells_dict.items():
+        print("start ", name)
+        if first:
+            matrix = add_cell(cell[0], cell[1], name, False)
+            first = False
+        else:
+            matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
+        print("end ", name)
     print("end running")
-    print(time.process_time() - start)
