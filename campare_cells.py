@@ -12,7 +12,7 @@ COV = 3
 METHYLATION = 4
 MATRIX_SOURCE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/CTCF.fimocentered200bpwherefound.min50.hg38.bed"
 CHR_I = 3
-MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/site_matrix.tsv"
+MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/site_&_bind_matrix.tsv" #todo:change
 COLUMNS = ["chr", "start", "end"]
 THRESHOLD = 50
 
@@ -47,7 +47,7 @@ def build_matrix():
     #     return matrix
     matrix = pd.read_csv(MATRIX_SOURCE, sep='\t', header=None)
     matrix.rename(columns={0:"chr", 1:"start", 2:"end"}, inplace=True)
-    matrix.to_csv(MATRIX)
+    matrix.to_csv(MATRIX, sep="\t")
 
 
 def create_site_df(f, to_sort=False):
@@ -70,9 +70,11 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
     :return:the matrix as dataframe
     """
     if not matrix_as_df:
-        matrix = pd.read_csv(matrix, index_col=0)
+        matrix = pd.read_csv(matrix, index_col=0, sep="\t")
+    print(matrix.describe())
     biding = create_site_df(binding_file, True)
-    matrix[name] = "."
+    matrix[name + "_met"] = "."
+    matrix[name + "_bind"] = "."
     print("I am here")
     if as_lst:
         for c in os.listdir(methylation_files_dir):
@@ -99,25 +101,26 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
         f[METHYLATION] = f[METHYLATION] / 100
         for c in range(1, 25):
             if c == 23:
-                chrom_name = "X"
+                chrom_name = CHR + "X"
             elif c == 24:
-                chrom_name = "Y"
+                chrom_name = CHR + "Y"
             else:
-                chrom_name = str(c)
-            f = f[f[0] == CHR + chrom_name]
+                chrom_name = CHR + str(c)
+            f = f[f[0] == chrom_name]
             for chr, start, end in zip(matrix[CHR], matrix[START], matrix[END]):
                 if chrom_name != chr:
                     continue
                 else:
-                    met = np.mean(f[(CHR + chr == f[0]) & (start - THRESHOLD <= f[1]) & (f[1] <= end + THRESHOLD)])[METHYLATION]
-                    bind = ((biding[0] == CHR + chr) & (start - THRESHOLD <= biding[1]) & (biding[1] <= end)
+                    met = np.mean(f[(chr == f[0]) & (start - THRESHOLD <= f[1]) & (f[1] <= end + THRESHOLD)])[METHYLATION]
+                    matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) & (matrix[END] == end), name + "_met"] = met
+                    bind = ((biding[0] == chrom_name) & (start - THRESHOLD <= biding[1]) & (biding[1] <= end)
                             & (start <= biding[2]) & (biding[2] <= end + THRESHOLD)).any()
                     if bind:
                         matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
-                                   (matrix[END] == end), name] = str((met, 0))
+                                   (matrix[END] == end), name + "_bind"] = 1
                     else:
                         matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
-                                   (matrix[END] == end), name] = str((met, 1))
+                                   (matrix[END] == end), name + "_bind"] = 0
     matrix.to_csv(MATRIX, sep="\t") #todo: pay attention
     return matrix
 
@@ -127,6 +130,8 @@ if __name__ == '__main__':
     first = True
     matrix = None
     for name, cell in cells_dict.items():
+        if name == "A549":
+            continue
         print("start ", name)
         if first:
             matrix = add_cell(cell[0], cell[1], name, False)
@@ -135,3 +140,4 @@ if __name__ == '__main__':
             matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
         print("end ", name)
     print("end running")
+    # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)

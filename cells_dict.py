@@ -18,7 +18,7 @@ B_CELL_SITE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/B_cell/ENCFF890T
 B_CELL_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/B_cell/edit_B_cell_met"
 
 ESOPHAGUS_SITE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/esophagus/ENCFF350ZNU.bed"
-ESOPHAGUS_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/esophagus/edit_esophagus_met"
+ESOPHAGUS_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/esophagus/edit_esophgus_met"
 
 H1_SITE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/H1/ENCFF904DSP.bed"
 H1_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/H1/edit_H1_met"
