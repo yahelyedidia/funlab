@@ -3,10 +3,13 @@ import pandas as pd
 from itertools import islice
 import os
 
+GENES_B38 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Homo_sapiens.GRCh38.98.gtf.gz"
+
+GENES_B37 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/genes/hg19.knownGene.gtf"
+
 TAB = "\t"
 
 BEDGRAPH_LINE_FORMAT = "s{i}\tchr{chr_name}\t{start}\t{number}\n"
-
 
 COLUMNS = 1
 
@@ -39,7 +42,6 @@ def filter_data(filter, d, col, name):
     print("no duplicate")
     pd.DataFrame(data=data).to_csv(name, sep=TAB)
     print("writing to file")
-
     return data
 
 
@@ -69,45 +71,72 @@ def remove_duplicate(data, chr_col, start, end, change=""):
     return data
 
 
-def read_genes_data(file, num_open_line=5):
+def read_genes_data(file, num_open_line=5, flag_38=False):
     """
     A function that reads the genes DB and filter it to the genes data
     :param file: the file to read
     :param num_open_line: the number of line to ignore in the begining of the file
     :return: the filtered data
     """
+    if(flag_38):
+        filter_by = 'gene'
+        data = pd.read_csv(file, sep="\t", skiprows=[i for i in range(num_open_line)],
+                           compression='gzip', header=None)
+    else:
+        filter_by = 'transcript'
+        data = pd.read_csv(file, sep="\t", skiprows=[i for i in range(num_open_line)],
+                            header=None)
     header = ['chr', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute']
-    data = pd.read_csv(file, sep="\t", skiprows=[i for i in range(num_open_line)],
-                       compression='gzip', header=None)
     data.columns = header[:len(data.columns)]
-    data = data[data['feature'] == 'gene']
+    data = data[data['feature'] == filter_by]
     names = []
+    data = data.drop_duplicates(['start', 'end'], keep='last')
     for row in data.iterrows():
         line = row[1]['attribute']
         sindex = line.find("gene_name")
-        line = line[sindex + 9:]
-        line = line.split(";")[0]
+        if sindex == -1:
+            line = "no_name_found"
+        else:
+            line = line[sindex + 9:]
+            line = line.split(";")[0]
         names.append(line)
     data['attribute'] = names
     data['close_sites'] = [[] for i in range(data.shape[0])]
-    data.to_csv("genes" + os.path.sep + "genes.csv", sep="\t", compression='gzip')
+    if flag_38:
+        data.to_csv("genes" + os.path.sep + "genes_19.csv", sep="\t", compression='gzip', index=False)
+    else:
+        data.to_csv("genes" + os.path.sep + "genes_19.csv", sep="\t", index=False)
     return data
 
 
-def create_gene_data(file):
+def create_gene_data(flag_38):
     """
     creating an array of chromosomes with the genes data
-    :param file: the genes file
+    :param flag_38: flag to choose the genome build file
     :return: an array with genes data sorted by chromosomes
     """
-    data = read_genes_data(file)
+    if flag_38:
+        file = GENES_B38
+    else:
+        file = GENES_B37
+    data = read_genes_data(file, flag_38)
     chroms = []
     for chr in range(NUM_OF_CHR - 2):
-        chr_data = data[data['chr'] == chr + 1]
+        if flag_38:
+            char_name = chr + 1
+        else:
+            char_name = "chr{0}".format(chr + 1)
+        chr_data = data[data['chr'] == char_name]
         chroms.append(chr_data)
-    chr_data = data[data['chr'] == 'X']
+    if flag_38:
+        chr_x = 'X'
+        chr_y = 'y'  # todo : is it writen like that ?
+    else:
+        chr_x = 'chrX'
+        chr_y = 'chrY'
+    chr_data = data[data['chr'] == chr_x]
     chroms.append(chr_data)
-    chr_data = data[data['chr'] == 'y']
+    chr_data = data[data['chr'] == chr_y]
     chroms.append(chr_data)
     return chroms
 
@@ -117,9 +146,10 @@ def find_close_genes(filter, gene_data, site_file, name):
     A function that finds which genes are close to the CTCF biding sites and count to how
     many site the gene is close.
     :param filter: the radius to look at
-    :param gene_file: the data of genes
+    :param gene_data: thr gene data
     :param site_file: the data of sites
-    :return:
+    :param name: the final file's name
+    :return: thr genes dict
     """
     gene_dict = {}
     data_sites = pd.read_csv(site_file, sep="\t")
@@ -149,13 +179,13 @@ def find_close_genes(filter, gene_data, site_file, name):
     return gene_dict
 
 
-def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name):
+def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name, flag_38=False):
     """
     A function that gets list of filter to look at, and print the most repetitive genes
     :param list_of_filters: the filters in list
     :param num_to_print: the num of repetitive elements to print
     """
-    chroms = create_gene_data("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Homo_sapiens.GRCh38.98.gtf.gz")
+    chroms = create_gene_data(flag_38)
     print("yay data")
     for f in list_of_filters:
         d = find_close_genes(f, chroms, file_to_check, name)
@@ -270,10 +300,20 @@ def create_genes_files(up, down):
             print("done decrease")
 
 
-def get_genes(file):
-    check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_500")
+def get_genes(file, flag_38=False):
+    if flag_38:
+        check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_500", True)
+    else:
+        check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_500")
 
-get_genes("corrected_t_test/t_test_by_site_with_population_all_w_500.csv")
+
+
+if __name__ == '__main__':
+    get_genes("corrected_t_test/t_test_by_site_with_population_all_w_1000.csv")
+    # read_genes_data(GENES_B37)
+    # read_genes_data(GENES_B38)
+
+    # get_genes("corrected_t_test/t_test_by_site_with_population_all_w_500.csv")
 
 # create_genes_files(0.2, -0.4)
 # check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
@@ -286,4 +326,4 @@ get_genes("corrected_t_test/t_test_by_site_with_population_all_w_500.csv")
 # filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac_0.6.csv", "test")
-remove_duplicate(pd.read_csv("probs_sort_and_uniq", sep='\t', header=None), 0, 1, 2)
+# remove_duplicate(pd.read_csv("probs_sort_and_uniq", sep='\t', header=None), 0, 1, 2)

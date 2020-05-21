@@ -726,10 +726,12 @@ def filter_final_data(dir):
 
 
 
+def create_graphs():
+    for file in os.listdir("plass_new"):
+        if file.endswith(".csv"):
+            plot_cov("plass_new", file.split(".")[0], pd.read_csv("plass_new"+os.path.sep + file, sep="\t"))
+
 
 if __name__ == '__main__':
-    i = int(sys.argv[1])
-    j = int(sys.argv[2])
-    print(i,j)
-    main_plass(i, j)
-    print("done")
+    d = pd.read_csv("plass_new/with_dac_vs_with_dac_and_hdac.csv", sep="\t")
+    print("hi")
