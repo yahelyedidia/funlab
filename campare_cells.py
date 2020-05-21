@@ -1,19 +1,22 @@
-import lab
 import pandas as pd
 import numpy as np
 import os
+import matplotlib.pyplot as plt
+from cells_dict import *
 
 #genome build 38
+START = "start"
+CHR = "chr"
+END = "end"
+MIN_COV = 5
+COV = 3
+METHYLATION = 4
 MATRIX_SOURCE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/CTCF.fimocentered200bpwherefound.min50.hg38.bed"
 CHR_I = 3
-MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/site_matrix"
+MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/the_big_matrix.tsv" #todo:change
+MATRIX_FOR_PLAY = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/site_&_bind_matrix.tsv"
 COLUMNS = ["chr", "start", "end"]
-THRESHOLD = 100
-PANCREAS_SITE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/pancreas/ENCFF994QQT.bed"
-PANCREAS_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/pancreas/chrs_t"
-t_file = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/chr1_test"
-
-
+THRESHOLD = 50
 
 
 def build_matrix():
@@ -46,7 +49,7 @@ def build_matrix():
     #     return matrix
     matrix = pd.read_csv(MATRIX_SOURCE, sep='\t', header=None)
     matrix.rename(columns={0:"chr", 1:"start", 2:"end"}, inplace=True)
-    matrix.to_csv(MATRIX)
+    matrix.to_csv(MATRIX, sep="\t")
 
 
 def create_site_df(f, to_sort=False):
@@ -57,30 +60,98 @@ def create_site_df(f, to_sort=False):
     return data
 
 
-def add_cell(methylation_files_dir, biding_file, name, as_lst=True, matrix=MATRIX):
-    matrix = pd.read_csv(matrix, index_col=0)
-    biding = create_site_df(biding_file, True)
-    matrix[name] = "."
+def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_df = False, matrix=MATRIX):
+    """
+    A function that add new cell column to the big matrix and save the matrix as file
+    :param methylation_files_dir: the path to the methylation file
+    :param binding_file: the path to the binding file
+    :param name:the name of the new column
+    :param as_lst: a boolean parameter that decide if the data came as list
+    :param matrix_as_df: a boolean parameter that decide if the matrix came as dataframe
+    :param matrix: the site matrix
+    :return:the matrix as dataframe
+    """
+    if not matrix_as_df:
+        matrix = pd.read_csv(matrix, index_col=0, sep="\t")
+    print(matrix.describe())
+    biding = create_site_df(binding_file, True)
+    matrix[name + "_met"] = "."
+    matrix[name + "_bind"] = "."
+    print("I am here")
     if as_lst:
         for c in os.listdir(methylation_files_dir):
             f = pd.read_csv(methylation_files_dir + os.sep + c, sep='\t')
-            chrom_name = (list(f)[0].split("=")[1])[3:]
-            for chr, start, end in zip(matrix["chr"], matrix["start"], matrix["end"]):
-                if chrom_name < chr:
-                    continue
-                elif chrom_name > chr:
+            chrom_name = (list(f)[0].split("=")[1])[COV:]
+            for chr, start, end in zip(matrix[CHR], matrix[START], matrix[END]):
+                if chrom_name != chr:
                     continue
                 else:
                     met = np.mean(f.loc[(start - THRESHOLD <= f.index) & (f.index <= end + THRESHOLD)])[0]
-                    bind = biding.loc[(biding[0] == "chr" + chr) & (start - THRESHOLD <= biding[1]) &(biding[1] <= end)
-                                      & (start <= biding[2]) & (biding[2] <= end + THRESHOLD)]
+                    bind = biding[(biding[0] == CHR + chr) & (start - THRESHOLD <= biding[1]) & (biding[1] <= end)
+                                  & (start <= biding[2]) & (biding[2] <= end + THRESHOLD)]
                     if bind.empty:
-                        matrix.loc[(matrix["chr"] == chr) & (matrix["start"] == start) & (matrix["end"] == end), name] = str((met, 0))
+                        matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
+                                   (matrix[END] == end), name] = str((met, 0))
                     else:
-                        matrix.loc[(matrix["chr"] == chr) & (matrix["start"] == start) & (matrix["end"] == end), name] = str((met, 1))
-    matrix.to_csv(MATRIX) #todo: pay attention
-    return
+                        matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
+                                   (matrix[END] == end), name] = str((met, 1))
+    else:
+        f = pd.read_csv(methylation_files_dir, sep='\t', header=None)
+        print("after reading f")
+        f = f[f[COV] >= MIN_COV]
+        print("filtered by coverage")
+        f[METHYLATION] = f[METHYLATION] / 100
+        for c in range(1, 25):
+            if c == 23:
+                chrom_name = CHR + "X"
+            elif c == 24:
+                chrom_name = CHR + "Y"
+            else:
+                chrom_name = CHR + str(c)
+            file = f[f[0] == chrom_name]
+            for chr, start, end in zip(matrix[CHR], matrix[START], matrix[END]):
+                if chrom_name != chr:
+                    continue
+                else:
+                    met = np.mean(file[(chr == file[0]) & (start - THRESHOLD <= file[1]) & (file[1] <= end + THRESHOLD)])[METHYLATION]
+                    matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) & (matrix[END] == end), name + "_met"] = met
+                    bind = ((biding[0] == chrom_name) & (((biding[1] <= start) & (end <= biding[2])) |
+                                         ((start <= biding[1]) & (biding[2] <= end)) |
+                                         ((biding[1] - THRESHOLD <= start) & (end <= biding[2]  + THRESHOLD)) )).any()
+                    if bind:
+                        matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
+                                   (matrix[END] == end), name + "_bind"] = 1
+                    else:
+                        matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
+                                   (matrix[END] == end), name + "_bind"] = 0
+    matrix.to_csv(MATRIX, sep="\t") #todo: pay attention
+    return matrix
+
+def play_with_data(matrix):
+    matrix = pd.read_csv(matrix, sep="\t")
+    matrix = matrix[matrix['chr'] == 'chr1']
+    matrix = matrix.fillna(0)
+    print(matrix.describe())
+    col_name = list(matrix.columns)
+    matrix.plot.scatter(x=0, y="H1_met", c="H1_bind", colormap='viridis')
+    plt.show()
+    x = 1
 
 if __name__ == '__main__':
     print("start runing")
-    add_cell(PANCREAS_MET, PANCREAS_SITE, "pancreas")
+    build_matrix()
+    first = True
+    matrix = None
+    for name, cell in cells_dict.items():
+        if name == "A549":
+            continue
+        print("start ", name)
+        if first:
+            matrix = add_cell(cell[0], cell[1], name, False)
+            first = False
+        else:
+            matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
+        print("end ", name)
+    print("end running")
+    # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
+    # play_with_data(MATRIX_FOR_PLAY)
