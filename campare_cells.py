@@ -14,6 +14,7 @@ METHYLATION = 4
 MATRIX_SOURCE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/CTCF.fimocentered200bpwherefound.min50.hg38.bed"
 CHR_I = 3
 MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/the_big_matrix.tsv" #todo:change
+MATRIX_FOR_PLAY = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/site_&_bind_matrix.tsv"
 COLUMNS = ["chr", "start", "end"]
 THRESHOLD = 50
 
@@ -114,8 +115,9 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
                 else:
                     met = np.mean(file[(chr == file[0]) & (start - THRESHOLD <= file[1]) & (file[1] <= end + THRESHOLD)])[METHYLATION]
                     matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) & (matrix[END] == end), name + "_met"] = met
-                    bind = ((biding[0] == chrom_name) & (((biding[1] <= start) & (end <= biding[2])) | ((biding[1]- THRESHOLD <= start)
-                            & (end <= biding[2]  + THRESHOLD)) )).any()
+                    bind = ((biding[0] == chrom_name) & (((biding[1] <= start) & (end <= biding[2])) |
+                                         ((start <= biding[1]) & (biding[2] <= end)) |
+                                         ((biding[1] - THRESHOLD <= start) & (end <= biding[2]  + THRESHOLD)) )).any()
                     if bind:
                         matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
                                    (matrix[END] == end), name + "_bind"] = 1
@@ -127,6 +129,7 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
 
 def play_with_data(matrix):
     matrix = pd.read_csv(matrix, sep="\t")
+    matrix = matrix[matrix['chr'] == 'chr1']
     matrix = matrix.fillna(0)
     print(matrix.describe())
     col_name = list(matrix.columns)
@@ -151,4 +154,4 @@ if __name__ == '__main__':
         print("end ", name)
     print("end running")
     # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
-    # play_with_data(MATRIX)
+    # play_with_data(MATRIX_FOR_PLAY)
