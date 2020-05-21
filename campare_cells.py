@@ -124,7 +124,7 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
                     else:
                         matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
                                    (matrix[END] == end), name + "_bind"] = 0
-    matrix.to_csv("check_somthing", sep="\t") #todo: pay attention
+    matrix.to_csv(MATRIX, sep="\t") #todo: pay attention
     return matrix
 
 def play_with_data(matrix):
