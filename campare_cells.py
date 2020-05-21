@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 from cells_dict import *
 
 #genome build 38
@@ -12,7 +13,7 @@ COV = 3
 METHYLATION = 4
 MATRIX_SOURCE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/CTCF.fimocentered200bpwherefound.min50.hg38.bed"
 CHR_I = 3
-MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/site_&_bind_matrix.tsv" #todo:change
+MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/the_big_matrix.tsv" #todo:change
 COLUMNS = ["chr", "start", "end"]
 THRESHOLD = 50
 
@@ -106,23 +107,32 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
                 chrom_name = CHR + "Y"
             else:
                 chrom_name = CHR + str(c)
-            f = f[f[0] == chrom_name]
+            file = f[f[0] == chrom_name]
             for chr, start, end in zip(matrix[CHR], matrix[START], matrix[END]):
                 if chrom_name != chr:
                     continue
                 else:
-                    met = np.mean(f[(chr == f[0]) & (start - THRESHOLD <= f[1]) & (f[1] <= end + THRESHOLD)])[METHYLATION]
+                    met = np.mean(file[(chr == file[0]) & (start - THRESHOLD <= file[1]) & (file[1] <= end + THRESHOLD)])[METHYLATION]
                     matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) & (matrix[END] == end), name + "_met"] = met
-                    bind = ((biding[0] == chrom_name) & (start - THRESHOLD <= biding[1]) & (biding[1] <= end)
-                            & (start <= biding[2]) & (biding[2] <= end + THRESHOLD)).any()
+                    bind = ((biding[0] == chrom_name) & (((biding[1] <= start) & (end <= biding[2])) | ((biding[1]- THRESHOLD <= start)
+                            & (end <= biding[2]  + THRESHOLD)) )).any()
                     if bind:
                         matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
                                    (matrix[END] == end), name + "_bind"] = 1
                     else:
                         matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
                                    (matrix[END] == end), name + "_bind"] = 0
-    matrix.to_csv(MATRIX, sep="\t") #todo: pay attention
+    matrix.to_csv("check_somthing", sep="\t") #todo: pay attention
     return matrix
+
+def play_with_data(matrix):
+    matrix = pd.read_csv(matrix, sep="\t")
+    matrix = matrix.fillna(0)
+    print(matrix.describe())
+    col_name = list(matrix.columns)
+    matrix.plot.scatter(x=0, y="H1_met", c="H1_bind", colormap='viridis')
+    plt.show()
+    x = 1
 
 if __name__ == '__main__':
     print("start runing")
@@ -141,3 +151,4 @@ if __name__ == '__main__':
         print("end ", name)
     print("end running")
     # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
+    # play_with_data(MATRIX)
