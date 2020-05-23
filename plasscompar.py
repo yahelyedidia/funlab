@@ -694,12 +694,14 @@ def remove_duplicate(file, window):
     data = data.reset_index(drop=True)
     data = data.drop(columns=['Unnamed: 0', 'strand'])
     i = 0
+    filename_w_ext = os.path.basename(file)
+    filename, file_extension = os.path.splitext(filename_w_ext)
     if data['chr'][0] < 1:
         i = 1
     counter = 0
     filtered = np.empty((1, 6))
     print("#starting")
-    while i + counter < len(data.index):  # todo -1?
+    while i + counter < len(data.index) - 1:  # todo -1?
         size1 = data['end'][i + counter] - data['start'][i + counter]
         size2 = data['end'][i + counter+1] - data['start'][i + counter+1]
         _overlap = overlap(data['start'][i + counter], data['end'][i + counter], data['start'][i + counter + 1], data['end'][i + counter + 1])
@@ -724,14 +726,16 @@ def remove_duplicate(file, window):
                 i += 1
                 print("appending new line with counter 0")
 
-    pd.DataFrame(filtered, columns=['chr', 'start', 'end', 'control', 'after treatment' 'change']).iloc[1:].to_csv("no_duplicate_" + file, sep="\t", index=False)
+    pd.DataFrame(filtered, columns=['chr', 'start', 'end', 'control', 'after treatment' 'change']).iloc[1:].\
+        to_csv("no_duplicate_{0}.tsv".format(filename), sep="\t", index=False)
     print("yay we finished")
 
 
 if __name__ == '__main__':
-    # t_test(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep="\t"),
-           # pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep="\t"),
-           # pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep="\t"))
-    remove_duplicate("immortalization_result/by_window/imm_result_b1_w_500.csv", 100)
-
+    file_name = str(sys.argv[1])
+    window = int(sys.argv[2])
+    remove_duplicate(file_name, window)
     print("hi")
+    # t_test(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep="\t"),
+    # pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep="\t"),
+    # pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep="\t"))
