@@ -687,36 +687,44 @@ def create_graphs():
         if file.endswith(".csv"):
             plot_cov("plass_new", file.split(".")[0], pd.read_csv("plass_new"+os.path.sep + file, sep="\t"))
 
+
 def remove_duplicate(file, window):
     data = pd.read_csv(file, sep="\t")
     data = data.sort_values(by=['chr', 'start', 'end'])
     data = data.reset_index(drop=True)
     data = data.drop(columns=['Unnamed: 0', 'strand'])
     i = 0
+    if data['chr'][0] < 1:
+        i = 1
     counter = 0
     filtered = np.empty((1, 6))
     print("#starting")
     while i + counter < len(data.index):  # todo -1?
+        size1 = data['end'][i + counter] - data['start'][i + counter]
+        size2 = data['end'][i + counter+1] - data['start'][i + counter+1]
         _overlap = overlap(data['start'][i + counter], data['end'][i + counter], data['start'][i + counter + 1], data['end'][i + counter + 1])
-        if _overlap <= window:
+        print("min size {0} - overlap {1} for i = {2}, counter = {3}".format(min(size1, size2), _overlap, i, counter))
+        if min(size1, size2) - _overlap <= window:
             counter += 1
+            print("increacing the counter")
         else:
             if counter != 0:
                 before = data['no drugs avg'][i:i+counter].mean()
                 after = data['with drugs avg'][i:i+counter].mean()
                 filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before,
                                                           after, before - after])])
-                i += counter
+                i += counter + 1
+                print("appending new line with counter {0}".format(counter))
                 counter = 0
-                continue
             else:
                 before = data['no drugs avg']
                 after = data['with drugs avg']
                 filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before,
                                                           after, before - after])])
                 i += 1
+                print("appending new line with counter 0")
 
-    pd.DataFrame(filtered, columns=['chr', 'start', 'end', 'control', 'after treatment' 'change']).to_csv("no_duplicate_" + file, sep="\t")
+    pd.DataFrame(filtered, columns=['chr', 'start', 'end', 'control', 'after treatment' 'change']).iloc[1:].to_csv("no_duplicate_" + file, sep="\t", index=False)
     print("yay we finished")
 
 
@@ -724,5 +732,6 @@ if __name__ == '__main__':
     # t_test(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep="\t"),
            # pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep="\t"),
            # pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep="\t"))
-    print(overlap(805134, 805484, 805135, 805525))
+    remove_duplicate("immortalization_result/by_window/imm_result_b1_w_500.csv", 100)
+
     print("hi")
