@@ -8,6 +8,7 @@ from scipy import stats
 import matplotlib.cm as cm
 import sys
 
+IMM_RES_NAME = "imm_result_b{0}_w_{1}_new.csv"
 
 COV = "cov"
 T1 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/adrenal_cells_try.txt"
@@ -54,7 +55,7 @@ CHIP_B_CELLS_ACTIVE = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalizat
 TF_TRANS = "/vol/sci/bio/data/yotam.drier/CTCF_and_DNAme/immortalization/ENCFF833FTF.bed"
 
 
-def closest_to_peak(lst, peak, start):
+def closest_to_peak(lst, peak, start, window):
     """
     find in list of probes i
     :param lst: the chromosome biding sits as we filtered from the data
@@ -77,25 +78,26 @@ def closest_to_peak(lst, peak, start):
                 first = mid + 1
 
     if val == lst[mid][0]:
-        cov = calc_cov(mid, lst)
+        cov = calc_cov(mid, lst, window)
         return lst[mid][1], cov
 
     elif mid-1 < 0:
-        cov = calc_cov(mid+1, lst)
+        cov = calc_cov(mid+1, lst, window)
         return lst[mid+1][1], cov
 
     elif mid+1 > last:
-        cov = calc_cov(mid-1, lst)
+        cov = calc_cov(mid-1, lst, window)
         return lst[mid-1][1], cov
 
-    cov = calc_cov(mid-1, lst)
+    cov = calc_cov(mid-1, lst, window)
     return max(lst[mid-1][1], lst[mid+1][1]), cov
 
 
-def calc_cov(mid, chr_lst):
+def calc_cov(mid, chr_lst, window):
     # new_lst = [item[2] for item in chr_lst if chr_lst[mid][0] - 50 <= item[0] <= chr_lst[mid][0] + 50]
+    buffer = window // 2
     l = np.array(chr_lst)
-    l = l[(l[:, 0] >= chr_lst[mid][0] - 250) & (l[:, 0] <= chr_lst[mid][0] + 250)]
+    l = l[(l[:, 0] >= chr_lst[mid][0] - buffer) & (l[:, 0] <= chr_lst[mid][0] + buffer)]
     if len(l) != 0:
         cov = np.mean(l[:, 2])
         # cov2 = sum(new_lst) / len(new_lst)
@@ -322,12 +324,13 @@ def make_box_plot(file, title, graph_name, control="no drugs avg", treatment="wi
     plt.show()
 
 
-def search(before, after, chip_data, name="in_progress.csv"):
+def search(before, after, chip_data, window, name="in_progress.csv"):
     """
     searching if prob is at the area of an peak +- the buffer.
     :param before: the data before treatment
     :param after: the data after treatment
     :param chip_data: the data from the chip array experience
+    :param window: window size of bases
     :param name: the output file name
     :return: the ratio between sum of probes are is the buffer to the total amount of probes
     """
@@ -368,7 +371,7 @@ def search(before, after, chip_data, name="in_progress.csv"):
     pd.DataFrame(data=lst, columns=head).to_csv(name, sep="\t")
 
 
-def main_plass(i, j):
+def main_plass(i, j, window):
     """
     main function to process plass files
     """
@@ -392,13 +395,13 @@ def main_plass(i, j):
     drag = smooth_parse(drg, plass_files[j][1], "Chromosome", "Start")
     print("done parsing")
     name = "{0}_vs_{1}".format(plass_files[i][2], plass_files[j][2])
-    search(nodrag, drag, data, name + ".csv")
+    search(nodrag, drag, data, window, name + ".csv")
     # plot_cov("", "{0}_covarge_histogram".format(name), data)
     # make_box_plot(name + ".csv", "mthylation level's changes at " + name, name)
     print("F I N I S H !")
 
 
-def main_imm(i):
+def main_imm(i, window):
     """
     main function to process immortalization files
     """
@@ -426,63 +429,8 @@ def main_imm(i):
     print("done parsing")
     # output = "mthylation level's changes at b immortalization cells"
     # search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
-    search(active, transformed, data, "imm_result_b{0}_w_500.csv".format(i))  # transformed file
+    search(active, transformed, data, window, IMM_RES_NAME.format(i))  # transformed file
     print("D O N E")
-    # make_box_plot("imm_result_b1.csv", output, "imm_result_graph_b1")
-    # for i in range(len(imm_files)):
-    #     act, trn = read_gz_file(imm_files[i][0], imm_files[i][1], ',')
-    #     print("done reading the files")
-    #     active = smooth_parse(act, "smoothSmall", "chr", "pos")  # only small ! there is also large
-    #     transformed = smooth_parse(trn, "smoothSmall", "chr", "pos")
-    #     print("done parsing")
-    #     output = "mthylation level's changes at b{0} immortalization cells"
-    #     name = "b{0}"
-    #     # search(active, transformed, b_active, name.format(i+1, "active") + ".csv")  # active file
-    #     search(active, transformed, data, name.format(i+1) + ".csv")  # transformed file
-    #     make_box_plot(name.format(i+1) + ".csv", output.format(i+1), name.format(i+1) + "_graph")
-        # make_box_plot(name.format(i+1, "trans") + ".csv", output.format(i+1, "transformed"), name.format(i+1, "transformed") + "_graph")
-        # print("F I N I S H !")
-
-
-def no_use():
-    return
-
-    # procecess the files
-    # finding the start index of the methylation
-    # startin = find_position(nodrags[chr], start)
-    # endin = find_position(nodrags[chr], end)
-    # nodrag_met = endin - startin
-    # nodragcount += nodrag_met
-    #  finding the end index of the methylation
-    # startin = find_position(drags[chr], start)
-    # endin = find_position(drags[chr], end)
-    # drag_met = endin - startin
-    # dragcount += drag_met
-    #  calculation of the average
-    # creating graphs
-    # num_chr = 1
-    # for chr in chroms:
-        # x = chr['start']
-        # start = int(min(x))
-        # end = int(max(x))
-        # no_d = chr['no drugs avg']
-        # with_d = chr['with drugs avg']
-        # # plt.xticks(range(start, end))
-        # x_asix = np.linspace(start, end, chr.shape[0])
-        # plt.plot(x_asix, no_d, label="No drug")
-        # plt.plot(x_asix, with_d, label="With drug")
-        # plt.title("change in matylation level at chromosome " + str(num_chr) + " after treatment")
-        # plt.grid()
-        # plt.legend()
-        # plt.savefig("chr " + str(num_chr))
-        # num_chr += 1
-        # plt.clf()
-
-    # iter in sarceh
-# for chromStart, chromEnd, chrom, peak in zip(chip_data[i]["chromStart"],
-#                             chip_data[i]["chromEnd"],
-#                             chip_data[i]["chrom"],
-#                                  chip_data[i]["peak"]):
 
 
 def cut_by_filter(file):
@@ -655,8 +603,14 @@ def get_uniq_rate(b):
     round = np.around(np.array(b['change']), 2)
     return np.unique(round, return_counts=True)
 
+def overlap(start1, end1, start2, end2):
+    """how much does the range (start1, end1) overlap with (start2, end2)"""
+    return max(max((end2-start1), 0) - max((end2-end1), 0) - max((start2-start1), 0), 0)
 
 def t_test(b1, b2, b3):
+    b1 = b1.drop_duplicates(['chr', 'start', 'end'], keep='last')
+    b2 = b2.drop_duplicates(['chr', 'start', 'end'], keep='last')
+    b3 = b3.drop_duplicates(['chr', 'start', 'end'], keep='last')
     b1['source'] = 1
     b2['source'] = 2
     b3['source'] = 3
@@ -666,7 +620,7 @@ def t_test(b1, b2, b3):
     all = all.reset_index(drop=True)
     all = all.drop(columns=['Unnamed: 0', 'strand'])
     i = 0
-    sites = np.empty((1, 7))
+    sites = np.empty((1, 9))
     print("#starting")
     while i < len(all.index) - 2:
         if all['source'][i] != all['source'][i+1]:
@@ -675,24 +629,27 @@ def t_test(b1, b2, b3):
                     if all['start'][i] - 50 <= all['start'][i+2] <= all['start'][i] + 50 and all['end'][i] - 50 <= all['end'][i+2] <= all['end'][i] + 50:
                         before = all['no drugs avg'][i:i+3]
                         after = all['with drugs avg'][i:i+3]
+                        ber_val = before.mean()
+                        after_val = after.mean()
                         t_test = stats.ttest_ind(before, after, equal_var=False)
                         # if t_test.pvalue <= 0.05:
                         sites = np.vstack([sites, np.array([all['chr'][i], all['start'][i], all['end'][i], t_test.pvalue,
-                                                                all['change'][i:i+3].mean(), np.array(before), np.array(after)])])
+                                                                ber_val - after_val,ber_val, after_val,  np.array(before), np.array(after)])])
                         # sites = np.vstack([sites, np.array([int(all['chr'][i]), int(all['start'][i]), t_test.pvalue])])
                         # print("we have the same !")
                         i += 3
                         continue
         i += 1
 
-    pd.DataFrame(sites, columns=['chr', 'start', 'end', 'p value','metylation change', 'control', 'after treatment']).to_csv("t_test_by_site_with_population_all_w_1000.csv", sep="\t")
-    # pd.DataFrame(sites, columns=['chr', 'start', 'p value']).to_csv("t_test_by_site_with_population_all_w_500.csv", sep="\t")
+    pd.DataFrame(sites, columns=['chr', 'start', 'end', 'p value', 'metylation change', 'control avg', 'treat avg',
+                                 'control', 'after treatment']).to_csv("t_test_by_site_with_population_all_w_1000.csv", sep="\t")
+    # pd.DataFrame(sites, columns=['chr', 'start', 'p value']).to_csv("gal_and_yahel_having_fun.csv", sep="\t")
     print(sites.shape)
     print("yay we finished")
 
 
 def create_plot(t_file):
-    x,ys,c = [],[],[]
+    x, ys, c = [], [], []
     t = pd.read_csv(t_file, sep='\t')
     for row in t.iterrows():
         if row[1]['close_genes'] != '[]':
@@ -725,13 +682,47 @@ def filter_final_data(dir):
             data.to_csv("genes/corrected/filtered" + os.sep + file, sep="\t", index=False)
 
 
-
 def create_graphs():
     for file in os.listdir("plass_new"):
         if file.endswith(".csv"):
             plot_cov("plass_new", file.split(".")[0], pd.read_csv("plass_new"+os.path.sep + file, sep="\t"))
 
+def remove_duplicate(file, window):
+    data = pd.read_csv(file, sep="\t")
+    data = data.sort_values(by=['chr', 'start', 'end'])
+    data = data.reset_index(drop=True)
+    data = data.drop(columns=['Unnamed: 0', 'strand'])
+    i = 0
+    counter = 0
+    filtered = np.empty((1, 6))
+    print("#starting")
+    while i + counter < len(data.index):  # todo -1?
+        _overlap = overlap(data['start'][i + counter], data['end'][i + counter], data['start'][i + counter + 1], data['end'][i + counter + 1])
+        if _overlap <= window:
+            counter += 1
+        else:
+            if counter != 0:
+                before = data['no drugs avg'][i:i+counter].mean()
+                after = data['with drugs avg'][i:i+counter].mean()
+                filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before,
+                                                          after, before - after])])
+                i += counter
+                counter = 0
+                continue
+            else:
+                before = data['no drugs avg']
+                after = data['with drugs avg']
+                filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before,
+                                                          after, before - after])])
+                i += 1
+
+    pd.DataFrame(filtered, columns=['chr', 'start', 'end', 'control', 'after treatment' 'change']).to_csv("no_duplicate_" + file, sep="\t")
+    print("yay we finished")
+
 
 if __name__ == '__main__':
-    d = pd.read_csv("plass_new/with_dac_vs_with_dac_and_hdac.csv", sep="\t")
+    # t_test(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep="\t"),
+           # pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep="\t"),
+           # pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep="\t"))
+    print(overlap(805134, 805484, 805135, 805525))
     print("hi")
