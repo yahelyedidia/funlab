@@ -65,14 +65,16 @@ TIBIAL_NERVE_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/tibial_nerv
 TRANS_COLON_SITE = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/transverse_colon/ENCFF919KHH.bed"
 TRANS_COLON_MET = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/transverse_colon/edit_transverse_colon"
 
-cells_dict = { "pancreas": [PANCREAS_MET, PANCREAS_SITE], "stomach": [STOMACH, STOMACH_SITE],
-               "spleen": [SPLEEN_MET, SPLEEN_SITE], "A549": [A549_MET, A549_SITE],
-               "adrenal_gland" : [ADRENAL_GLAND_MET, ADRENAL_GLAND_SITE], "B_cell" : [B_CELL_MET, B_CELL_SITE],
-               "esophagus": [ESOPHAGUS_MET, ESOPHAGUS_SITE], "H1": [H1_MET, H1_SITE], "HeLa-S3": [HELA_MET, HELA_SITE],
-               "HepG2": [HEP_MET, HEP_SITE], "IMR-90" : [IMR90_MET, IMR90_SITE], "K562": [K562_MET, K562_SITE],
+cells_dict = { "K562": [K562_MET, K562_SITE],
                "liver": [LIVER_MET, LIVER_SITE], "lung" : [LUNG_MET, LUNG_SITE], "mammary": [MAMMARY_MET, MAMMARY_SITE],
                "OCI-LY7": [OCI_MET, OCI_SITE], "sigmoid_colon" : [COLON_MET, COLON_SITE],
                "SK-N-SH": [SKNSH_MET, SKNSH_SITE], "testis": [TESTIS_MET, TESTIS_SITE],
                "thyroid_gland": [THYROID_GLAND_MET, THYROID_GLAND_SITE],
                "tibial_nerve": [TIBIAL_NERVE_MET, TIBIAL_NERVE_SITE],
                "transverse_colon" : [TRANS_COLON_MET, TRANS_COLON_SITE]}
+
+# "pancreas": [PANCREAS_MET, PANCREAS_SITE], "stomach": [STOMACH, STOMACH_SITE],
+# "spleen": [SPLEEN_MET, SPLEEN_SITE], "A549": [A549_MET, A549_SITE],
+# "adrenal_gland" : [ADRENAL_GLAND_MET, ADRENAL_GLAND_SITE], "B_cell" : [B_CELL_MET, B_CELL_SITE],
+# "esophagus": [ESOPHAGUS_MET, ESOPHAGUS_SITE], "H1": [H1_MET, H1_SITE], "HeLa-S3": [HELA_MET, HELA_SITE],
+# "HepG2": [HEP_MET, HEP_SITE], "IMR-90" : [IMR90_MET, IMR90_SITE],
