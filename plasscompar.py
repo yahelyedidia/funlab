@@ -720,7 +720,8 @@ def remove_duplicate(file, window):
             else:
                 before = data['no drugs avg']
                 after = data['with drugs avg']
-                filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before, after, before - after])])
+                change = before - after
+                filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before, after, change])])
                 i += 1
                 print("appending new line with counter 0")
 

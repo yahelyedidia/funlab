@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-P_VALS = "p_values.tsv"
+
+P_VALS = "p_values_all_information.tsv"
 
 REP_LIST = ['1_month', '6_month', '10_month', '15_month']
 
@@ -12,19 +13,24 @@ DIR = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC"
 FIRST_FILE = "control_vs_csc_after_1_month_rep{0}"
 ALL_NAME = "csc_all_rep{0}.tsv"
 CHANGES_REP = "csc_all_changes_rep{0}.tsv"
+ORIG_CHANGE = "all_changes_by_orig_data_rep_{0}.tsv"
 
 
-def create_one_file(target_file_name):
-    combined = pd.read_csv(DIR + os.path.sep + FIRST_FILE, sep="\t")
+def create_one_file(i, target_file_name, to_control=False):
+    combined = pd.read_csv(DIR + os.path.sep + FIRST_FILE.format(i), sep="\t")
     combined = combined.drop(columns=['cov', 'strand', 'change'])
-    combined = combined.rename(columns={"treatment": "1_month"})
+    if to_control:
+        data = "change"
+    else:
+        data = "treatment"
+    combined = combined.rename(columns={data: "1_month"})
     # a = os.listdir(DIR)
     for file in os.listdir(DIR):
-        if file != FIRST_FILE and file.endswith("2"):
+        if file != FIRST_FILE and file.endswith(str(i)):
             time_interval = file.split("_")[4]
             print(time_interval)
             temp = pd.read_csv(DIR + os.path.sep + file, sep="\t")
-            combined["{0}_month".format(time_interval)] = temp["treatment"]
+            combined["{0}_month".format(time_interval)] = temp[data]
     combined = combined[['ID_REF',
                          'chr',
                          'start',
@@ -55,8 +61,8 @@ def get_uniq_rate(b, label):
     return np.unique(round, return_counts=True)
 
 
-def plot_change(i):
-    data = pd.read_csv(DIR + os.path.sep + CHANGES_REP.format(i), sep="\t")
+def plot_change(i, name):
+    data = pd.read_csv(DIR + os.path.sep + name, sep="\t")
     xs_list, ys_list = [], []
     for col in REP_LIST:
         xs, ys = get_uniq_rate(data, col)
@@ -76,20 +82,31 @@ def plot_change(i):
 
 
 def statistic_test():
-    rep_1 = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(1), sep="\t")
-    rep_2 = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(2), sep="\t")
+    rep_1 = pd.read_csv(DIR + os.path.sep + ORIG_CHANGE.format(1), sep="\t")
+    rep_2 = pd.read_csv(DIR + os.path.sep + ORIG_CHANGE.format(2), sep="\t")
+    all_vals_1 = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(1), sep="\t")
+    all_vals_2 = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(2), sep="\t")
 
     result = rep_1
     result = result.drop(columns=REP_LIST)
     result = result.drop(columns=['control'])
-    for title in REP_LIST:
-        p_vals = []
+    print("start to fill the data")
+    for title in REP_LIST[1:]:
+        c_list, a_list, p_vals = [], [], []
         for i in range(rep_1.shape[0]):
-            control = [rep_1['control'][i], rep_2['control'][i]]
-            after = [rep_1[title][i], rep_2[title][i]]
+            first_month_1 = rep_1[REP_LIST[0]][i]
+            first_month_2 = rep_2[REP_LIST[0]][i]
+            control = [rep_1['control'][i], rep_2['control'][i], first_month_1, first_month_2]
+            after = [rep_1[title][i], rep_2[title][i], all_vals_1[title][i] - first_month_1, all_vals_2[title][i] - first_month_2]
             t_test = stats.ttest_ind(control, after, equal_var=False)
+            c_list.append(control)
+            a_list.append(after)
             p_vals.append(t_test.pvalue)
-        result[title] = p_vals
+        result["controls_{0}".format(title)] = c_list
+        result["afters{0}".format(title)] = a_list
+        result["p_values_{0}".format(title)] = p_vals
+        print("done for " + title)
+    print("done all")
     result.to_csv(DIR + os.path.sep + P_VALS, sep="\t", index=False)
 
 
@@ -121,6 +138,32 @@ def data_to_plot():
     data.to_csv("csc/changes_to_plot_1", index=False)
 
 
+def compare_control_to_first_col(i, name):
+    first = pd.read_csv(DIR + os.path.sep + FIRST_FILE.format(i), sep="\t")
+    first = first.drop(columns=['cov', 'strand', 'change', 'treatment'])
+    first = first.rename(columns={"control": "1_month"})
+    # a= os.listdir(DIR)
+    for file in os.listdir(DIR):
+        if file != FIRST_FILE and file.endswith(str(i)):
+            time_interval = file.split("_")[4]
+            print(time_interval)
+            temp = pd.read_csv(DIR + os.path.sep + file, sep="\t")
+            first["{0}_month".format(time_interval)] = temp["control"]
+    first = first[['ID_REF',
+                         'chr',
+                         'start',
+                         'end',
+                         '1_month',
+                         '6_month',
+                         '10_month',
+                         '15_month']]
+    print(first.head())
+    first.to_csv(DIR + os.path.sep + name, sep="\t", index=False)
+
+
 if __name__ == '__main__':
     print("hi")
-    plot_change(1)
+    # statistic_test()
+    a = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
+    x = 2
+
