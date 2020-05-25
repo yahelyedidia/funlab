@@ -127,31 +127,60 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
     matrix.to_csv(MATRIX, sep="\t") #todo: pay attention
     return matrix
 
+
 def play_with_data(matrix):
     matrix = pd.read_csv(matrix, sep="\t")
     matrix = matrix[matrix['chr'] == 'chr1']
     matrix = matrix.fillna(0)
-    print(matrix.describe())
+    # print(matrix.describe())
     col_name = list(matrix.columns)
-    matrix.plot.scatter(x=0, y="H1_met", c="H1_bind", colormap='viridis')
+    bind_col = [col_name[i] for i in range(5, len(col_name), 2)]
+    met_col = [col_name[i] for i in range(4, len(col_name), 2)]
+    matrix["binding_rate"] = matrix[bind_col].mean(axis=1)
+    matrix["met_rate"] = matrix[met_col].mean(axis=1)
+    # matrix.plot.scatter(x=0, y="met_rate", c="binding_rate", colormap='viridis')
+    # plt.show()
+    # x = 1
+    matrix = matrix[matrix["binding_rate"] > 0.05]
+    # methylation_dist_in_cell(matrix, col_name[4], col_name[5])
+    fig, axes = plt.subplots(4, 5, figsize = (10, 7.5), dpi=100, sharex=True, sharey=True)
+# colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:pink', 'tab:olive']
+    a = axes.flatten()
+    cell_counter = 4
+    axes_counter = 0
+    while cell_counter < len(col_name) - 2:
+        cell = (col_name[cell_counter].split("_"))[0]
+        met = col_name[cell_counter]
+        bind = col_name[cell_counter + 1]
+        binded = matrix.loc[matrix[bind] == 1, met]
+        unbinded = matrix.loc[matrix[bind] == 0, met]
+        a[axes_counter].hist(binded, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the binded site")
+        a[axes_counter].hist(unbinded, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the unbinded")
+        a[axes_counter].set_title(cell)
+        plt.yscale("log")
+        cell_counter = cell_counter + 2
+        axes_counter = axes_counter + 1
+    plt.title("methylation distribution at CTCF binding site in diffrent cells",  y=4.95, x=-2 ,size=16)
+    plt.tight_layout()
+    plt.legend(loc="lower center", bbox_to_anchor=(0, -0.7))
+    # plt.savefig("tests on healty data")
     plt.show()
-    x = 1
 
 if __name__ == '__main__':
-    print("start runing")
-    build_matrix()
-    first = True
-    matrix = None
-    for name, cell in cells_dict.items():
-        if name == "A549":
-            continue
-        print("start ", name)
-        if first:
-            matrix = add_cell(cell[0], cell[1], name, False)
-            first = False
-        else:
-            matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
-        print("end ", name)
-    print("end running")
+    # print("start runing")
+    # # build_matrix()
+    # first = True
+    # matrix = None
+    # for name, cell in cells_dict.items():
+    #     if name == "A549":
+    #         continue
+    #     print("start ", name)
+    #     if first:
+    #         matrix = add_cell(cell[0], cell[1], name, False)
+    #         first = False
+    #     else:
+    #         matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
+    #     print("end ", name)
+    # print("end running")
     # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
-    # play_with_data(MATRIX_FOR_PLAY)
+    play_with_data(MATRIX_FOR_PLAY)

@@ -662,6 +662,7 @@ def create_plot(t_file):
     d = pd.DataFrame({'chr': c, 'genes': x, 'met': ys})
     # sns.scatterplot(data=d, x='genes', y='met', hue='chr')
     print(d.head())
+
     # plt.scatter(x, y,edgecolors=c)
     # plt.xticks(rotation=90)
     # plt.show()
@@ -730,10 +731,10 @@ def remove_duplicate(file, window):
 
 
 if __name__ == '__main__':
-    file_name = str(sys.argv[1])
-    window = int(sys.argv[2])
-    remove_duplicate(file_name, window)
-    print("hi")
-    # t_test(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep="\t"),
-    # pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep="\t"),
-    # pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep="\t"))
+    # file_name = str(sys.argv[1])
+    # window = int(sys.argv[2])
+    # remove_duplicate(file_name, window)
+    # print("hi")
+    t_test(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep="\t"),
+    pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep="\t"),
+    pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep="\t"))
