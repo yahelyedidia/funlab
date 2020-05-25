@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 
-P_VALS = "p_values_all_information.tsv"
+P_VALS = "p_values_all_information_by_orig_vals.tsv"
 
 REP_LIST = ['1_month', '6_month', '10_month', '15_month']
 
@@ -61,7 +61,7 @@ def get_uniq_rate(b, label):
     return np.unique(round, return_counts=True)
 
 
-def plot_change(i, name):
+def plot_change(name):
     data = pd.read_csv(DIR + os.path.sep + name, sep="\t")
     xs_list, ys_list = [], []
     for col in REP_LIST:
@@ -70,34 +70,35 @@ def plot_change(i, name):
         ys_list += list(ys)
         y = data[col]
         plt.hist(y, alpha=0.5, label=col)
-    plt.scatter(xs_list, ys_list, color="black")
+    # plt.scatter(xs_list, ys_list, color="black")
     # plt.plot(xs_list, ys_list, color="black")
 
     plt.xlabel("methylation change rate")
     plt.ylabel("Amount of performances")
-    plt.title("methylation change distribution according to time, replication : {0}".format(i))
+    # plt.title("methylation change distribution according to time, replication : {0}".format(i))
+    plt.title("compare between 1, 6 time point in both replictaions")
     plt.legend()
     # plt.savefig(DIR + os.path.sep + "change_distribution_graph_rep{0}".format(i))
     plt.show()
 
 
 def statistic_test():
-    rep_1 = pd.read_csv(DIR + os.path.sep + ORIG_CHANGE.format(1), sep="\t")
-    rep_2 = pd.read_csv(DIR + os.path.sep + ORIG_CHANGE.format(2), sep="\t")
+    # rep_1 = pd.read_csv(DIR + os.path.sep + ORIG_CHANGE.format(1), sep="\t")
+    # rep_2 = pd.read_csv(DIR + os.path.sep + ORIG_CHANGE.format(2), sep="\t")
     all_vals_1 = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(1), sep="\t")
     all_vals_2 = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(2), sep="\t")
 
-    result = rep_1
+    result = all_vals_1
     result = result.drop(columns=REP_LIST)
     result = result.drop(columns=['control'])
     print("start to fill the data")
     for title in REP_LIST[1:]:
         c_list, a_list, p_vals = [], [], []
-        for i in range(rep_1.shape[0]):
-            first_month_1 = rep_1[REP_LIST[0]][i]
-            first_month_2 = rep_2[REP_LIST[0]][i]
-            control = [rep_1['control'][i], rep_2['control'][i], first_month_1, first_month_2]
-            after = [rep_1[title][i], rep_2[title][i], all_vals_1[title][i] - first_month_1, all_vals_2[title][i] - first_month_2]
+        for i in range(all_vals_1.shape[0]):
+            first_month_1 = all_vals_1[REP_LIST[0]][i]
+            first_month_2 = all_vals_2[REP_LIST[0]][i]
+            control = [all_vals_1['control'][i], all_vals_2['control'][i], first_month_1, first_month_2]
+            after = [all_vals_1[title][i], all_vals_2[title][i], all_vals_1[title][i] - first_month_1, all_vals_2[title][i] - first_month_2]
             t_test = stats.ttest_ind(control, after, equal_var=False)
             c_list.append(control)
             a_list.append(after)
@@ -161,9 +162,19 @@ def compare_control_to_first_col(i, name):
     first.to_csv(DIR + os.path.sep + name, sep="\t", index=False)
 
 
+def compare_at_time():
+    first = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(1), sep="\t")
+    first = first.drop(columns=['control', '10_month', '15_month'])
+    second = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(2), sep="\t")
+    first['10_month'] = second['1_month']
+    first['15_month'] = second['6_month']
+    first.to_csv(DIR + os.path.sep + "compare_6_to_1.tsv", sep="\t", index=False)
+
+
 if __name__ == '__main__':
     print("hi")
-    # statistic_test()
-    a = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
-    x = 2
+    compare_at_time()
+    plot_change("compare_6_to_1.tsv")
+    # a = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
+    # x = 2
 
