@@ -190,7 +190,7 @@ def plot_cov(dir, graph_name, data, file=None):
         plt.savefig(dir + os.path.sep + g)
     else:
         plt.savefig(g)
-    plt.show()
+    # plt.show()
     fig, ax = plt.subplots()
 
     # create small coverage vs change graph
@@ -207,7 +207,7 @@ def plot_cov(dir, graph_name, data, file=None):
         plt.savefig(dir + os.path.sep + graph_name + g)
     else:
         plt.savefig(graph_name + g)
-    plt.show()
+    # plt.show()
 
     # # create scatter graph of change vs coverage
     # change_data = data["change"]
@@ -309,8 +309,8 @@ def make_box_plot(file, title, graph_name, control="no drugs avg", treatment="wi
     chroms = []
     for i in range(1, 25):
         this_chrom = lst[lst["chr"] == i]
-        this_chrom = this_chrom.drop(columns=["chr", "start", "end", "strand", control, treatment, "cov"])
-        this_chrom = this_chrom.drop(this_chrom.columns[0], axis=1)
+        this_chrom = this_chrom.drop(columns=["chr", "start", "end", control, treatment, "cov"])
+        # this_chrom = this_chrom.drop(this_chrom.columns[0], axis=1)
         if not this_chrom.empty:
             chroms.append(np.array(this_chrom))
     plt.boxplot(chroms)
@@ -321,7 +321,7 @@ def make_box_plot(file, title, graph_name, control="no drugs avg", treatment="wi
     # plt.setp(plt, xticks=[c+1 for c in range(23)])
     plt.legend()
     plt.savefig(graph_name)
-    plt.show()
+    # plt.show()
 
 
 def search(before, after, chip_data, window, name="in_progress.csv"):
@@ -433,10 +433,10 @@ def main_imm(i, window):
     print("D O N E")
 
 
-def cut_by_filter(file):
+def cut_by_filter(file, save, thresh):
     data = pd.read_csv(file, sep="\t")
-    data = data[data["cov"] >= 5]
-    data.to_csv("{0}_filtered.csv".format(file), sep="\t", index=False)
+    data = data[data["cov"] >= thresh]
+    data.to_csv("immortalization_result/final_filtered/{0}_filtered.csv".format(save), sep="\t", index=False)
 
 
 def remove_empty_sites(dir):
@@ -700,8 +700,8 @@ def remove_duplicate(file, window):
     if data['chr'][0] < 1:
         i = 1
     counter = 0
-    filtered = np.empty((1, 6))
-    print("#starting")
+    filtered = np.empty((1, 7))
+    print("#starting " +filename)
     while i + counter < len(data.index) - 1:
         size1 = data['end'][i + counter] - data['start'][i + counter]
         size2 = data['end'][i + counter+1] - data['start'][i + counter+1]
@@ -712,30 +712,39 @@ def remove_duplicate(file, window):
             # print("increacing the counter")
         else:
             if counter != 0:
-                before = data['no drugs avg'][i:i+counter].mean()
-                after = data['with drugs avg'][i:i+counter].mean()
-                filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before, after, before - after])])
+                before = data['no drugs avg'][i:i+counter+1].mean()
+                after = data['with drugs avg'][i:i+counter+1].mean()
+                cov = data['cov'][i:i+counter+1].mean()
+                filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before, after, cov, after - before])])
                 i += counter + 1
                 # print("appending new line with counter {0}".format(counter))
                 counter = 0
             else:
-                before = data['no drugs avg']
-                after = data['with drugs avg']
-                change = before - after
-                filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before, after, change])])
+                before = data['no drugs avg'][i]
+                after = data['with drugs avg'][i]
+                cov = data['cov'][i]
+                change = after - before
+                filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before, after, cov, change])])
                 i += 1
                 # print("appending new line with counter 0")
-
-    pd.DataFrame(filtered, columns=['chr', 'start', 'end', 'control', 'after treatment' 'change']).iloc[1:].\
-        to_csv("no_duplicate_{0}.tsv".format(filename), sep="\t", index=False)
+    print("done appending data, start to save")
+    df = pd.DataFrame(filtered, columns=['chr', 'start', 'end', 'control', 'after treatment', 'cov', 'change'])
+    df = df.iloc[1:]
+    print("after cutting the data")
+    df.to_csv("no_duplicate_{0}.tsv".format(filename), sep="\t", index=False)
     print("yay we finished")
 
 
 if __name__ == '__main__':
     file_name = str(sys.argv[1])
-    window = int(sys.argv[2])
-    remove_duplicate(file_name, window)
-    print("hi")
+    thresh = int(sys.argv[2])
+    filename_w_ext = os.path.basename(file_name)
+    filename, file_extension = os.path.splitext(filename_w_ext)
+    cut_by_filter(file_name, filename, thresh)
+    # remove_duplicate(file_name, window)
+    # plot_cov("", "uniq_" + filename, pd.read_csv("no_duplicate_{0}.tsv".format(filename), sep="\t"))
+    # make_box_plot("no_duplicate_{0}.tsv".format(filename), "changes by chroms in {0}".format(filename), "box_plot_"+filename, "control", "after treatment")
+    # print("done "+filename)
     # t_test(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep="\t"),
     # pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep="\t"),
     # pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep="\t"))
