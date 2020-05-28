@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+import scipy.stats as st
 from cells_dict import *
 
 #genome build 38
@@ -127,6 +128,50 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
     matrix.to_csv(MATRIX, sep="\t") #todo: pay attention
     return matrix
 
+def mann_witney_and_fun(matrix):
+    matrix = pd.read_csv(matrix, sep="\t")
+    matrix = matrix[matrix['chr'] == 'chr1']
+    matrix = matrix.fillna(0)
+    col_name = list(matrix.columns)
+    bind_col = [col_name[i] for i in range(5, len(col_name), 2)]
+    met_col = [col_name[i] for i in range(4, len(col_name), 2)]
+    matrix["binding_rate"] = matrix[bind_col].mean(axis=1)
+    matrix["met_rate"] = matrix[met_col].mean(axis=1)
+    matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
+    binded_avg = []
+    unbinded_avg = []
+    p_val = []
+    counter = 0
+    for site in matrix.iterrows():
+        binded = []
+        unbinded = []
+        for cell in range(len(bind_col)):
+            if site[1][bind_col[cell]] == 1:
+                binded.append(float(site[1][met_col[cell]]))
+            else:
+                unbinded.append(float(site[1][met_col[cell]]))
+        if (len(unbinded) < 3 or site[1]["met_rate"] == 0):
+            print("in line {0}".format(counter))
+            p_val.append(None)
+        else:
+
+            p_val.append(st.mannwhitneyu(binded, unbinded).pvalue)
+        binded_avg.append((sum(binded))/len(binded))
+        if len(unbinded) != 0:
+            unbinded_avg.append((sum(unbinded))/len(unbinded))
+        else:
+            unbinded_avg.append(0)
+        counter += 1
+    matrix["binded_avg"] = binded_avg
+    matrix["unbinded_avg"] = unbinded_avg
+    matrix["p_val"] = p_val
+    matrix.plot.scatter(x="binded_avg", y="unbinded_avg", c="p_val", colormap='viridis')
+    plt.show()
+    sg_matrix = matrix[matrix["p_val"] <= 0.1]
+    sg_matrix.to_csv("significant_sites_chr1.tsv", sep="\t")
+
+
+
 
 def play_with_data(matrix):
     matrix = pd.read_csv(matrix, sep="\t")
@@ -141,13 +186,22 @@ def play_with_data(matrix):
     # matrix.plot.scatter(x=0, y="met_rate", c="binding_rate", colormap='viridis')
     # plt.show()
     # x = 1
-    matrix = matrix[matrix["binding_rate"] > 0.05]
+    matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
+    # is_it_the_same_distribution(matrix, met_col, ")
+    all_cells = []
+    for i in range(len(met_col)):
+        all_cells.append(matrix[met_col[i]].tolist())
+    s, p_val = st.kruskal(*zip(*all_cells))
+    print("all cell binding and unbinding")
+    print("p value is {0}".format(p_val))
     # methylation_dist_in_cell(matrix, col_name[4], col_name[5])
     fig, axes = plt.subplots(4, 5, figsize = (10, 7.5), dpi=100, sharex=True, sharey=True)
 # colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:pink', 'tab:olive']
     a = axes.flatten()
     cell_counter = 4
     axes_counter = 0
+    bind_data = []
+    unbind_data = []
     while cell_counter < len(col_name) - 2:
         cell = (col_name[cell_counter].split("_"))[0]
         met = col_name[cell_counter]
@@ -160,27 +214,55 @@ def play_with_data(matrix):
         plt.yscale("log")
         cell_counter = cell_counter + 2
         axes_counter = axes_counter + 1
+        bind_data.append(binded.tolist())
+        unbind_data.append(unbinded.tolist())
     plt.title("methylation distribution at CTCF binding site in diffrent cells",  y=4.95, x=-2 ,size=16)
     plt.tight_layout()
     plt.legend(loc="lower center", bbox_to_anchor=(0, -0.7))
     # plt.savefig("tests on healty data")
     plt.show()
+    s, p_val = st.kruskal(*zip(*bind_data))
+    print("all cell binding data")
+    print("p value is {0}".format(p_val))
+    s, p_val = st.kruskal(*zip(*unbind_data))
+    print("all cell unbinding data")
+    print("p value is {0}".format(p_val))
+
+
+
+def compare_significant_sites(compare_to, num, significant_site):
+    comp = pd.read_csv(compare_to, sep="\t")
+    comp = comp[(comp["chr"] == 1) & (comp["p_values_{0}_month".format(num)] <= 0.1)]
+    sg = pd.read_csv(significant_site, sep="\t")
+    for chr, start, end in zip(sg[CHR], sg[START], sg[END]):
+        s = ((((comp['start'] <= start) & (end <= comp['end'])) |
+                                             ((start <= comp['start']) & (comp['end'] <= end)) |
+                                             ((comp['start'] - THRESHOLD <= start) & (end <= comp['end']  + THRESHOLD)) )).any()
+        if s:
+            print("chr: {0}, start: {1}, end: {2}".format(chr, start, end))
+
 
 if __name__ == '__main__':
-    print("start runing")
-    # build_matrix()
-    first = True
-    matrix = None
-    for name, cell in cells_dict.items():
-        if name == "A549":
-            continue
-        print("start ", name)
-        if first:
-            matrix = add_cell(cell[0], cell[1], name, False)
-            first = False
-        else:
-            matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
-        print("end ", name)
-    print("end running")
-    add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
-    # play_with_data(MATRIX_FOR_PLAY)
+    # print("start runing")
+    # # build_matrix()
+    # first = True
+    # matrix = None
+    # for name, cell in cells_dict.items():
+    #     if name == "A549":
+    #         continue
+    #     print("start ", name)
+    #     if first:
+    #         matrix = add_cell(cell[0], cell[1], name, False)
+    #         first = False
+    #     else:
+    #         matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
+    #     print("end ", name)
+    # print("end running")
+    # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
+    play_with_data(MATRIX_FOR_PLAY)
+    # mann_witney_and_fun(MATRIX_FOR_PLAY)
+    # numbers = [6, 15, 10]
+    # for num in numbers:
+    #     print("for {0} month".format(num))
+    #     compare_significant_sites("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p_values_all_information_by_orig_vals.tsv", num, "significant_sites_chr1.tsv")
+
