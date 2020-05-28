@@ -3,6 +3,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
+from scipy.spatial.distance import squareform
+from scipy.spatial.distance import pdist
+
+
 
 
 P_VALS = "p_values_all_information_by_orig_vals.tsv"
@@ -171,9 +175,28 @@ def compare_at_time():
     first.to_csv(DIR + os.path.sep + "compare_6_to_1.tsv", sep="\t", index=False)
 
 
-def cov_1(i):
-    data = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(i), sep="\t")
+def cov_1(rep):
+    data = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(rep), sep="\t")
     data = data.drop(columns=['ID_REF', 'chr', 'start', 'end'])
+    pairwise = pd.DataFrame(squareform(pdist(data.loc[data.index])), columns=data.index, index=data.index)
+    print("after create file")
+    pairwise.to_csv("correlation csc.tsv", sep="\t")
+    plt.matshow(pairwise)
+    plt.savefig("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/correlation heat map by matshow")
+    plt.close()
+    plt.pcolor(pairwise)
+    plt.savefig("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/correlation heat map by pcolor")
+    plt.show()
+
+
+
+
+
+def mean_score():
+    pass
+
+def divide_score():
+    pass
 
 
 if __name__ == '__main__':
