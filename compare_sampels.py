@@ -171,10 +171,16 @@ def compare_at_time():
     first.to_csv(DIR + os.path.sep + "compare_6_to_1.tsv", sep="\t", index=False)
 
 
+def cov_1(i):
+    data = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(i), sep="\t")
+    data = data.drop(columns=['ID_REF', 'chr', 'start', 'end'])
+
+
 if __name__ == '__main__':
     print("hi")
-    compare_at_time()
-    plot_change("compare_6_to_1.tsv")
+    cov_1(1)
+    # compare_at_time()
+    # plot_change("compare_6_to_1.tsv")
     # a = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
     # x = 2
 

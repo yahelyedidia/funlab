@@ -702,21 +702,21 @@ def remove_duplicate(file, window):
     counter = 0
     filtered = np.empty((1, 6))
     print("#starting")
-    while i + counter < len(data.index) - 1:  # todo -1?
+    while i + counter < len(data.index) - 1:
         size1 = data['end'][i + counter] - data['start'][i + counter]
         size2 = data['end'][i + counter+1] - data['start'][i + counter+1]
         _overlap = overlap(data['start'][i + counter], data['end'][i + counter], data['start'][i + counter + 1], data['end'][i + counter + 1])
-        print("min size {0} - overlap {1} for i = {2}, counter = {3}".format(min(size1, size2), _overlap, i, counter))
+        # print("min size {0} - overlap {1} for i = {2}, counter = {3}".format(min(size1, size2), _overlap, i, counter))
         if min(size1, size2) - _overlap <= window:
             counter += 1
-            print("increacing the counter")
+            # print("increacing the counter")
         else:
             if counter != 0:
                 before = data['no drugs avg'][i:i+counter].mean()
                 after = data['with drugs avg'][i:i+counter].mean()
                 filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before, after, before - after])])
                 i += counter + 1
-                print("appending new line with counter {0}".format(counter))
+                # print("appending new line with counter {0}".format(counter))
                 counter = 0
             else:
                 before = data['no drugs avg']
@@ -724,7 +724,7 @@ def remove_duplicate(file, window):
                 change = before - after
                 filtered = np.vstack([filtered, np.array([data['chr'][i], data['start'][i], data['end'][i], before, after, change])])
                 i += 1
-                print("appending new line with counter 0")
+                # print("appending new line with counter 0")
 
     pd.DataFrame(filtered, columns=['chr', 'start', 'end', 'control', 'after treatment' 'change']).iloc[1:].\
         to_csv("no_duplicate_{0}.tsv".format(filename), sep="\t", index=False)
@@ -732,10 +732,10 @@ def remove_duplicate(file, window):
 
 
 if __name__ == '__main__':
-    # file_name = str(sys.argv[1])
-    # window = int(sys.argv[2])
-    # remove_duplicate(file_name, window)
-    # print("hi")
-    t_test(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep="\t"),
-    pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep="\t"),
-    pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep="\t"))
+    file_name = str(sys.argv[1])
+    window = int(sys.argv[2])
+    remove_duplicate(file_name, window)
+    print("hi")
+    # t_test(pd.read_csv("immortalization_result/by_window/imm_result_b1_w_500_filtered.csv", sep="\t"),
+    # pd.read_csv("immortalization_result/by_window/imm_result_b2_w_500_filtered.csv", sep="\t"),
+    # pd.read_csv("immortalization_result/by_window/imm_result_b3_w_500_filtered.csv", sep="\t"))
