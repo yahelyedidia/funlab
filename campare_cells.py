@@ -186,6 +186,7 @@ def play_with_data(matrix):
     # matrix.plot.scatter(x=0, y="met_rate", c="binding_rate", colormap='viridis')
     # plt.show()
     # x = 1
+    # x = 1
     matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
     # is_it_the_same_distribution(matrix, met_col, ")
     all_cells = []
@@ -260,7 +261,7 @@ if __name__ == '__main__':
     # print("end running")
     # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
     play_with_data(MATRIX_FOR_PLAY)
-    # mann_witney_and_fun(MATRIX_FOR_PLAY)
+    mann_witney_and_fun(MATRIX_FOR_PLAY)
     # numbers = [6, 15, 10]
     # for num in numbers:
     #     print("for {0} month".format(num))

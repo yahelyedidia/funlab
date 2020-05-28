@@ -195,15 +195,40 @@ def cov_1(rep):
 def mean_score():
     pass
 
-def divide_score():
-    pass
+def divide_score(rep):
+    data = pd.read_csv(DIR + os.sep + CHANGES_REP.format(rep), sep="\t")
+    index = data.iloc[:, : 4]
+    data = data.drop(columns=['ID_REF', 'chr', 'start', 'end'])
+    x=1
+    n_rows = data.shape[0]
+    col_name = list(data.columns)
+    new_df = np.empty((1, 5))
+    for row in data.iterrows():
+        lst = []
+        for col in col_name:
+            s = data[col][data[col] < row[1][col]].count()
+            if s != 0:
+                p = s / n_rows
+                lst.append(1/(p))
+            else:
+                lst.append(0)
+        new_df = np.vstack([new_df, np.array(lst)])
+    new_df = pd.DataFrame(new_df, columns=col_name)
+    new_df = new_df.iloc[1:]
+    new_df["sum"] = new_df[col_name].sum(axis=1)
+    data = pd.concat([index, new_df], axis=1, ignore_index=True)
+    q_df = new_df.quantile(.9, axis=1)
+    x = 1
+
+
+
 
 
 if __name__ == '__main__':
     print("hi")
-    cov_1(1)
+    # cov_1(1)
     # compare_at_time()
     # plot_change("compare_6_to_1.tsv")
     # a = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
     # x = 2
-
+    divide_score(1)
