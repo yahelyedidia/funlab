@@ -189,19 +189,21 @@ def cov_1(rep):
     plt.show()
 
 
-
-
-
 def mean_score():
-    pass
+    data = pd.read_csv("correlation csc.tsv", sep="\t")
+    plt.pcolor(data)
+    plt.show()
+
 
 def divide_score():
     pass
 
 
+
+
 if __name__ == '__main__':
     print("hi")
-    cov_1(1)
+    mean_score()
     # compare_at_time()
     # plot_change("compare_6_to_1.tsv")
     # a = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
