@@ -6,8 +6,7 @@ from scipy import stats
 from scipy.spatial.distance import squareform
 from scipy.spatial.distance import pdist
 
-
-
+OUTLIERS = "outlier_for_csc_rep{0}.tsv"
 
 P_VALS = "p_values_all_information_by_orig_vals.tsv"
 
@@ -189,9 +188,6 @@ def cov_1(rep):
     plt.show()
 
 
-
-
-
 def mean_score():
     data = pd.read_csv("correlation csc.tsv", sep="\t")
     plt.pcolor(data)
@@ -199,37 +195,44 @@ def mean_score():
 
 
 def divide_score(rep):
-    data = pd.read_csv(DIR + os.sep + CHANGES_REP.format(rep), sep="\t")
-    index = data.iloc[:, : 4]
-    data = data.drop(columns=['ID_REF', 'chr', 'start', 'end'])
+    d = pd.read_csv(DIR + os.sep + CHANGES_REP.format(rep), sep="\t")
+    index = d.iloc[:, : 5]
+    data = d.drop(columns=['ID_REF', 'chr', 'start', 'end', 'control'])  # todo : also control ?
     x=1
     n_rows = data.shape[0]
     col_name = list(data.columns)
-    new_df = np.empty((1, 5))
+    new_df = np.empty((1, 4))
     for row in data.iterrows():
         lst = []
         for col in col_name:
             s = data[col][data[col] < row[1][col]].count()
-            if s != 0:
-                p = s / n_rows
-                lst.append(1/(p))
-            else:
-                lst.append(0)
-        new_df = np.vstack([new_df, np.array(lst)])
+            p = s / (n_rows+1)
+            if p != 1:
+                # p = s / n_rows
+                lst.append(1/(1 - p))
+            # else:
+            #     lst.append(0)
+        new_df = np.vstack((new_df, np.array(lst)))
     new_df = pd.DataFrame(new_df, columns=col_name)
     new_df = new_df.iloc[1:]
-    new_df["sum"] = new_df[col_name].sum(axis=1)
-    data = pd.concat([index, new_df], axis=1, ignore_index=True)
-    q_df = new_df.quantile(.9, axis=1)
+    new_df["sum"] = new_df[col_name].sum(axis=1)  # todo : muliplty
+    # new_df = new_df.reset_index(drop=True, inplace=True)
+    # data = pd.concat([index, new_df], axis=1, ignore_index=True)
+    # q_df = new_df.quantile(.9, axis=1)
+    a = new_df['sum'].quantile(0.99)
+    print(a)
+    inx_lst = new_df[new_df['sum'] >= a].index.tolist()
+    final_data = d[d.index.isin(inx_lst)]
+    final_data.to_csv(DIR + os.path.sep + OUTLIERS.format(rep), sep="\t", index=False)
     x = 1
-
-
-
 
 
 if __name__ == '__main__':
     print("hi")
-    cov_1(1)
+    # todo : saving all the data !
+    divide_score(1)
+    # x = pd.read_csv(DIR + os.path.sep + OUTLIERS.format(1), sep="\t")
+    y = 2
     # compare_at_time()
     # plot_change("compare_6_to_1.tsv")
     # a = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")

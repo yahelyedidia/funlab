@@ -433,10 +433,12 @@ def main_imm(i, window):
     print("D O N E")
 
 
-def cut_by_filter(file, save, thresh):
+def cut_by_filter(file, thresh):
     data = pd.read_csv(file, sep="\t")
+    if data['chr'][0] < 1:
+        data = data.iloc[1:]
     data = data[data["cov"] >= thresh]
-    data.to_csv("immortalization_result/final_filtered/{0}_filtered.csv".format(save), sep="\t", index=False)
+    data.to_csv("plass_new/filtered/no_treatment_vs_with_dac_and_hdac.tsv", sep="\t", index=False)
 
 
 def remove_empty_sites(dir):
@@ -607,7 +609,10 @@ def overlap(start1, end1, start2, end2):
     """how much does the range (start1, end1) overlap with (start2, end2)"""
     return max(max((end2-start1), 0) - max((end2-end1), 0) - max((start2-start1), 0), 0)
 
-def t_test(b1, b2, b3):
+def t_test(w):
+    b1 = pd.read_csv("immortalization_result/final_filtered/no_duplicate_imm_result_b1_w_{0}_filtered.csv".format(w), sep="\t")
+    b2 = pd.read_csv("immortalization_result/final_filtered/no_duplicate_imm_result_b2_w_{0}_filtered.csv".format(w), sep="\t")
+    b3 = pd.read_csv("immortalization_result/final_filtered/no_duplicate_imm_result_b3_w_{0}_filtered.csv".format(w), sep="\t")
     b1 = b1.drop_duplicates(['chr', 'start', 'end'], keep='last')
     b2 = b2.drop_duplicates(['chr', 'start', 'end'], keep='last')
     b3 = b3.drop_duplicates(['chr', 'start', 'end'], keep='last')
@@ -618,7 +623,7 @@ def t_test(b1, b2, b3):
     all = pd.concat([all, b3], ignore_index=True)
     all = all.sort_values(by=['chr', 'start', 'end', 'source'])
     all = all.reset_index(drop=True)
-    all = all.drop(columns=['Unnamed: 0', 'strand'])
+    #all = all.drop(columns=['Unnamed: 0'])
     i = 0
     sites = np.empty((1, 9))
     print("#starting")
@@ -627,8 +632,8 @@ def t_test(b1, b2, b3):
             if all['start'][i] - 50 <= all['start'][i+1] <= all['start'][i] + 50 and all['end'][i] - 50 <= all['end'][i+1] <= all['end'][i] + 50:
                 if all['source'][i] != all['source'][i+2] and all['source'][i+1] != all['source'][i+2]:
                     if all['start'][i] - 50 <= all['start'][i+2] <= all['start'][i] + 50 and all['end'][i] - 50 <= all['end'][i+2] <= all['end'][i] + 50:
-                        before = all['no drugs avg'][i:i+3]
-                        after = all['with drugs avg'][i:i+3]
+                        before = all['control'][i:i+3]
+                        after = all['after treatment'][i:i+3]
                         ber_val = before.mean()
                         after_val = after.mean()
                         t_test = stats.ttest_ind(before, after, equal_var=False)
@@ -641,8 +646,10 @@ def t_test(b1, b2, b3):
                         continue
         i += 1
 
-    pd.DataFrame(sites, columns=['chr', 'start', 'end', 'p value', 'metylation change', 'control avg', 'treat avg',
-                                 'control', 'after treatment']).to_csv("t_test_by_site_with_population_all_w_1000.csv", sep="\t")
+    temp = pd.DataFrame(sites, columns=['chr', 'start', 'end', 'p value', 'metylation change', 'control avg', 'treat avg',
+                                 'control', 'after treatment'])
+    temp = temp.iloc[1:]
+    temp.to_csv("immortalization_result/final_filtered/t_test_imm_w_{0}_no_duplicat_1.tsv".format(w), sep="\t",index=False)
     # pd.DataFrame(sites, columns=['chr', 'start', 'p value']).to_csv("gal_and_yahel_having_fun.csv", sep="\t")
     print(sites.shape)
     print("yay we finished")
@@ -736,11 +743,17 @@ def remove_duplicate(file, window):
 
 
 if __name__ == '__main__':
-    file_name = str(sys.argv[1])
-    thresh = int(sys.argv[2])
-    filename_w_ext = os.path.basename(file_name)
-    filename, file_extension = os.path.splitext(filename_w_ext)
-    cut_by_filter(file_name, filename, thresh)
+    cut_by_filter("plass_new/no_treatment_vs_with_dac_and_hdac.csv", 6)
+    print("yay")
+    # t_test(500)
+    # t_test(1000)
+    # a = pd.read_csv("immortalization_result/final_filtered/t_test_imm_w_500_noduplicat.tsv", sep="\t")
+    # x = 2
+    #file_name = str(sys.argv[1])
+    #thresh = int(sys.argv[2])
+    #filename_w_ext = os.path.basename(file_name)
+    #filename, file_extension = os.path.splitext(filename_w_ext)
+   # cut_by_filter(file_name, filename, thresh)
     # remove_duplicate(file_name, window)
     # plot_cov("", "uniq_" + filename, pd.read_csv("no_duplicate_{0}.tsv".format(filename), sep="\t"))
     # make_box_plot("no_duplicate_{0}.tsv".format(filename), "changes by chroms in {0}".format(filename), "box_plot_"+filename, "control", "after treatment")
