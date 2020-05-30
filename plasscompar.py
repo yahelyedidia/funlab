@@ -605,9 +605,11 @@ def get_uniq_rate(b):
     round = np.around(np.array(b['change']), 2)
     return np.unique(round, return_counts=True)
 
+
 def overlap(start1, end1, start2, end2):
     """how much does the range (start1, end1) overlap with (start2, end2)"""
     return max(max((end2-start1), 0) - max((end2-end1), 0) - max((start2-start1), 0), 0)
+
 
 def t_test(w):
     b1 = pd.read_csv("immortalization_result/final_filtered/no_duplicate_imm_result_b1_w_{0}_filtered.csv".format(w), sep="\t")
