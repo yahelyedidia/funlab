@@ -244,21 +244,21 @@ def compare_significant_sites(compare_to, num, significant_site):
 
 
 if __name__ == '__main__':
-    # print("start runing")
-    # # build_matrix()
-    # first = True
-    # matrix = None
-    # for name, cell in cells_dict.items():
-    #     if name == "A549":
-    #         continue
-    #     print("start ", name)
-    #     if first:
-    #         matrix = add_cell(cell[0], cell[1], name, False)
-    #         first = False
-    #     else:
-    #         matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
-    #     print("end ", name)
-    # print("end running")
+    print("start runing")
+    # build_matrix()
+    first = True
+    matrix = None
+    for name, cell in cells_dict.items():
+        if name == "A549":
+            continue
+        print("start ", name)
+        if first:
+            matrix = add_cell(cell[0], cell[1], name, False)
+            first = False
+        else:
+            matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
+        print("end ", name)
+    print("end running")
     # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
     play_with_data(MATRIX_FOR_PLAY)
     mann_witney_and_fun(MATRIX_FOR_PLAY)
