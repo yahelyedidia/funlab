@@ -8,8 +8,12 @@ from scipy.spatial.distance import pdist
 # "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p_values_all_information_by_orig_vals.tsv"
 ORIGINAL_HEATMAP = "original_outliers_by_heatmap.tsv"
 
-OUTLIERS_CHANGE = "outlier_for_csc_by_changes_rep{0}.tsv"
-OUTLIERS_ORIG = "outlier_for_csc_original_rep{0}.tsv"
+OUTLIERS_CHANGE_UP = "outlier_up_for_csc_by_changes_rep{0}.tsv"
+OUTLIERS_CHANGE_DOWN = "outlier_down_for_csc_by_changes_rep{0}.tsv"
+
+OUTLIERS_ORIG_UP = "outlier_up_for_csc_original_rep{0}.tsv"
+OUTLIERS_ORIG_DOWN = "outlier_down_for_csc_original_rep{0}.tsv"
+
 
 P_VALS = "p_values_all_information_by_orig_vals.tsv"
 
@@ -234,16 +238,27 @@ def divide_score(rep):
     # new_df = new_df.reset_index(drop=True, inplace=True)
     # data = pd.concat([index, new_df], axis=1, ignore_index=True)
     # q_df = new_df.quantile(.9, axis=1)
-    a = new_df['sum'].quantile(0.9)
+    a = new_df['sum'].quantile(0.95)
+    b = new_df['sum'].quantile(0.05)
+    print("low bond = " + str(b))
     print("quantile = " + str(a) + "\nstart saving files")
+    inx_down_lst = new_df[new_df['sum'] <= b].index.tolist()
+    inx_up_lst = new_df[new_df['sum'] >= a].index.tolist()
+
     # saving changes outliers
-    inx_lst = new_df[new_df['sum'] >= a].index.tolist()
-    final_data = d[d.index.isin(inx_lst)]
-    final_data.to_csv(DIR + os.path.sep + OUTLIERS_CHANGE.format(rep), sep="\t", index=False)
+    final_up_change = d[d.index.isin(inx_up_lst)]
+    final_up_change.to_csv(DIR + os.path.sep + OUTLIERS_CHANGE_UP.format(rep), sep="\t", index=False)
+    final_down_change = d[d.index.isin(inx_down_lst)]
+    final_down_change.to_csv(DIR + os.path.sep + OUTLIERS_CHANGE_DOWN.format(rep), sep="\t", index=False)
     # saving original outliers as well
     orig_data = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(rep), sep="\t")
-    filtered_orig = orig_data[orig_data.index.isin(inx_lst)]
-    filtered_orig.to_csv(DIR + os.path.sep + OUTLIERS_ORIG.format(rep), sep="\t", index=False)
+    final_up_orig = orig_data[orig_data.index.isin(inx_up_lst)]
+    final_up_orig.to_csv(DIR + os.path.sep + OUTLIERS_ORIG_UP.format(rep), sep="\t", index=False)
+    final_up_orig.to_csv("test_csc_heatmap_up_2.tsv", sep="\t", index=False)
+
+    final_down_orig = orig_data[orig_data.index.isin(inx_down_lst)]
+    final_down_orig.to_csv(DIR + os.path.sep + OUTLIERS_ORIG_DOWN.format(rep), sep="\t", index=False)
+    final_down_orig.to_csv("test_csc_heatmap_down_2.tsv", sep="\t", index=False)
     print("done saving")
 
 
@@ -258,13 +273,16 @@ def fun_with_flags():
     plt.bar(*zip(*dict.items()))
     plt.show()
 
+
 if __name__ == '__main__':
     print("hi")
     # plot_change(CHANGES_REP, 2)
-    # divide_score(2)
-    # mean_score(1)
-    fun_with_flags()
-    # x = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
+    divide_score(2)
+    # mean_score(2)
+    # fun_with_flags()
+    x = pd.read_csv(DIR + os.path.sep + OUTLIERS_ORIG_DOWN.format(2), sep="\t")
+    y = pd.read_csv(DIR + os.path.sep + OUTLIERS_ORIG_UP.format(2), sep="\t")
+    # x.to_csv("test_csc_heatmap_down_2.tsv", sep="\t", index=False)
     y = 2
     # compare_at_time()
     # plot_change("compare_6_to_1.tsv")

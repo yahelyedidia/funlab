@@ -638,7 +638,7 @@ def t_test(w):
                         after = all['after treatment'][i:i+3]
                         ber_val = before.mean()
                         after_val = after.mean()
-                        t_test = stats.ttest_ind(before, after, equal_var=False)
+                        t_test = stats.ttest_ind(before, after)
                         # if t_test.pvalue <= 0.05:
                         sites = np.vstack([sites, np.array([all['chr'][i], all['start'][i], all['end'][i], t_test.pvalue,
                                                                 ber_val - after_val,ber_val, after_val,  np.array(before), np.array(after)])])
@@ -744,11 +744,12 @@ def remove_duplicate(file, window):
     print("yay we finished")
 
 
+
 if __name__ == '__main__':
-    cut_by_filter("plass_new/no_treatment_vs_with_dac_and_hdac.csv", 6)
-    print("yay")
-    # t_test(500)
-    # t_test(1000)
+    # cut_by_filter("plass_new/no_treatment_vs_with_dac_and_hdac.csv", 6)
+    # print("yay")
+    t_test(500)
+    t_test(1000)
     # a = pd.read_csv("immortalization_result/final_filtered/t_test_imm_w_500_noduplicat.tsv", sep="\t")
     # x = 2
     #file_name = str(sys.argv[1])

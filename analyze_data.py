@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from itertools import islice
+import sys
 import os
 
 GENES_B38 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Homo_sapiens.GRCh38.98.gtf.gz"
@@ -309,9 +310,11 @@ def get_genes(file, flag_38=False):
         check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_500")
 
 
-
 if __name__ == '__main__':
-    get_genes("corrected_t_test/t_test_by_site_with_population_all_w_1000.csv")
+    file = sys.argv[1]
+    print(file)
+    get_genes(file)
+    print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
 
