@@ -79,7 +79,7 @@ def plot_change(name, i):
         # xs_list += list(xs)
         # ys_list += list(ys)
         y = data[col]
-        plt.hist(y, alpha=0.5, label=col, bins=100)
+        plt.hist(y, alpha=0.5, label=col, bins=50)
     # plt.scatter(xs_list, ys_list, color="black")
     # plt.plot(xs_list, ys_list, color="black")
 
@@ -265,7 +265,7 @@ def divide_score(rep):
 def fun_with_flags():
     dict = {}
     x = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
-    a = x[x['p_values_15_month'] <= 0.05]
+    a = x[x['p_values_6_month'] <= 0.05]
     for i in range(1, 23):
         dict[i] = a[a['chr'] == i].shape[0]
     # dict["X"] = a[a['chr'] == "X"].shape[0]
@@ -274,15 +274,26 @@ def fun_with_flags():
     plt.show()
 
 
+def plot_sgnif_ratio():
+    dict = {}
+    x = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
+    all_len = x.shape[1]
+    for i in [6, 10, 15]:
+        a = x[x['p_values_{0}_month'.format(i)] <= 0.05].shape[0]
+        dict[i] = a / all_len
+    plt.bar(*zip(*dict.items()))
+    plt.show()
+
+
 if __name__ == '__main__':
     print("hi")
-    # plot_change(CHANGES_REP, 2)
-    divide_score(2)
+    plot_sgnif_ratio()
+    # plot_change(CHANGES_REP, 1)
+    # divide_score(2)
     # mean_score(2)
     # fun_with_flags()
-    x = pd.read_csv(DIR + os.path.sep + OUTLIERS_ORIG_DOWN.format(2), sep="\t")
-    y = pd.read_csv(DIR + os.path.sep + OUTLIERS_ORIG_UP.format(2), sep="\t")
-    # x.to_csv("test_csc_heatmap_down_2.tsv", sep="\t", index=False)
+    # x = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(2), sep="\t")
+    # x.to_csv("all_2.tsv", sep="\t", index=False)
     y = 2
     # compare_at_time()
     # plot_change("compare_6_to_1.tsv")
