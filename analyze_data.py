@@ -3,6 +3,8 @@ import pandas as pd
 from itertools import islice
 import sys
 import os
+import matplotlib.pyplot as plt
+import matplotlib.cm
 
 GENES_B38 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Homo_sapiens.GRCh38.98.gtf.gz"
 
@@ -181,13 +183,13 @@ def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False,):
     data_sites['close_genes'] = add_gene
     print()
     if csc:
-        data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name.format(i)), sep="\t")
+        data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name.format(i)), sep="\t", index=False)
         merge_genes_data = pd.concat(gene_data)
-        merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name.format(i)), sep="\t")
+        merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name.format(i)), sep="\t", index=False)
     else:
-        data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name), sep="\t")
+        data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name), sep="\t", index=False)
         merge_genes_data = pd.concat(gene_data)
-        merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name), sep="\t")
+        merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name), sep="\t", index=False)
 
     return gene_dict
 
@@ -331,11 +333,69 @@ def get_genes(file, window=500, flag_38=False, csc=False):
             check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_{0}".format(window))
 
 
+def covnert_list_to_avg(data, col1, col2):
+    control, treat = [], []
+    for row in data.iterrows():
+        temp = row[1][col1].split(",")
+        s = [x for x in temp if x]
+        c = [float(s[0][1:]), float(s[1]), float(s[2]), float(s[3][:len(s[3])-1])]
+        temp = row[1][col2].split(",")
+        s = [x for x in temp if x]
+        t = [float(s[0][1:]), float(s[1]), float(s[2]), float(s[3][:len(s[3]) - 1])]
+        control.append(sum(c) / len(c))
+        treat.append(sum(t) / len(t))
+    return control, treat
+
+
+def plot_sgnificant_genes(file, csc=False):
+    colors = [plt.cm.tab10(i / float(24)) for i in range(25)]
+    data = pd.read_csv(file, sep="\t")
+    data = data.drop(columns=["Unnamed: 0"])
+    no_name = "['no_name_found']"
+    data = data[data['close_genes'] != '[]']
+    data = data[data['close_genes'] != no_name]
+    print(data.head())
+    if csc:
+        control_label = 'controls_{0}_month'.format(csc)
+        after_label = 'afters{0}_month'.format(csc)
+        control, after = covnert_list_to_avg(data, control_label, after_label)
+        data['control'] = control
+        data['treatment'] = after
+        data['metylation change'] = data['treatment'] - data['control']
+
+    x, ys, c = [], [], []
+    for row in data.iterrows():
+        gene = row[1]['close_genes'].split("'")
+        for g in gene:
+            if g != '[' and g != ']' and g != 'no_name_found' and g != ', ':
+                x.append(g)
+                ys.append(row[1]['metylation change'])
+                c.append(row[1]['chr'])
+    d = pd.DataFrame({'chr': c, 'genes': x, 'met': ys})
+    print(d.head())
+    # d.to_csv("data_to_plot_gene_6_csc.tsv", sep="\t", index=False)
+    for i in range(1, 24):
+        temp = d[d['chr'] == i]
+        plt.scatter(x='genes', y='met', data=temp,
+                    s=20, c=colors[i], label="chr " + str(i))
+    # i = 23
+    # temp = data[data['chr'] == "X"]
+    # plt.scatter(x='genes', y='met', data=temp,
+    #             s=20, c=colors[i], label="chr " + str(i))
+    # i = 24
+    # temp = data[data['chr'] == "Y"]
+    # plt.scatter(x='genes', y='met', data=temp,
+    #             s=20, c=colors[i], label="chr " + str(i))
+    plt.title(file)
+    plt.show()
+
+
 if __name__ == '__main__':
-    file = sys.argv[1]
+    # file = sys.argv[1]
     # window = sys.argv[2]
-    print(file)
-    get_genes(file, csc=True)
+    # print(file)
+    plot_sgnificant_genes("genes/genes_close_to_sites_t_test_w_1000_filter_10000.csv")
+    # get_genes(file, csc=True)
     print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
