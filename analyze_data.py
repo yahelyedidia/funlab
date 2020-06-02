@@ -1,17 +1,21 @@
 import numpy as np
 import pandas as pd
 from itertools import islice
+import sys
 import os
 
 GENES_B38 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Homo_sapiens.GRCh38.98.gtf.gz"
 
 GENES_B37 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/genes/hg19.knownGene.gtf"
 
+CSC = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p_values_all_information_by_orig_vals.tsv"
+
 TAB = "\t"
 
 BEDGRAPH_LINE_FORMAT = "s{i}\tchr{chr_name}\t{start}\t{number}\n"
 
 COLUMNS = 1
+REP_LIST = ['6', '10', '15']
 
 """number of cromosomes"""
 NUM_OF_CHR = 24
@@ -130,7 +134,7 @@ def create_gene_data(flag_38):
         chroms.append(chr_data)
     if flag_38:
         chr_x = 'X'
-        chr_y = 'y'  # todo : is it writen like that ?
+        chr_y = 'y'
     else:
         chr_x = 'chrX'
         chr_y = 'chrY'
@@ -141,7 +145,7 @@ def create_gene_data(flag_38):
     return chroms
 
 
-def find_close_genes(filter, gene_data, site_file, name):
+def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False,):
     """
     A function that finds which genes are close to the CTCF biding sites and count to how
     many site the gene is close.
@@ -153,6 +157,12 @@ def find_close_genes(filter, gene_data, site_file, name):
     """
     gene_dict = {}
     data_sites = pd.read_csv(site_file, sep="\t")
+    if csc:
+        data_sites = data_sites[['ID_REF', 'chr', 'start', 'end', 'controls_{0}_month'.format(i), 'afters{0}_month'.format(i), 'p_values_{0}_month'.format(i)]]
+        data_sites = data_sites[data_sites['p_values_{0}_month'.format(i)] <= 0.05]
+    else:
+        data_sites = data_sites[data_sites['p value'] <= 0.05]
+    # print("pass")
     add_gene = []
     for site in data_sites.iterrows():
         genes = []
@@ -170,16 +180,19 @@ def find_close_genes(filter, gene_data, site_file, name):
         add_gene.append(genes)
     data_sites['close_genes'] = add_gene
     print()
-    data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name),
-                      sep="\t")
-    merge_genes_data = pd.concat(gene_data)
-    merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name),
-                            sep="\t")
+    if csc:
+        data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name.format(i)), sep="\t")
+        merge_genes_data = pd.concat(gene_data)
+        merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name.format(i)), sep="\t")
+    else:
+        data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name), sep="\t")
+        merge_genes_data = pd.concat(gene_data)
+        merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name), sep="\t")
 
     return gene_dict
 
 
-def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name, flag_38=False):
+def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name, csc=False, flag_38=False):
     """
     A function that gets list of filter to look at, and print the most repetitive genes
     :param list_of_filters: the filters in list
@@ -188,10 +201,18 @@ def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name,
     chroms = create_gene_data(flag_38)
     print("yay data")
     for f in list_of_filters:
-        d = find_close_genes(f, chroms, file_to_check, name)
-        print("dictionary after filter {0}".format(f))
-        print("number of genes: {0}".format(len(d)))
-        print_top_values(num_to_print, d)
+        if csc:
+            for label in REP_LIST:
+                finds_and_print_genes(chroms, f, file_to_check, name, num_to_print, label, csc=True)
+        else:
+            finds_and_print_genes(chroms, f, file_to_check, name, num_to_print)
+
+
+def finds_and_print_genes(chroms, f, file_to_check, name, num_to_print, p_label='p value', csc=False):
+    d = find_close_genes(f, chroms, file_to_check, name, p_label, csc)
+    print("dictionary after filter {0}".format(f))
+    print("number of genes: {0}".format(len(d)))
+    print_top_values(num_to_print, d)
 
 
 def print_top_values(num_to_print, d):
@@ -300,16 +321,22 @@ def create_genes_files(up, down):
             print("done decrease")
 
 
-def get_genes(file, flag_38=False):
+def get_genes(file, window=500, flag_38=False, csc=False):
     if flag_38:
-        check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_500", True)
+        check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_{0}".format(window), flag_38=True)
     else:
-        check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_500")
-
+        if csc:
+            check_with_change_filter([10000, 50000, 100000], 30, file, "csc_sgnificant{0}", csc=True)
+        else:
+            check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_{0}".format(window))
 
 
 if __name__ == '__main__':
-    get_genes("corrected_t_test/t_test_by_site_with_population_all_w_1000.csv")
+    file = sys.argv[1]
+    # window = sys.argv[2]
+    print(file)
+    get_genes(file, csc=True)
+    print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
 
