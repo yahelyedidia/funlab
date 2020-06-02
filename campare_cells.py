@@ -130,19 +130,20 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
 
 def mann_witney_and_fun(matrix):
     matrix = pd.read_csv(matrix, sep="\t")
-    matrix = matrix[matrix['chr'] == 'chr1']
+    # matrix = matrix[matrix['chr'] == 'chr1']
     matrix = matrix.fillna(0)
     col_name = list(matrix.columns)
     bind_col = [col_name[i] for i in range(5, len(col_name), 2)]
     met_col = [col_name[i] for i in range(4, len(col_name), 2)]
     matrix["binding_rate"] = matrix[bind_col].mean(axis=1)
     matrix["met_rate"] = matrix[met_col].mean(axis=1)
-    matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
+    matrix = matrix[(matrix["binding_rate"] > 5 / len(bind_col)) & (matrix["binding_rate"] < 1- (3 / len(bind_col)))]
+    m = matrix[matrix["met_rate"] != float(0)]
     binded_avg = []
     unbinded_avg = []
     p_val = []
     counter = 0
-    for site in matrix.iterrows():
+    for site in m.iterrows():
         binded = []
         unbinded = []
         for cell in range(len(bind_col)):
@@ -150,11 +151,10 @@ def mann_witney_and_fun(matrix):
                 binded.append(float(site[1][met_col[cell]]))
             else:
                 unbinded.append(float(site[1][met_col[cell]]))
-        if (len(unbinded) < 3 or site[1]["met_rate"] == 0):
+        if site[1]["met_rate"] == 0:
             print("in line {0}".format(counter))
             p_val.append(None)
         else:
-
             p_val.append(st.mannwhitneyu(binded, unbinded).pvalue)
         binded_avg.append((sum(binded))/len(binded))
         if len(unbinded) != 0:
@@ -167,15 +167,16 @@ def mann_witney_and_fun(matrix):
     matrix["p_val"] = p_val
     matrix.plot.scatter(x="binded_avg", y="unbinded_avg", c="p_val", colormap='viridis')
     plt.show()
-    sg_matrix = matrix[matrix["p_val"] <= 0.1]
-    sg_matrix.to_csv("significant_sites_chr1.tsv", sep="\t")
+    sg_matrix = matrix[matrix["p_val"] <= 0.05]
+    sg_matrix.to_csv("/vol/dci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", sep="\t")
+    compare_at_significant("/vol/dci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv")
 
 
 
 
 def play_with_data(matrix):
     matrix = pd.read_csv(matrix, sep="\t")
-    matrix = matrix[matrix['chr'] == 'chr1']
+    # matrix = matrix[matrix['chr'] == 'chr1']
     matrix = matrix.fillna(0)
     # print(matrix.describe())
     col_name = list(matrix.columns)
@@ -197,9 +198,10 @@ def play_with_data(matrix):
     print("p value is {0}".format(p_val))
     # methylation_dist_in_cell(matrix, col_name[4], col_name[5])
     fig, axes = plt.subplots(4, 5, figsize = (10, 7.5), dpi=100, sharex=True, sharey=True)
+    # fig, axes = plt.subplots(4, 5, dpi=100, sharex=True, sharey=True)
 # colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:pink', 'tab:olive']
     a = axes.flatten()
-    cell_counter = 4
+    cell_counter = 10
     axes_counter = 0
     bind_data = []
     unbind_data = []
@@ -243,27 +245,46 @@ def compare_significant_sites(compare_to, num, significant_site):
             print("chr: {0}, start: {1}, end: {2}".format(chr, start, end))
 
 
+def compare_at_significant(sg_file):
+    sg = pd.read_csv(sg_file, sep="\t", index_col=0)
+    sg = sg[sg["binding_rate"] != 1]
+    col_name = list(sg.columns)[4:-5]
+    bind = []
+    unbind = []
+    for sg_site in sg.iterrows():
+        for cell in range(0, len(col_name), 2):
+            if sg_site[1][col_name[cell + 1]] == 1:
+                bind.append(sg_site[1][col_name[cell]])
+            else:
+                unbind.append(sg_site[1][col_name[cell]])
+    plt.hist(bind, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the binded site")
+    plt.hist(unbind, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the unbinded")
+    plt.show()
+
+
+
+
+
 if __name__ == '__main__':
-    print("start runing")
-    # build_matrix()
-    first = True
-    matrix = None
-    for name, cell in cells_dict.items():
-        if name == "A549":
-            continue
-        print("start ", name)
-        if first:
-            matrix = add_cell(cell[0], cell[1], name, False)
-            first = False
-        else:
-            matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
-        print("end ", name)
-    print("end running")
+    # print("start runing")
+    # # build_matrix()
+    # first = True
+    # matrix = None
+    # for name, cell in cells_dict.items():
+    #     if name == "A549":
+    #         continue
+    #     print("start ", name)
+    #     if first:
+    #         matrix = add_cell(cell[0], cell[1], name, False)
+    #         first = False
+    #     else:
+    #         matrix = add_cell(cell[0], cell[1], name, False, True, matrix)
+    #     print("end ", name)
+    # print("end running")
     # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
-    play_with_data(MATRIX_FOR_PLAY)
-    mann_witney_and_fun(MATRIX_FOR_PLAY)
+    # play_with_data(MATRIX)
+    mann_witney_and_fun(MATRIX)
     # numbers = [6, 15, 10]
     # for num in numbers:
     #     print("for {0} month".format(num))
-    #     compare_significant_sites("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p_values_all_information_by_orig_vals.tsv", num, "significant_sites_chr1.tsv")
-
+    #     compare_significant_sites("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p
