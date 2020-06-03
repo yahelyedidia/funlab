@@ -137,8 +137,15 @@ def mann_witney_and_fun(matrix):
     met_col = [col_name[i] for i in range(4, len(col_name), 2)]
     matrix["binding_rate"] = matrix[bind_col].mean(axis=1)
     matrix["met_rate"] = matrix[met_col].mean(axis=1)
+    always_bond = matrix[matrix["binding_rate"] == 1]
+    print(matrix.shape)
+    l = matrix.shape[0]
     matrix = matrix[(matrix["binding_rate"] > 5 / len(bind_col)) & (matrix["binding_rate"] < 1- (3 / len(bind_col)))]
-    m = matrix[matrix["met_rate"] != float(0)]
+    np_data = np.array(matrix[met_col])
+    vars = np.var(np_data, axis=1)
+    matrix['met_var'] = vars
+    m = matrix[matrix["met_var"] != 0]
+    never_met = matrix[matrix["met_var"] <= 0.01]
     binded_avg = []
     unbinded_avg = []
     p_val = []
@@ -162,16 +169,43 @@ def mann_witney_and_fun(matrix):
         else:
             unbinded_avg.append(0)
         counter += 1
-    matrix["binded_avg"] = binded_avg
-    matrix["unbinded_avg"] = unbinded_avg
-    matrix["p_val"] = p_val
-    matrix.plot.scatter(x="binded_avg", y="unbinded_avg", c="p_val", colormap='viridis')
+    m["binded_avg"] = binded_avg
+    # m["binded_avg"] = binded_avg
+    m["unbinded_avg"] = unbinded_avg
+    m["p_val"] = p_val
+    # m.plot.scatter(x="binded_avg", y="unbinded_avg", c="p_val", colormap='viridis')
+    # plt.show()
+    sg_matrix = m[m["p_val"] <= 0.05]
+    nsg_matrix = m[m["p_val"] > 0.05]
+    sg_matrix.to_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", sep="\t")
+    nsg_matrix.to_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/not_significant_sites_all_chr_p=0.05.tsv", sep="\t")
+    m.to_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all.tsv", sep="\t")
+    print(sg_matrix.shape)
+    print(never_met.shape)
+    print(always_bond.shape)
+    langs = ['Always bound', 'Stable methylation levels', 'Dynamic relationship']
+    p = lambda x: (x/l) * 100
+    a_r = p(always_bond.shape[0])
+    n_r = p(never_met.shape[0])
+    ratio = [a_r,n_r , 100 - a_r - n_r]
+    print(ratio)
+    pie(ratio, langs)
+    s_r = p(sg_matrix.shape[0])
+
+    langs.append("p value < 0.05")
+    ratio2 = [a_r, n_r, 100 - a_r - n_r - s_r, s_r]
+    print(ratio2)
+    pie(ratio2, langs)
+
+def pie(values, labels, color='RdPu'):
+    fig = plt.figure()
+    ax = fig.add_axes([0,0,1,1])
+    ax.axis('equal')
+    c = plt.get_cmap(color)
+    ax.set_prop_cycle("color", [c(1. * i/len(values)) for i in range(len(values))])
+    ax.pie(values, labels = labels,autopct='%1.2f%%', labeldistance=1000)
+    plt.legend()
     plt.show()
-    sg_matrix = matrix[matrix["p_val"] <= 0.05]
-    sg_matrix.to_csv("/vol/dci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", sep="\t")
-    compare_at_significant("/vol/dci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv")
-
-
 
 
 def play_with_data(matrix):
@@ -245,10 +279,10 @@ def compare_significant_sites(compare_to, num, significant_site):
             print("chr: {0}, start: {1}, end: {2}".format(chr, start, end))
 
 
-def compare_at_significant(sg_file):
+def compare_at_significant(sg_file, title):
     sg = pd.read_csv(sg_file, sep="\t", index_col=0)
     sg = sg[sg["binding_rate"] != 1]
-    col_name = list(sg.columns)[4:-5]
+    col_name = list(sg.columns)[4:-6]
     bind = []
     unbind = []
     for sg_site in sg.iterrows():
@@ -258,7 +292,10 @@ def compare_at_significant(sg_file):
             else:
                 unbind.append(sg_site[1][col_name[cell]])
     plt.hist(bind, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the binded site")
-    plt.hist(unbind, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the unbinded")
+    plt.hist(unbind, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the unbinded site")
+    plt.yscale("log")
+    plt.title(title)
+    plt.legend()
     plt.show()
 
 
@@ -283,8 +320,10 @@ if __name__ == '__main__':
     # print("end running")
     # add_cell(cells_dict["pancreas"][0], cells_dict["pancreas"][1], "pancreas", False)
     # play_with_data(MATRIX)
-    mann_witney_and_fun(MATRIX)
+    # mann_witney_and_fun(MATRIX)
     # numbers = [6, 15, 10]
     # for num in numbers:
     #     print("for {0} month".format(num))
-    #     compare_significant_sites("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p
+    #     compare_significant_sites("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p                          
+    compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value < 0.05")
+    compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/not_significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value >= 0.05")
