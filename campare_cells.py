@@ -6,6 +6,10 @@ import scipy.stats as st
 from cells_dict import *
 
 #genome build 38
+DYNAMIC_STATE_TSV = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/sites_groups/dynamic_state.tsv"
+STABLE_MET_TSV = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/sites_groups/stable_met.tsv"
+BOUND_TSV = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/sites_groups/bound.tsv"
+BOUND_STABLE_MET_TSV = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/sites_groups/bound_stable_met.tsv"
 START = "start"
 CHR = "chr"
 END = "end"
@@ -210,52 +214,67 @@ def pie(values, labels, color='RdPu'):
 
 def play_with_data(matrix):
     matrix = pd.read_csv(matrix, sep="\t")
+    print("read data")
     # matrix = matrix[matrix['chr'] == 'chr1']
-    matrix = matrix.fillna(0)
+    # matrix = matrix.fillna(0)
     # print(matrix.describe())
     col_name = list(matrix.columns)
     bind_col = [col_name[i] for i in range(5, len(col_name), 2)]
     met_col = [col_name[i] for i in range(4, len(col_name), 2)]
     matrix["binding_rate"] = matrix[bind_col].mean(axis=1)
     matrix["met_rate"] = matrix[met_col].mean(axis=1)
+    matrix["met_var"] = matrix[met_col].var(axis=1)
     # matrix.plot.scatter(x=0, y="met_rate", c="binding_rate", colormap='viridis')
     # plt.show()
     # x = 1
     # x = 1
     matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
-    # is_it_the_same_distribution(matrix, met_col, ")
+    print("full matrix shape = {0}".format(matrix.shape))
+    always_bound_and_stable_met = matrix[(matrix["binding_rate"] == 1) & (matrix["met_var"] <= 0.01)]
+    always_bound_and_stable_met.to_csv(BOUND_STABLE_MET_TSV, sep="\t")
+    print("bound and met shape = {0}".format(always_bound_and_stable_met.shape))
+    always_bound = matrix[(matrix["binding_rate"] == 1) & (matrix["met_var"] > 0.01)]
+    print("bound = {0}".format(always_bound.shape))
+    always_bound.to_csv(BOUND_TSV, sep="\t")
+    stable_met = matrix[(matrix["binding_rate"] != 1) & (matrix["met_var"] <= 0.01)]
+    print("stable met shape = {0}".format(stable_met.shape))
+    stable_met.to_csv(STABLE_MET_TSV, sep="\t")
+    dynamic_state = matrix[(matrix["binding_rate"] != 1) & (matrix["met_var"] > 0.01)]
+    print("dynamic shape = {0}".format(dynamic_state.shape))
+    dynamic_state.to_csv(DYNAMIC_STATE_TSV, sep="\t")
+# is_it_the_same_distribution(matrix, met_col, ")
     all_cells = []
     for i in range(len(met_col)):
         all_cells.append(matrix[met_col[i]].tolist())
     s, p_val = st.kruskal(*zip(*all_cells))
-    print("all cell binding and unbinding")
-    print("p value is {0}".format(p_val))
+    # print("all cell binding and unbinding")
+    # print("p value is {0}".format(p_val))
     # methylation_dist_in_cell(matrix, col_name[4], col_name[5])
-    fig, axes = plt.subplots(4, 5, figsize = (10, 7.5), dpi=100, sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 3, dpi=100, sharex=True, sharey=True)
     # fig, axes = plt.subplots(4, 5, dpi=100, sharex=True, sharey=True)
 # colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:pink', 'tab:olive']
     a = axes.flatten()
-    cell_counter = 10
+    cell_counter = 4
     axes_counter = 0
     bind_data = []
     unbind_data = []
-    while cell_counter < len(col_name) - 2:
+    while cell_counter < len(col_name): #todo
         cell = (col_name[cell_counter].split("_"))[0]
         met = col_name[cell_counter]
         bind = col_name[cell_counter + 1]
         binded = matrix.loc[matrix[bind] == 1, met]
         unbinded = matrix.loc[matrix[bind] == 0, met]
-        a[axes_counter].hist(binded, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the binded site")
-        a[axes_counter].hist(unbinded, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the unbinded")
-        a[axes_counter].set_title(cell)
+        a[axes_counter].hist(binded, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the binded sites", color="darkturquoise")
+        a[axes_counter].hist(unbinded, alpha=0.5, bins=50, density=True, stacked=True, label="methylation at the unbinded sutes", color="lightpink")
+        # a[axes_counter].set_title(cell)
         plt.yscale("log")
         cell_counter = cell_counter + 2
         axes_counter = axes_counter + 1
         bind_data.append(binded.tolist())
         unbind_data.append(unbinded.tolist())
-    plt.title("methylation distribution at CTCF binding site in diffrent cells",  y=4.95, x=-2 ,size=16)
+    # plt.title("methylation distribution at CTCF binding site in diffrent cells",  y=4.95, x=-2 ,size=16)
     plt.tight_layout()
-    plt.legend(loc="lower center", bbox_to_anchor=(0, -0.7))
+    # plt.legend(loc="lower center)
     # plt.savefig("tests on healty data")
     plt.show()
     s, p_val = st.kruskal(*zip(*bind_data))
@@ -325,5 +344,6 @@ if __name__ == '__main__':
     # for num in numbers:
     #     print("for {0} month".format(num))
     #     compare_significant_sites("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p                          
-    compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value < 0.05")
-    compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/not_significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value >= 0.05")
+    # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value < 0.05")
+    # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/not_significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value >= 0.05")
+    play_with_data(MATRIX)
