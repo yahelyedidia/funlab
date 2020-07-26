@@ -4,6 +4,7 @@ from itertools import islice
 import sys
 import os
 import re
+import matplotlib.pyplot as plt
 
 GENES_B38 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Homo_sapiens.GRCh38.98.gtf.gz"
 
@@ -342,15 +343,37 @@ def get_genes(file, window=500, flag_38=False, csc=False, healthy=False, name="t
         else:
             check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_{0}".format(window))
 
+def compare_genes(dir):
+    labels = []
+    genes = []
+    x = np.arange(len(os.listdir(dir)))
+    width = 0.35
+    fig, ax = plt.subplots()
+    for file in os.listdir(dir):
+        if file.find("update") != -1:
+            labels.append("bound")
+        elif file.find("dynamic") != -1:
+            labels.append("dynamic state")
+        elif file.find("boundNstable") != -1:
+            labels.append("bound and stable")
+        else:
+            labels.append("stable state")
+        data = pd.read_csv(file, sep="\t")
+        data = data[data["close_sites"] != '[]']
+
+
+
+
 
 if __name__ == '__main__':
-    file = sys.argv[1]
-    n = sys.argv[2]
-    print(file)
-    get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
-    print("done")
+    # file = sys.argv[1]
+    # n = sys.argv[2]
+    # print(file)
+    # get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
+    # print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
+    compare_genes("genes/filter10000/sitesTogenes")
 
     # get_genes("corrected_t_test/t_test_by_site_with_population_all_w_500.csv")
 
