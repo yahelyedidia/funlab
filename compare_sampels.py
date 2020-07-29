@@ -6,6 +6,7 @@ from scipy import stats
 from scipy.spatial.distance import squareform
 from scipy.spatial.distance import pdist
 # "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p_values_all_information_by_orig_vals.tsv"
+VARS = "biggest_var_csc_rep{0}.tsv"
 ORIGINAL_HEATMAP = "original_outliers_by_heatmap.tsv"
 
 OUTLIERS_CHANGE_UP = "outlier_up_for_csc_by_changes_rep{0}.tsv"
@@ -74,18 +75,20 @@ def get_uniq_rate(b, label):
 def plot_change(name, i):
     data = pd.read_csv(DIR + os.path.sep + name.format(i), sep="\t")
     # xs_list, ys_list = [], []
+    prv = "control"
     for col in REP_LIST:
         # xs, ys = get_uniq_rate(data, col)
         # xs_list += list(xs)
         # ys_list += list(ys)
         y = data[col]
-        plt.hist(y, alpha=0.5, label=col, bins=50)
+        plt.hist(y, alpha=0.5, label=prv + "-" + col, bins=80, range=(-0.2, 0.2))
+        prv = col
     # plt.scatter(xs_list, ys_list, color="black")
     # plt.plot(xs_list, ys_list, color="black")
 
     plt.xlabel("methylation change rate")
     plt.ylabel("Amount of performances")
-    plt.title("methylation change distribution according to time, replication : {0}".format(i))
+    plt.title("Changes distributing with time")
     # plt.title("compare between 1, 6 time point in both replictaions")
     plt.legend()
     plt.savefig(DIR + os.path.sep + "change_distribution_graph_rep{0}".format(i))
@@ -108,10 +111,10 @@ def statistic_test():
             first_month_1 = all_vals_1[REP_LIST[0]][i]
             first_month_2 = all_vals_2[REP_LIST[0]][i]
             control = [all_vals_1['control'][i], all_vals_2['control'][i], first_month_1, first_month_2]
-            after = [all_vals_1[title][i], all_vals_2[title][i], all_vals_1[title][i] - first_month_1, all_vals_2[title][i] - first_month_2]
+            after = [all_vals_1[title][i], all_vals_2[title][i], all_vals_1[title][i], all_vals_2[title][i]]
             t_test = stats.ttest_ind(control, after, equal_var=False)
-            c_list.append(control)
-            a_list.append(after)
+            c_list.append(np.mean(control))
+            a_list.append(np.mean(after))
             p_vals.append(t_test.pvalue)
         result["controls_{0}".format(title)] = c_list
         result["afters{0}".format(title)] = a_list
@@ -180,7 +183,9 @@ def compare_at_time():
     first['15_month'] = second['6_month']
     first.to_csv(DIR + os.path.sep + "compare_6_to_1.tsv", sep="\t", index=False)
 
-# doto : maybe another way ?
+# todo : maybe another way ?
+
+
 def cov_1(rep):
     data = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(rep), sep="\t")
     data = data.drop(columns=['ID_REF', 'chr', 'start', 'end'])
@@ -262,6 +267,18 @@ def divide_score(rep):
     print("done saving")
 
 
+def changing_sites(rep):
+    data = pd.read_csv(DIR + os.sep + ALL_NAME.format(rep), sep="\t")
+    np_data = np.array(data[REP_LIST])
+    vars = np.var(np_data, axis=1)
+    data['var'] = vars
+    a = data['var'].quantile(0.9)
+    data = data[data['var'] >= a]
+    data = data.drop(columns=['var'])
+    data.to_csv(DIR + os.sep + VARS.format(rep), sep="\t", index=False)
+    data.to_csv(VARS.format(rep), sep="\t", index=False)
+
+
 def fun_with_flags():
     dict = {}
     x = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
@@ -282,21 +299,40 @@ def plot_sgnif_ratio():
         a = x[x['p_values_{0}_month'.format(i)] <= 0.05].shape[0]
         dict[i] = a / all_len
     plt.bar(*zip(*dict.items()))
+
+    plt.show()
+
+
+def plot_bars_as_time(rep, thr):
+    final_dict = {}
+    data = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(rep), sep="\t")
+    time_list = [1, 6, 10, 15]
+    for i in time_list:
+        temp = data[data["{0}_month".format(i)] >= thr]
+        final_dict[i] = temp.shape[0]
+    plt.bar(*zip(*final_dict.items()))
+    plt.title("CSCF biding sits with methylation level higher the {0}".format(thr))
+    plt.xlabel("times")
     plt.show()
 
 
 if __name__ == '__main__':
     print("hi")
-    plot_sgnif_ratio()
+    plot_change(CHANGES_REP, 2)
+    # statistic_test()
+    # changing_sites(1)
+    # changing_sites(2)
+    # plot_sgnif_ratio()
     # plot_change(CHANGES_REP, 1)
     # divide_score(2)
     # mean_score(2)
     # fun_with_flags()
-    # x = pd.read_csv(DIR + os.path.sep + ALL_NAME.format(2), sep="\t")
+    # plot_bars_as_time(1, 0.7)
+    # x = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
     # x.to_csv("all_2.tsv", sep="\t", index=False)
     y = 2
     # compare_at_time()
-    # plot_change("compare_6_to_1.tsv")
+    # plot_change(CHANGES_REP, 2)
     # a = pd.read_csv(DIR + os.path.sep + P_VALS, sep="\t")
     # x = 2
 

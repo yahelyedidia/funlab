@@ -746,12 +746,14 @@ def remove_duplicate(file, window):
 
 
 if __name__ == '__main__':
+    main_imm(1, 500)
     # cut_by_filter("plass_new/no_treatment_vs_with_dac_and_hdac.csv", 6)
     # print("yay")
-    t_test(500)
-    t_test(1000)
-    # a = pd.read_csv("immortalization_result/final_filtered/t_test_imm_w_500_noduplicat.tsv", sep="\t")
-    # x = 2
+    # t_test(500)
+    # t_test(1000)
+    a = pd.read_csv("no_duplicate_imm_result_b1_w_500.tsv", sep="\t")
+    print(a.shape)
+    x = 2
     #file_name = str(sys.argv[1])
     #thresh = int(sys.argv[2])
     #filename_w_ext = os.path.basename(file_name)

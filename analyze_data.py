@@ -12,6 +12,8 @@ GENES_B37 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/genes/hg19.knownGene.gt
 
 CSC = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p_values_all_information_by_orig_vals.tsv"
 
+DIR_CSC = DIR = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC"
+
 TAB = "\t"
 
 BEDGRAPH_LINE_FORMAT = "s{i}\tchr{chr_name}\t{start}\t{number}\n"
@@ -95,18 +97,28 @@ def read_genes_data(file, num_open_line=5, flag_38=False):
     header = ['chr', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute']
     data.columns = header[:len(data.columns)]
     data = data[data['feature'] == filter_by]
-    names = []
+    names, id = [], []
     data = data.drop_duplicates(['start', 'end'], keep='last')
     for row in data.iterrows():
         line = row[1]['attribute']
         sindex = line.find("gene_name")
+        idinx = line.find("gene_id")
+
+        # no gene name
         if sindex == -1:
-            line = "no_name_found"
+            name_line = "no_name_found"
         else:
-            line = line[sindex + 9:]
-            line = line.split(";")[0]
-        names.append(line)
+            name_line = line[sindex + 9:]
+            name_line = name_line.split(";")[0]
+        names.append(name_line)
+        if(idinx == -1):
+            id_line = "no_id_found"
+        else:
+            id_line = line[idinx + 7:]
+            id_line = id_line.split(";")[0]
+        id.append(id_line)
     data['attribute'] = names
+    data['ids'] = id
     data['close_sites'] = [[] for i in range(data.shape[0])]
     if flag_38:
         data.to_csv("genes" + os.path.sep + "genes_19.csv", sep="\t", compression='gzip', index=False)
@@ -325,12 +337,12 @@ def create_genes_files(up, down):
 
 def get_genes(file, window=500, flag_38=False, csc=False):
     if flag_38:
-        check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_{0}".format(window), flag_38=True)
+        check_with_change_filter([10000, 50000, 100000], 30, file, "imm_sagnificant_w_{0}".format(window), flag_38=True)
     else:
         if csc:
-            check_with_change_filter([10000, 50000, 100000], 30, file, "csc_sgnificant{0}", csc=True)
+            check_with_change_filter([10000, 50000, 100000], 30, file, "csc_sgnificant_{0}", csc=True)
         else:
-            check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_{0}".format(window))
+            check_with_change_filter([10000, 50000, 100000], 30, file, "imm_sgnificant_w_{0}".format(window))
 
 
 def covnert_list_to_avg(data, col1, col2):
@@ -347,56 +359,76 @@ def covnert_list_to_avg(data, col1, col2):
     return control, treat
 
 
-def plot_sgnificant_genes(file, csc=False):
-    colors = [plt.cm.tab10(i / float(24)) for i in range(25)]
+def get_output_gene_list(file, outputname, csc=False):
     data = pd.read_csv(file, sep="\t")
-    data = data.drop(columns=["Unnamed: 0"])
     no_name = "['no_name_found']"
     data = data[data['close_genes'] != '[]']
     data = data[data['close_genes'] != no_name]
+
     print(data.head())
     if csc:
         control_label = 'controls_{0}_month'.format(csc)
         after_label = 'afters{0}_month'.format(csc)
-        control, after = covnert_list_to_avg(data, control_label, after_label)
-        data['control'] = control
-        data['treatment'] = after
-        data['metylation change'] = data['treatment'] - data['control']
-
-    x, ys, c = [], [], []
+        data['metylation change'] = data[after_label] - data[control_label]
+        # ref_data = pd.read_csv(DIR + os.path.sep + "after_fdr_correction_csc.tsv", sep="\t")
+        # data['rejected'] = ref_data['rejected_{0}_month'.format(csc)]
+    # data = data[data['rejected'] == True]
+    genes_set = set()
+    genes_lst = []
     for row in data.iterrows():
+        at_site_lst = []
         gene = row[1]['close_genes'].split("'")
         for g in gene:
             if g != '[' and g != ']' and g != 'no_name_found' and g != ', ':
-                x.append(g)
-                ys.append(row[1]['metylation change'])
-                c.append(row[1]['chr'])
-    d = pd.DataFrame({'chr': c, 'genes': x, 'met': ys})
-    print(d.head())
+                g = g.strip('"')
+                g = g.strip('" ')
+                at_site_lst.append(g)
+                genes_set.add(g)
+        genes_lst.append(at_site_lst)
+    data['close_genes'] = genes_lst
+    with open(outputname, 'w') as f:
+        for item in genes_set:
+            f.write("%s\n" % item)
+
+    # todo to csv ?
+    return data
+
+                # x.append(g)
+                # ys.append(row[1]['metylation change'])
+                # c.append(row[1]['chr'])
+    # d = pd.DataFrame({'chr': c, 'genes': x, 'met': ys})
+    # print(d.head())
+    # d['genes'] = d['genes'].apply(lambda x: x.strip('" '))
+    # d['genes'] = d['genes'].apply(lambda x: x.strip('"'))
+    # x = d['genes']
+    # return
+    # x.to_csv("genes_at_{0}_month.txt".format(6), index=False)
     # d.to_csv("data_to_plot_gene_6_csc.tsv", sep="\t", index=False)
-    for i in range(1, 24):
-        temp = d[d['chr'] == i]
-        plt.scatter(x='genes', y='met', data=temp,
-                    s=20, c=colors[i], label="chr " + str(i))
-    # i = 23
-    # temp = data[data['chr'] == "X"]
-    # plt.scatter(x='genes', y='met', data=temp,
-    #             s=20, c=colors[i], label="chr " + str(i))
-    # i = 24
-    # temp = data[data['chr'] == "Y"]
-    # plt.scatter(x='genes', y='met', data=temp,
-    #             s=20, c=colors[i], label="chr " + str(i))
-    plt.title(file)
-    plt.show()
+    # for i in range(1, 24):
+    #     temp = d[d['chr'] == i]
+    #     plt.scatter(x='genes', y='met', data=temp,
+    #                 s=20, c=colors[i], label="chr " + str(i))
+    # # i = 23
+    # # temp = data[data['chr'] == "X"]
+    # # plt.scatter(x='genes', y='met', data=temp,
+    # #             s=20, c=colors[i], label="chr " + str(i))
+    # # i = 24
+    # # temp = data[data['chr'] == "Y"]
+    # # plt.scatter(x='genes', y='met', data=temp,
+    # #             s=20, c=colors[i], label="chr " + str(i))
+    # plt.title(file)
+    # plt.show()
 
 
 if __name__ == '__main__':
     # file = sys.argv[1]
     # window = sys.argv[2]
-    # print(file)
-    plot_sgnificant_genes("genes/genes_close_to_sites_t_test_w_1000_filter_10000.csv")
+    print("hi")
+    # plot_sgnificant_genes("genes/genes_close_to_sites_imm_sgnificant_w_1000_filter_100000.csv", "genes/imm_1000_ref.txt")
+    # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_15_filter_100000.csv", 'genes/genes_file_csc_15_ref.txt', 15)
+    # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_10_filter_100000.csv", 'genes/genes_file_csc_10_ref.txt', 10)
+    # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_6_filter_100000.csv", 'genes/genes_file_csc_6_ref.txt', 6)
     # get_genes(file, csc=True)
-    print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
 
