@@ -343,12 +343,9 @@ def get_genes(file, window=500, flag_38=False, csc=False, healthy=False, name="t
         else:
             check_with_change_filter([10000, 50000, 100000], 30, file, "t_test_w_{0}".format(window))
 
-def compare_genes(dir):
+def compare_genes(dir, filter):
     labels = []
-    genes = []
-    x = np.arange(len(os.listdir(dir)))
-    width = 0.35
-    fig, ax = plt.subplots()
+    is_first = True
     for file in os.listdir(dir):
         if file.find("update") != -1:
             labels.append("bound")
@@ -358,10 +355,50 @@ def compare_genes(dir):
             labels.append("bound and stable")
         else:
             labels.append("stable state")
-        data = pd.read_csv(file, sep="\t")
-        data = data[data["close_sites"] != '[]']
+        thisdata = pd.read_csv(dir + os.sep + file, sep="\t")
+        if is_first:
+            data = thisdata[['chr', 'start', 'end', 'attribute', 'close_sites']]
+            data = data.rename(columns={'close_sites': labels[-1]})
+        # data = data[data["close_sites"] != '[]']
+        else:
+            data[labels[-1].strip()] = thisdata['close_sites']
+        is_first = False
+    data = data[(data["bound"] != '[]') | (data["stable state"] != '[]') | (data["bound and stable"] != '[]') | (data["dynamic state"] != '[]')]
+    count = lambda l: l.count('(')
+    data['n_bound'] = data['bound'].apply(count)
+    data['n_stable'] = data['stable state'].apply(count)
+    data['n_dynamic'] = data['dynamic state'].apply(count)
+    data['n_boundNstable'] = data['bound and stable'].apply(count)
+    data['count var'] = data.loc[:, 'n_bound' : 'n_boundNstable'].var(axis=1)
+    data['appearance'] = data.loc[:, 'n_bound' : 'n_boundNstable'].sum(axis=1)
+    data['not 0'] = data.loc[:, 'n_bound' : 'n_boundNstable'].gt(0).sum(axis=1)
+
+    print(data[['count var', 'appearance', 'not 0']].describe())
+
+    data.to_csv("genes" + os.sep + 'allgenes_filter_{0}.tsv'.format(filter), sep="\t")
 
 
+def create_bars(data, filter):
+    order_data = data.sort_values(by='appearance', ascending=False)
+    groups = order_data.groupby('not 0')
+    for name, group in groups:
+        title = "Genes that shared {0} methylation groups and close to CTCF binding sites".format(name)
+        fig, ax = plt.subplots()
+        if name != 1:
+            group = group.sort_values(by='count var', ascending=False)
+            print(group['count var'].describe())
+            ax.bar(group['attribute'], group['n_boundNstable'],  label='Bound & stable')
+            ax.bar(group['attribute'], group['n_bound'],  bottom=group['n_boundNstable'], label='Bound')
+            ax.bar(group['attribute'], group['n_stable'],  bottom=group['n_bound'] + group['n_boundNstable'] ,label='Stable')
+            ax.bar(group['attribute'], group['n_dynamic'],  bottom=group['n_bound'] + group['n_boundNstable'] + group['n_stable'], label='Dynamic')
+            ax.set_title(title)
+            plt.xticks([])
+            ax.set_xlabel("Genes")
+            ax.set_ylabel("Amount of appearance")
+            ax.legend()
+        # plt.axes.get_xaxis().set_visible(False)
+        plt.savefig("genes/filter_{0}_shared_{1}_groups.png".format(filter, name))
+        plt.show()
 
 
 
@@ -373,8 +410,12 @@ if __name__ == '__main__':
     # print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
-    compare_genes("genes/filter10000/sitesTogenes")
-
+    # compare_genes("genes/filter10000/sitesTogenes", 10000)
+    # compare_genes("genes/filter50000/sitesTogenes", 50000)
+    # compare_genes("genes/filter100000/sitesTogenes", 100000)
+    create_bars(pd.read_csv("genes/allgenes_filter_10000.tsv", sep="\t"), 10000)
+    create_bars(pd.read_csv("genes/allgenes_filter_100000.tsv", sep="\t"), 100000)
+    create_bars(pd.read_csv("genes/allgenes_filter_50000.tsv", sep="\t"), 50000)
     # get_genes("corrected_t_test/t_test_by_site_with_population_all_w_500.csv")
 
 # create_genes_files(0.2, -0.4)
