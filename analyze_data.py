@@ -123,7 +123,7 @@ def read_genes_data(file, flag_38=False, num_open_line=5):
     data['ids'] = id
     data['close_sites'] = [[] for i in range(data.shape[0])]
     if flag_38:
-        data.to_csv("genes" + os.path.sep + "genes_19.csv", sep="\t", compression='gzip', index=False)
+        data.to_csv("genes" + os.path.sep + "genes_38.csv", sep="\t", compression='gzip', index=False)
     else:
         data.to_csv("genes" + os.path.sep + "genes_19.csv", sep="\t", index=False)
     return data
@@ -194,11 +194,11 @@ def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False, hea
             chr = int(re.search(r'\d+', site[1]['chr']).group())
         for gene in gene_data[chr - 1].iterrows():
             if fs <= gene[1]['start'] and gene[1]['end'] <= fe:
-                genes.append(gene[1]['attribute'])
-                if gene[1]['attribute'] in gene_dict:
-                    gene_dict[gene[1]['attribute']] += 1
+                genes.append(gene[1]['ids'])
+                if gene[1]['ids'] in gene_dict:
+                    gene_dict[gene[1]['ids']] += 1
                 else:
-                    gene_dict[gene[1]['attribute']] = 1
+                    gene_dict[gene[1]['ids']] = 1
                 gene[1]['close_sites'].append((chr, fs, fe))
         add_gene.append(genes)
     data_sites['close_genes'] = add_gene
@@ -242,7 +242,6 @@ def finds_and_print_genes(chroms, f, file_to_check, name, num_to_print, p_label=
     print("number of genes: {0}".format(len(d)))
     print_top_values(num_to_print, d)
 
-
 def print_top_values(num_to_print, d):
     """
     A function that get dictionary and number of items to print and
@@ -261,7 +260,6 @@ def print_top_values(num_to_print, d):
         counter -= len(max_keys)
         for key in max_keys:
             del d[key]
-
 
 def convert_csv_to_cn(file, s):
     """
@@ -291,7 +289,6 @@ def convert_csv_to_cn(file, s):
         x = x.replace(",", '\t')
         cn_file.write(x)
     cn_file.close()
-
 
 def convert_to_cn_2(file):
     """
@@ -327,12 +324,10 @@ def convert_to_cn_2(file):
             output_file.write(line)
             i += 1
 
-
 def creat_cns(dir):
     for file in os.listdir(dir):
         if file.endswith(".csv"):
             convert_to_cn_2(dir+os.path.sep+file)
-
 
 def create_genes_files(up, down):
     for file in os.listdir("immortalization_result/by_window"):
@@ -347,7 +342,6 @@ def create_genes_files(up, down):
             print("done increase")
             check_with_change_filter([10000, 50000, 100000], 30,  "immortalization_result/by_window/decrease_" + file + "_{0}.csv".format(down), os.path.splitext(os.path.basename(file))[0])
             print("done decrease")
-
 
 def get_genes(file, window=500, flag_38=False, csc=False, healthy=False, name="t_test_w_{0}"):
     if flag_38:
@@ -374,11 +368,14 @@ def covnert_list_to_avg(data, col1, col2):
     return control, treat
 
 
-def get_output_gene_list(file, outputname, csc=False):
+def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
     data = pd.read_csv(file, sep="\t")
     no_name = "['no_name_found']"
-    data = data[data['close_genes'] != '[]']
-    data = data[data['close_genes'] != no_name]
+    if helthy_backgroud:
+        data = data
+    else:
+        data = data[data['close_genes'] != '[]']
+        data = data[data['close_genes'] != no_name]
 
     print(data.head())
     if csc:
@@ -390,9 +387,12 @@ def get_output_gene_list(file, outputname, csc=False):
     # data = data[data['rejected'] == True]
     genes_set = set()
     genes_lst = []
+    col = 'close_genes'
+    if helthy_backgroud:
+        col = 'attribute'
     for row in data.iterrows():
         at_site_lst = []
-        gene = row[1]['close_genes'].split("'")
+        gene = row[1][col].split("'")
         for g in gene:
             if g != '[' and g != ']' and g != 'no_name_found' and g != ', ':
                 g = g.strip('"')
@@ -400,7 +400,7 @@ def get_output_gene_list(file, outputname, csc=False):
                 at_site_lst.append(g)
                 genes_set.add(g)
         genes_lst.append(at_site_lst)
-    data['close_genes'] = genes_lst
+    data[col] = genes_lst
     with open(outputname, 'w') as f:
         for item in genes_set:
             f.write("%s\n" % item)
@@ -468,7 +468,6 @@ def compare_genes(dir, filter):
 
     data.to_csv("genes" + os.sep + 'allgenes_filter_{0}.tsv'.format(filter), sep="\t")
 
-
 def create_bars(data, filter):
     order_data = data.sort_values(by='appearance', ascending=False)
     groups = order_data.groupby('not 0')
@@ -502,21 +501,26 @@ if __name__ == '__main__':
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_10_filter_100000.csv", 'genes/genes_file_csc_10_ref.txt', 10)
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_6_filter_100000.csv", 'genes/genes_file_csc_6_ref.txt', 6)
     # get_genes(file, csc=True)
-    # file = sys.argv[1]
-    # n = sys.argv[2]
-    # print(file)
-    # get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
-    # print("done")
+    file = sys.argv[1]
+    n = sys.argv[2]
+    print(file)
+    get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
+    print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
     # compare_genes("genes/filter10000/sitesTogenes", 10000)
     # compare_genes("genes/filter50000/sitesTogenes", 50000)
     # compare_genes("genes/filter100000/sitesTogenes", 100000)
-    create_bars(pd.read_csv("genes/allgenes_filter_10000.tsv", sep="\t"), 10000)
-    create_bars(pd.read_csv("genes/allgenes_filter_100000.tsv", sep="\t"), 100000)
-    create_bars(pd.read_csv("genes/allgenes_filter_50000.tsv", sep="\t"), 50000)
+    # create_bars(pd.read_csv("genes/allgenes_filter_10000.tsv", sep="\t"), 10000)
+    # create_bars(pd.read_csv("genes/allgenes_filter_100000.tsv", sep="\t"), 100000)
+    # create_bars(pd.read_csv("genes/allgenes_filter_50000.tsv", sep="\t"), 50000)
     # get_genes("corrected_t_test/t_test_by_site_with_population_all_w_500.csv")
-
+    # for file in os.listdir("genes/filter100000/genesTosites"):
+    #     name = file[21:-18]
+    #     get_output_gene_list("genes/filter100000/genesTosites" + os.sep + file, "genes/{0}_genes_list_filter100000.txt".format(name))
+    # get_output_gene_list("genes/allgenes_filter_10000.tsv", "genes/background_filter10000.txt", helthy_backgroud=True)
+    # get_output_gene_list("genes/allgenes_filter_100000.tsv", "genes/background_filter100000.txt", helthy_backgroud=True)
+    # get_output_gene_list("genes/allgenes_filter_50000.tsv", "genes/background_filter50000.txt", helthy_backgroud=True)
 # create_genes_files(0.2, -0.4)
 # check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
