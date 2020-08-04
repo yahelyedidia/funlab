@@ -389,7 +389,7 @@ def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
     genes_lst = []
     col = 'close_genes'
     if helthy_backgroud:
-        col = 'attribute'
+        col = 'ids'
     for row in data.iterrows():
         at_site_lst = []
         gene = row[1][col].split("'")
@@ -438,17 +438,17 @@ def compare_genes(dir, filter):
     labels = []
     is_first = True
     for file in os.listdir(dir):
-        if file.find("update") != -1:
-            labels.append("bound")
+        if file.find("sm") != -1:
+            labels.append("stable state")
         elif file.find("dynamic") != -1:
             labels.append("dynamic state")
         elif file.find("boundNstable") != -1:
             labels.append("bound and stable")
         else:
-            labels.append("stable state")
+            labels.append("bound")
         thisdata = pd.read_csv(dir + os.sep + file, sep="\t")
         if is_first:
-            data = thisdata[['chr', 'start', 'end', 'attribute', 'close_sites']]
+            data = thisdata[['chr', 'start', 'end', 'attribute', 'ids', 'close_sites']]
             data = data.rename(columns={'close_sites': labels[-1]})
         # data = data[data["close_sites"] != '[]']
         else:
@@ -501,11 +501,11 @@ if __name__ == '__main__':
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_10_filter_100000.csv", 'genes/genes_file_csc_10_ref.txt', 10)
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_6_filter_100000.csv", 'genes/genes_file_csc_6_ref.txt', 6)
     # get_genes(file, csc=True)
-    file = sys.argv[1]
-    n = sys.argv[2]
-    print(file)
-    get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
-    print("done")
+    # file = sys.argv[1]
+    # n = sys.argv[2]
+    # print(file)
+    # get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
+    # print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
     # compare_genes("genes/filter10000/sitesTogenes", 10000)
@@ -515,12 +515,12 @@ if __name__ == '__main__':
     # create_bars(pd.read_csv("genes/allgenes_filter_100000.tsv", sep="\t"), 100000)
     # create_bars(pd.read_csv("genes/allgenes_filter_50000.tsv", sep="\t"), 50000)
     # get_genes("corrected_t_test/t_test_by_site_with_population_all_w_500.csv")
-    # for file in os.listdir("genes/filter100000/genesTosites"):
-    #     name = file[21:-18]
-    #     get_output_gene_list("genes/filter100000/genesTosites" + os.sep + file, "genes/{0}_genes_list_filter100000.txt".format(name))
-    # get_output_gene_list("genes/allgenes_filter_10000.tsv", "genes/background_filter10000.txt", helthy_backgroud=True)
-    # get_output_gene_list("genes/allgenes_filter_100000.tsv", "genes/background_filter100000.txt", helthy_backgroud=True)
-    # get_output_gene_list("genes/allgenes_filter_50000.tsv", "genes/background_filter50000.txt", helthy_backgroud=True)
+    # for file in os.listdir("genes/filter10000/genesTosites"):
+    #     name = file[30:-17]
+    #     get_output_gene_list("genes/filter10000/genesTosites" + os.sep + file, "genes/{0}_genes_list_filter10000.txt".format(name))
+    get_output_gene_list("genes/allgenes_filter_10000.tsv", "genes/background_filter10000.txt", helthy_backgroud=True)
+    get_output_gene_list("genes/allgenes_filter_100000.tsv", "genes/background_filter100000.txt", helthy_backgroud=True)
+    get_output_gene_list("genes/allgenes_filter_50000.tsv", "genes/background_filter50000.txt", helthy_backgroud=True)
 # create_genes_files(0.2, -0.4)
 # check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
