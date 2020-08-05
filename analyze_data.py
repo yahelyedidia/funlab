@@ -8,7 +8,9 @@ import matplotlib.cm
 import re
 import matplotlib.pyplot as plt
 
-GENES_B38 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Homo_sapiens.GRCh38.98.gtf.gz"
+# GENES_B38 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/files/Homo_sapiens.GRCh38.98.gtf.gz"
+
+GENES_B38 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/genes/mart_export.txt.gz"
 
 GENES_B37 = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/genes/hg19.knownGene.gtf"
 
@@ -92,19 +94,46 @@ def read_genes_data(file, flag_38=False, num_open_line=5):
         filter_by = 'gene'
         data = pd.read_csv(file, sep="\t", skiprows=[i for i in range(num_open_line)],
                            compression='gzip', header=None)
+        header = ['gene id', 'gene version', 'transcript id', 'transcript version', 'name', 'chr', 'start', 'end']
+        data.columns = header[:len(data.columns)]
+        names, id = [], []
+        data = data.drop_duplicates(['start', 'end'], keep='last')
+        valid_chr =[str(i) for i in range(1, 23)]
+        data_num = data[data['chr'].isin(valid_chr)]
+        data_num = data_num.loc[pd.to_numeric(data_num.chr, errors='coerce').sort_values().index]
+        data_c = data[data['chr'].isin(['X', 'Y'])].sort_values(by='chr')
+        data = pd.concat([data_num, data_c], ignore_index=True)
+        # data =
+        for row in data.iterrows():
+            line = row[1]
+            # sindex = line.find("gene_name")
+            # idinx = line.find("gene_id")
+            # no gene name
+            # if sindex == -1:
+            #     name_line = "no_name_found"
+            # else:
+            name_line = line['name']
+                # name_line = name_line.split(";")[0]
+            names.append(name_line)
+            # if(idinx == -1):
+            #     id_line = "no_id_found"
+            # else:
+            id_line = line['gene id']
+                # id_line = id_line.split(";")[0]
+            id.append(id_line)
     else:
         filter_by = 'transcript'
         data = pd.read_csv(file, sep="\t", skiprows=[i for i in range(num_open_line)],
                             header=None)
-    header = ['chr', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute']
-    data.columns = header[:len(data.columns)]
-    data = data[data['feature'] == filter_by]
-    names, id = [], []
-    data = data.drop_duplicates(['start', 'end'], keep='last')
-    for row in data.iterrows():
-        line = row[1]['attribute']
-        sindex = line.find("gene_name")
-        idinx = line.find("gene_id")
+        header = ['chr', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attribute']
+        data.columns = header[:len(data.columns)]
+        data = data[data['feature'] == filter_by]
+        names, id = [], []
+        data = data.drop_duplicates(['start', 'end'], keep='last')
+        for row in data.iterrows():
+            line = row[1]['attribute']
+            sindex = line.find("gene_name")
+            idinx = line.find("gene_id")
 
         # no gene name
         if sindex == -1:
@@ -146,7 +175,7 @@ def create_gene_data(flag_38):
             char_name = chr + 1
         else:
             char_name = "chr{0}".format(chr + 1)
-        chr_data = data[data['chr'] == char_name]
+        chr_data = data[data['chr'] == str(char_name)]
         chroms.append(chr_data)
     if flag_38:
         chr_x = 'X'
@@ -501,11 +530,11 @@ if __name__ == '__main__':
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_10_filter_100000.csv", 'genes/genes_file_csc_10_ref.txt', 10)
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_6_filter_100000.csv", 'genes/genes_file_csc_6_ref.txt', 6)
     # get_genes(file, csc=True)
-    # file = sys.argv[1]
-    # n = sys.argv[2]
-    # print(file)
-    # get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
-    # print("done")
+    file = sys.argv[1]
+    n = sys.argv[2]
+    print(file)
+    get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
+    print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
     # compare_genes("genes/filter10000/sitesTogenes", 10000)
@@ -518,9 +547,9 @@ if __name__ == '__main__':
     # for file in os.listdir("genes/filter10000/genesTosites"):
     #     name = file[30:-17]
     #     get_output_gene_list("genes/filter10000/genesTosites" + os.sep + file, "genes/{0}_genes_list_filter10000.txt".format(name))
-    get_output_gene_list("genes/allgenes_filter_10000.tsv", "genes/background_filter10000.txt", helthy_backgroud=True)
-    get_output_gene_list("genes/allgenes_filter_100000.tsv", "genes/background_filter100000.txt", helthy_backgroud=True)
-    get_output_gene_list("genes/allgenes_filter_50000.tsv", "genes/background_filter50000.txt", helthy_backgroud=True)
+    # get_output_gene_list("genes/allgenes_filter_10000.tsv", "genes/background_filter10000.txt", helthy_backgroud=True)
+    # get_output_gene_list("genes/allgenes_filter_100000.tsv", "genes/background_filter100000.txt", helthy_backgroud=True)
+    # get_output_gene_list("genes/allgenes_filter_50000.tsv", "genes/background_filter50000.txt", helthy_backgroud=True)
 # create_genes_files(0.2, -0.4)
 # check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
