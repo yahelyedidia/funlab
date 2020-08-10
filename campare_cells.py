@@ -208,43 +208,36 @@ def pie(values, labels, color='RdPu'):
 
 
 def play_with_data(matrix):
+    """
+    A function that split the big matrix to 4 groups:
+    1. always bound (binding rate == 1) and dynamic methylation (met_var >= 0.01)
+    2. always bound (binding rate == 1) and stable methylation (met_var < 0.01)
+    3. stable methylation (met_var < 0.01) but not always bound (binding_rate != 1)
+    4. dynamic state (met_var >=0.01, binding_rate != 1)
+    :param matrix: the healthy cells matrix
+    :return: save the groups as tsv
+    """
     matrix = pd.read_csv(matrix, sep="\t")
-    print("read data")
-    # matrix = matrix[matrix['chr'] == 'chr1']
-    # matrix = matrix.fillna(0)
-    # print(matrix.describe())
     col_name = list(matrix.columns)
     bind_col = [col_name[i] for i in range(5, len(col_name), 2)]
     met_col = [col_name[i] for i in range(4, len(col_name), 2)]
-    matrix["binding_rate"] = matrix[bind_col].mean(axis=1)
-    matrix["met_rate"] = matrix[met_col].mean(axis=1)
-    matrix["met_var"] = matrix[met_col].var(axis=1)
-    # matrix.plot.scatter(x=0, y="met_rate", c="binding_rate", colormap='viridis')
-    # plt.show()
-    # x = 1
-    # x = 1
+    matrix["binding_rate"] = matrix[bind_col].mean(axis=1, skipna = True)
+    matrix["met_rate"] = matrix[met_col].mean(axis=1, skipna = True)
+    matrix["met_var"] = matrix[met_col].var(axis=1, skipna = True)
     matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
-    print("full matrix shape = {0}".format(matrix.shape))
     always_bound_and_stable_met = matrix[(matrix["binding_rate"] == 1) & (matrix["met_var"] <= 0.01)]
     always_bound_and_stable_met.to_csv(BOUND_STABLE_MET_TSV, sep="\t")
-    print("bound and met shape = {0}".format(always_bound_and_stable_met.shape))
     always_bound = matrix[(matrix["binding_rate"] == 1) & (matrix["met_var"] > 0.01)]
-    print("bound = {0}".format(always_bound.shape))
     always_bound.to_csv(BOUND_TSV, sep="\t")
     stable_met = matrix[(matrix["binding_rate"] != 1) & (matrix["met_var"] <= 0.01)]
-    print("stable met shape = {0}".format(stable_met.shape))
     stable_met.to_csv(STABLE_MET_TSV, sep="\t")
     dynamic_state = matrix[(matrix["binding_rate"] != 1) & (matrix["met_var"] > 0.01)]
-    print("dynamic shape = {0}".format(dynamic_state.shape))
     dynamic_state.to_csv(DYNAMIC_STATE_TSV, sep="\t")
-# is_it_the_same_distribution(matrix, met_col, ")
+    # is_it_the_same_distribution(matrix, met_col, ")
     all_cells = []
     for i in range(len(met_col)):
         all_cells.append(matrix[met_col[i]].tolist())
     s, p_val = st.kruskal(*zip(*all_cells))
-    # print("all cell binding and unbinding")
-    # print("p value is {0}".format(p_val))
-    # methylation_dist_in_cell(matrix, col_name[4], col_name[5])
     fig, axes = plt.subplots(2, 3, dpi=100, sharex=True, sharey=True)
     # fig, axes = plt.subplots(4, 5, dpi=100, sharex=True, sharey=True)
 # colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:pink', 'tab:olive']
@@ -282,6 +275,14 @@ def play_with_data(matrix):
 
 
 def compare_significant_sites(compare_to, num, significant_site):
+    """
+    A function that get a file that you want to compare and the file of significant sites
+    and check if there overlap sites
+    :param compare_to:
+    :param num:
+    :param significant_site:
+    :return:
+    """
     comp = pd.read_csv(compare_to, sep="\t")
     comp = comp[(comp["chr"] == 1) & (comp["p_values_{0}_month".format(num)] <= 0.1)]
     sg = pd.read_csv(significant_site, sep="\t")
