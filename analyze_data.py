@@ -464,9 +464,20 @@ def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
     # plt.show()
 
 def compare_genes(dir, filter):
+    """
+    create file with genes (chromosome, start, end) and two columns for all
+    sites groups - (sites near the gene by index, number of close sites), then
+    column for variance of appearance between the groups, number of appearance
+    and number of groups that have site who close to the gene.
+    :param dir: directory of a folder that contain file of sites that close to each
+    gene, one file to group.
+    :param filter: the gene filter that used to filter the data
+    :return: save the file at genes folder
+    """
     labels = []
     is_first = True
     for file in os.listdir(dir):
+        # check which file is it
         if file.find("sm") != -1:
             labels.append("stable state")
         elif file.find("dynamic") != -1:
@@ -475,25 +486,29 @@ def compare_genes(dir, filter):
             labels.append("bound and stable")
         else:
             labels.append("bound")
+        # read the original file
         thisdata = pd.read_csv(dir + os.sep + file, sep="\t")
         if is_first:
             data = thisdata[['chr', 'start', 'end', 'attribute', 'ids', 'close_sites']]
             data = data.rename(columns={'close_sites': labels[-1]})
-        # data = data[data["close_sites"] != '[]']
         else:
             data[labels[-1].strip()] = thisdata['close_sites']
         is_first = False
-    data = data[(data["bound"] != '[]') | (data["stable state"] != '[]') | (data["bound and stable"] != '[]') | (data["dynamic state"] != '[]')]
+    # filter the data - keep only genes that have close site from some group
+    data = data[(data["bound"] != '[]') | (data["stable state"] != '[]') | (data["bound and stable"] != '[]')
+                | (data["dynamic state"] != '[]')]
+    # count number of close sites for each group
     count = lambda l: l.count('(')
     data['n_bound'] = data['bound'].apply(count)
     data['n_stable'] = data['stable state'].apply(count)
     data['n_dynamic'] = data['dynamic state'].apply(count)
     data['n_boundNstable'] = data['bound and stable'].apply(count)
+    # calculate the variance of appearance between the groups
     data['count var'] = data.loc[:, 'n_bound' : 'n_boundNstable'].var(axis=1)
+    # calculate the number of sites that close to genes
     data['appearance'] = data.loc[:, 'n_bound' : 'n_boundNstable'].sum(axis=1)
+    # calculate how many groups has close sites to the genes
     data['not 0'] = data.loc[:, 'n_bound' : 'n_boundNstable'].gt(0).sum(axis=1)
-
-    print(data[['count var', 'appearance', 'not 0']].describe())
 
     data.to_csv("genes" + os.sep + 'allgenes_filter_{0}.tsv'.format(filter), sep="\t")
 
@@ -530,11 +545,11 @@ if __name__ == '__main__':
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_10_filter_100000.csv", 'genes/genes_file_csc_10_ref.txt', 10)
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_6_filter_100000.csv", 'genes/genes_file_csc_6_ref.txt', 6)
     # get_genes(file, csc=True)
-    file = sys.argv[1]
-    n = sys.argv[2]
-    print(file)
-    get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
-    print("done")
+    # file = sys.argv[1]
+    # n = sys.argv[2]
+    # print(file)
+    # get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
+    # print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
     # compare_genes("genes/filter10000/sitesTogenes", 10000)
@@ -544,9 +559,9 @@ if __name__ == '__main__':
     # create_bars(pd.read_csv("genes/allgenes_filter_100000.tsv", sep="\t"), 100000)
     # create_bars(pd.read_csv("genes/allgenes_filter_50000.tsv", sep="\t"), 50000)
     # get_genes("corrected_t_test/t_test_by_site_with_population_all_w_500.csv")
-    # for file in os.listdir("genes/filter10000/genesTosites"):
-    #     name = file[30:-17]
-    #     get_output_gene_list("genes/filter10000/genesTosites" + os.sep + file, "genes/{0}_genes_list_filter10000.txt".format(name))
+    # for file in os.listdir("genes/filter100000/genesTosites"):
+    #     name = file[31:-18]
+    #     get_output_gene_list("genes/filter100000/genesTosites" + os.sep + file, "genes/{0}_genes_list_filter100000.txt".format(name))
     # get_output_gene_list("genes/allgenes_filter_10000.tsv", "genes/background_filter10000.txt", helthy_backgroud=True)
     # get_output_gene_list("genes/allgenes_filter_100000.tsv", "genes/background_filter100000.txt", helthy_backgroud=True)
     # get_output_gene_list("genes/allgenes_filter_50000.tsv", "genes/background_filter50000.txt", helthy_backgroud=True)
@@ -555,6 +570,9 @@ if __name__ == '__main__':
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 # create_genes_files()
 # creat_cns("plass_result")
+    data = pd.read_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/biomart_genes/bound/kegg.txt", sep='\t')
+    print(data.describe())
+    x=1
 
 # filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done1")
