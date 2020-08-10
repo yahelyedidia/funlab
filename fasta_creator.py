@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 from Bio import SeqIO
 
+MOTIV_SIZE = 200
 
 MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/sites_groups/{0}.tsv"
 FASTA = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/hg38.analysisSet.chroms/chr{0}.fa"
@@ -20,7 +21,11 @@ def singal_action(matrix, output_file, cnum):
     for site in temp_matrix.iterrows():
         title = "chr{0}|id {1}|start {2}|end {3}".format(cnum, site[1]["Unnamed: 0"], site[1]["start"], site[1]["end"])
         seq = fasta.seq[site[1]["start"]: site[1]["end"]]
+        if len(seq) > MOTIV_SIZE:
+            y = (len(seq) - MOTIV_SIZE) // 2
+            seq = seq[y: y + 200]
         output_file.write(">{0}\n{1}\n".format(title, seq))
+
 
 
 def fasta_creator(matrix_name, output_name):
