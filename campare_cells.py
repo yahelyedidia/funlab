@@ -30,34 +30,18 @@ def build_matrix():
     :param lst_of_site_files: list of BED file with sites
     :return: the matrix as DataFrame
     """
-    # matrix = pd.DataFrame(columns=COLUMNS)
-    # for f in lst_of_site_files:
-    #     data = create_site_df(f)
-    #     exist_site = False
-    #     for chr, start, end in zip(data[0], data[1], data[2]):
-    #         if chr[CHR_I:] in CTCF_SITES.keys():
-    #             for site in CTCF_SITES[chr[CHR_I:]]:
-    #                 if (site[0] - THRESHOLD <= start <= site[1]) and (site[0] <= end <= site[1] + THRESHOLD):
-    #                     exist_site = True
-    #                     break
-    #             if not exist_site:
-    #                 CTCF_SITES[chr[CHR_I:]].append([start, end])
-    #                 exist_site = False
-    #                 matrix = matrix.append(pd.DataFrame([[chr[CHR_I:], start, end]], columns=COLUMNS))
-    #         else:
-    #             CTCF_SITES[chr[CHR_I:]] = []
-    #             CTCF_SITES[chr[CHR_I:]].append([start, end])
-    #             exist_site = False
-    #             matrix = matrix.append(pd.DataFrame([[chr[CHR_I:], start, end]], columns=COLUMNS))
-    #     matrix = matrix.sort_values(COLUMNS)
-    #     matrix.to_csv(MATRIX)
-    #     return matrix
     matrix = pd.read_csv(MATRIX_SOURCE, sep='\t', header=None)
     matrix.rename(columns={0:"chr", 1:"start", 2:"end"}, inplace=True)
     matrix.to_csv(MATRIX, sep="\t")
 
 
 def create_site_df(f, to_sort=False):
+    """
+    A function that get sites file and read it to dataframe
+    :param f: the file to read
+    :param to_sort: a boolean flag to sign if we need to sort the data
+    :return: the file as dataframe
+    """
     data = pd.read_csv(f, sep='\t', skiprows=[131629], header=None)  # todo: deal with problemist rows
     data = data.drop(columns=[i for i in range(CHR_I, 10)])
     if to_sort:
@@ -68,6 +52,8 @@ def create_site_df(f, to_sort=False):
 def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_df = False, matrix=MATRIX):
     """
     A function that add new cell column to the big matrix and save the matrix as file
+    PAY ATTENTION: at the end of the function you will save the update file instead of the
+    original file. If you don't want to do it, please silence the relevant line.
     :param methylation_files_dir: the path to the methylation file
     :param binding_file: the path to the binding file
     :param name:the name of the new column
@@ -82,7 +68,6 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
     biding = create_site_df(binding_file, True)
     matrix[name + "_met"] = "."
     matrix[name + "_bind"] = "."
-    print("I am here")
     if as_lst:
         for c in os.listdir(methylation_files_dir):
             f = pd.read_csv(methylation_files_dir + os.sep + c, sep='\t')
@@ -102,9 +87,7 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
                                    (matrix[END] == end), name] = str((met, 1))
     else:
         f = pd.read_csv(methylation_files_dir, sep='\t', header=None)
-        print("after reading f")
         f = f[f[COV] >= MIN_COV]
-        print("filtered by coverage")
         f[METHYLATION] = f[METHYLATION] / 100
         for c in range(1, 25):
             if c == 23:
@@ -129,7 +112,7 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
                     else:
                         matrix.loc[(matrix[CHR] == chr) & (start == matrix[START]) &
                                    (matrix[END] == end), name + "_bind"] = 0
-    matrix.to_csv(MATRIX, sep="\t") #todo: pay attention
+    matrix.to_csv(MATRIX, sep="\t") # WARNING: pay attention if you really want to replace the original file
     return matrix
 
 def mann_witney_and_fun(matrix):

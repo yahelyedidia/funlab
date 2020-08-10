@@ -198,7 +198,7 @@ def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False, hea
     :param gene_data: thr gene data
     :param site_file: the data of sites
     :param name: the final file's name
-    :return: thr genes dict
+    :return: the genes dict
     """
     gene_dict = {}
     data_sites = pd.read_csv(site_file, sep="\t")
@@ -411,9 +411,6 @@ def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
         control_label = 'controls_{0}_month'.format(csc)
         after_label = 'afters{0}_month'.format(csc)
         data['metylation change'] = data[after_label] - data[control_label]
-        # ref_data = pd.read_csv(DIR + os.path.sep + "after_fdr_correction_csc.tsv", sep="\t")
-        # data['rejected'] = ref_data['rejected_{0}_month'.format(csc)]
-    # data = data[data['rejected'] == True]
     genes_set = set()
     genes_lst = []
     col = 'close_genes'
@@ -436,32 +433,6 @@ def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
 
     # todo to csv ?
     return data
-
-                # x.append(g)
-                # ys.append(row[1]['metylation change'])
-                # c.append(row[1]['chr'])
-    # d = pd.DataFrame({'chr': c, 'genes': x, 'met': ys})
-    # print(d.head())
-    # d['genes'] = d['genes'].apply(lambda x: x.strip('" '))
-    # d['genes'] = d['genes'].apply(lambda x: x.strip('"'))
-    # x = d['genes']
-    # return
-    # x.to_csv("genes_at_{0}_month.txt".format(6), index=False)
-    # d.to_csv("data_to_plot_gene_6_csc.tsv", sep="\t", index=False)
-    # for i in range(1, 24):
-    #     temp = d[d['chr'] == i]
-    #     plt.scatter(x='genes', y='met', data=temp,
-    #                 s=20, c=colors[i], label="chr " + str(i))
-    # # i = 23
-    # # temp = data[data['chr'] == "X"]
-    # # plt.scatter(x='genes', y='met', data=temp,
-    # #             s=20, c=colors[i], label="chr " + str(i))
-    # # i = 24
-    # # temp = data[data['chr'] == "Y"]
-    # # plt.scatter(x='genes', y='met', data=temp,
-    # #             s=20, c=colors[i], label="chr " + str(i))
-    # plt.title(file)
-    # plt.show()
 
 def compare_genes(dir, filter):
     """
