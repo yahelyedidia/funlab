@@ -1,10 +1,7 @@
 import numpy as np
 import pandas as pd
 from itertools import islice
-import sys
 import os
-import matplotlib.pyplot as plt
-import matplotlib.cm
 import re
 import matplotlib.pyplot as plt
 
@@ -217,7 +214,7 @@ def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False, hea
         fe = site[1]['end'] + filter
         if site[1]['chr'] == 'chrX':
             chr = 23
-        elif  site[1]['chr'] == 'chrY':
+        elif site[1]['chr'] == 'chrY':
             chr = 24
         else:
             chr = int(re.search(r'\d+', site[1]['chr']).group())
@@ -266,15 +263,28 @@ def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name,
 
 
 def finds_and_print_genes(chroms, f, file_to_check, name, num_to_print, p_label='p value', csc=False, healthy=False):
+    """
+    finding close genes and printing the results
+    :param chroms:
+    :param f:
+    :param file_to_check:
+    :param name:
+    :param num_to_print:
+    :param p_label:
+    :param csc:
+    :param healthy:
+    :return:
+    """
     d = find_close_genes(f, chroms, file_to_check, name, p_label, csc, healthy)
     print("dictionary after filter {0}".format(f))
     print("number of genes: {0}".format(len(d)))
     print_top_values(num_to_print, d)
 
+
 def print_top_values(num_to_print, d):
     """
     A function that get dictionary and number of items to print and
-    :param num_to_print:
+    :param num_to_print: number of to values to print
     :param d: the dictionary to print
     """
     if num_to_print > len(d):
@@ -289,6 +299,7 @@ def print_top_values(num_to_print, d):
         counter -= len(max_keys)
         for key in max_keys:
             del d[key]
+
 
 def convert_csv_to_cn(file, s):
     """
@@ -318,6 +329,7 @@ def convert_csv_to_cn(file, s):
         x = x.replace(",", '\t')
         cn_file.write(x)
     cn_file.close()
+
 
 def convert_to_cn_2(file):
     """
@@ -353,16 +365,26 @@ def convert_to_cn_2(file):
             output_file.write(line)
             i += 1
 
+
 def creat_cns(dir):
+    """
+    old function to convert all csv files in folder to cn files
+    :param dir: the folder directory
+    """
     for file in os.listdir(dir):
         if file.endswith(".csv"):
             convert_to_cn_2(dir+os.path.sep+file)
 
+
 def create_genes_files(up, down):
+    """
+    Create a file of close genes by distance windows of different sizes and by files that are partitioned to increase
+    and decrease files.
+    :param up: increase file data
+    :param down: decrease file data
+    """
     for file in os.listdir("immortalization_result/by_window"):
         if file.endswith(".csv"):
-            # f = os.path.abspath(file)
-            # file = "imm_b1_filtered.csv"
             filter_data(up, "immortalization_result/by_window" + os.sep + file, "change", "immortalization_result/by_window/increase_" + file + "_{0}.csv".format(up))
             print("done1")
             filter_data(down, "immortalization_result/by_window" + os.sep + file, "change", "immortalization_result/by_window/decrease_" + file + "_{0}.csv".format(down))
@@ -372,7 +394,17 @@ def create_genes_files(up, down):
             check_with_change_filter([10000, 50000, 100000], 30,  "immortalization_result/by_window/decrease_" + file + "_{0}.csv".format(down), os.path.splitext(os.path.basename(file))[0])
             print("done decrease")
 
+
 def get_genes(file, window=500, flag_38=False, csc=False, healthy=False, name="t_test_w_{0}"):
+    """
+    Create a file of close genes by distance windows of different sizes
+    :param file: the file itself.
+    :param window: window of bases on the sides of the peak
+    :param flag_38: A flag representing if it is version 38
+    :param csc: A flag representing if it is CSC file
+    :param healthy: A flag representing if it is a healthy file
+    :param name: the output file name
+    """
     if flag_38:
         check_with_change_filter([10000, 50000, 100000], 30, file, name.format(window), csc, flag_38, healthy)
         check_with_change_filter([10000, 50000, 100000], 30, file, "imm_sagnificant_w_{0}".format(window), flag_38=True)
@@ -384,6 +416,13 @@ def get_genes(file, window=500, flag_38=False, csc=False, healthy=False, name="t
 
 
 def covnert_list_to_avg(data, col1, col2):
+    """
+    Converting the string data to numeric average data
+    :param data: the data matrix
+    :param col1: control column
+    :param col2: after treatment column
+    :return: the control, after treatment average vectors
+    """
     control, treat = [], []
     for row in data.iterrows():
         temp = row[1][col1].split(",")
@@ -398,6 +437,14 @@ def covnert_list_to_avg(data, col1, col2):
 
 
 def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
+    """
+    Creating gene list from existing
+    :param file: the input file
+    :param outputname: the output's file name.
+    :param csc: A flag representing if it is CSC file
+    :param helthy_backgroud: A flag representing if it is healthy file
+    :return: the filtered data
+    """
     data = pd.read_csv(file, sep="\t")
     no_name = "['no_name_found']"
     if helthy_backgroud:
@@ -433,6 +480,33 @@ def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
 
     # todo to csv ?
     return data
+
+                # x.append(g)
+                # ys.append(row[1]['metylation change'])
+                # c.append(row[1]['chr'])
+    # d = pd.DataFrame({'chr': c, 'genes': x, 'met': ys})
+    # print(d.head())
+    # d['genes'] = d['genes'].apply(lambda x: x.strip('" '))
+    # d['genes'] = d['genes'].apply(lambda x: x.strip('"'))
+    # x = d['genes']
+    # return
+    # x.to_csv("genes_at_{0}_month.txt".format(6), index=False)
+    # d.to_csv("data_to_plot_gene_6_csc.tsv", sep="\t", index=False)
+    # for i in range(1, 24):
+    #     temp = d[d['chr'] == i]
+    #     plt.scatter(x='genes', y='met', data=temp,
+    #                 s=20, c=colors[i], label="chr " + str(i))
+    # # i = 23
+    # # temp = data[data['chr'] == "X"]
+    # # plt.scatter(x='genes', y='met', data=temp,
+    # #             s=20, c=colors[i], label="chr " + str(i))
+    # # i = 24
+    # # temp = data[data['chr'] == "Y"]
+    # # plt.scatter(x='genes', y='met', data=temp,
+    # #             s=20, c=colors[i], label="chr " + str(i))
+    # plt.title(file)
+    # plt.show()
+
 
 def compare_genes(dir, filter):
     """
@@ -483,7 +557,13 @@ def compare_genes(dir, filter):
 
     data.to_csv("genes" + os.sep + 'allgenes_filter_{0}.tsv'.format(filter), sep="\t")
 
+
 def create_bars(data, filter):
+    """
+    Creating bar plot of the data
+    :param data: the data to plot
+    :param filter: the filter to plot by
+    """
     order_data = data.sort_values(by='appearance', ascending=False)
     groups = order_data.groupby('not 0')
     for name, group in groups:
@@ -501,7 +581,6 @@ def create_bars(data, filter):
             ax.set_xlabel("Genes")
             ax.set_ylabel("Amount of appearance")
             ax.legend()
-        # plt.axes.get_xaxis().set_visible(False)
         plt.savefig("genes/filter_{0}_shared_{1}_groups.png".format(filter, name))
         plt.show()
 
@@ -541,10 +620,6 @@ if __name__ == '__main__':
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 # create_genes_files()
 # creat_cns("plass_result")
-    data = pd.read_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/biomart_genes/bound/kegg.txt", sep='\t')
-    print(data.describe())
-    x=1
-
 # filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done1")
 # filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
