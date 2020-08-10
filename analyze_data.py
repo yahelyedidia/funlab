@@ -1,10 +1,7 @@
 import numpy as np
 import pandas as pd
 from itertools import islice
-import sys
 import os
-import matplotlib.pyplot as plt
-import matplotlib.cm
 import re
 import matplotlib.pyplot as plt
 
@@ -209,7 +206,6 @@ def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False, hea
         data_sites = data_sites
     else:
         data_sites = data_sites[data_sites['p value'] <= 0.05]
-    # print("pass")
     add_gene = []
     for site in data_sites.iterrows():
         genes = []
@@ -217,7 +213,7 @@ def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False, hea
         fe = site[1]['end'] + filter
         if site[1]['chr'] == 'chrX':
             chr = 23
-        elif  site[1]['chr'] == 'chrY':
+        elif site[1]['chr'] == 'chrY':
             chr = 24
         else:
             chr = int(re.search(r'\d+', site[1]['chr']).group())
@@ -266,15 +262,28 @@ def check_with_change_filter(list_of_filters, num_to_print, file_to_check, name,
 
 
 def finds_and_print_genes(chroms, f, file_to_check, name, num_to_print, p_label='p value', csc=False, healthy=False):
+    """
+    finding close genes and printing the results
+    :param chroms:
+    :param f:
+    :param file_to_check:
+    :param name:
+    :param num_to_print:
+    :param p_label:
+    :param csc:
+    :param healthy:
+    :return:
+    """
     d = find_close_genes(f, chroms, file_to_check, name, p_label, csc, healthy)
     print("dictionary after filter {0}".format(f))
     print("number of genes: {0}".format(len(d)))
     print_top_values(num_to_print, d)
 
+
 def print_top_values(num_to_print, d):
     """
     A function that get dictionary and number of items to print and
-    :param num_to_print:
+    :param num_to_print: number of to values to print
     :param d: the dictionary to print
     """
     if num_to_print > len(d):
@@ -289,6 +298,7 @@ def print_top_values(num_to_print, d):
         counter -= len(max_keys)
         for key in max_keys:
             del d[key]
+
 
 def convert_csv_to_cn(file, s):
     """
@@ -318,6 +328,7 @@ def convert_csv_to_cn(file, s):
         x = x.replace(",", '\t')
         cn_file.write(x)
     cn_file.close()
+
 
 def convert_to_cn_2(file):
     """
@@ -353,16 +364,26 @@ def convert_to_cn_2(file):
             output_file.write(line)
             i += 1
 
+
 def creat_cns(dir):
+    """
+    old function to convert all csv files in folder to cn files
+    :param dir: the folder directory
+    """
     for file in os.listdir(dir):
         if file.endswith(".csv"):
             convert_to_cn_2(dir+os.path.sep+file)
 
+
 def create_genes_files(up, down):
+    """
+    creating close genes files,
+    :param up:
+    :param down:
+    :return:
+    """
     for file in os.listdir("immortalization_result/by_window"):
         if file.endswith(".csv"):
-            # f = os.path.abspath(file)
-            # file = "imm_b1_filtered.csv"
             filter_data(up, "immortalization_result/by_window" + os.sep + file, "change", "immortalization_result/by_window/increase_" + file + "_{0}.csv".format(up))
             print("done1")
             filter_data(down, "immortalization_result/by_window" + os.sep + file, "change", "immortalization_result/by_window/decrease_" + file + "_{0}.csv".format(down))
@@ -371,6 +392,7 @@ def create_genes_files(up, down):
             print("done increase")
             check_with_change_filter([10000, 50000, 100000], 30,  "immortalization_result/by_window/decrease_" + file + "_{0}.csv".format(down), os.path.splitext(os.path.basename(file))[0])
             print("done decrease")
+
 
 def get_genes(file, window=500, flag_38=False, csc=False, healthy=False, name="t_test_w_{0}"):
     if flag_38:
