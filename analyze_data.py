@@ -377,10 +377,10 @@ def creat_cns(dir):
 
 def create_genes_files(up, down):
     """
-    creating close genes files,
-    :param up:
-    :param down:
-    :return:
+    Create a file of close genes by distance windows of different sizes and by files that are partitioned to increase
+    and decrease files.
+    :param up: increase file data
+    :param down: decrease file data
     """
     for file in os.listdir("immortalization_result/by_window"):
         if file.endswith(".csv"):
@@ -395,6 +395,15 @@ def create_genes_files(up, down):
 
 
 def get_genes(file, window=500, flag_38=False, csc=False, healthy=False, name="t_test_w_{0}"):
+    """
+    Create a file of close genes by distance windows of different sizes
+    :param file: the file itself.
+    :param window: window of bases on the sides of the peak
+    :param flag_38: A flag representing if it is version 38
+    :param csc: A flag representing if it is CSC file
+    :param healthy: A flag representing if it is a healthy file
+    :param name: the output file name
+    """
     if flag_38:
         check_with_change_filter([10000, 50000, 100000], 30, file, name.format(window), csc, flag_38, healthy)
         check_with_change_filter([10000, 50000, 100000], 30, file, "imm_sagnificant_w_{0}".format(window), flag_38=True)
@@ -406,6 +415,13 @@ def get_genes(file, window=500, flag_38=False, csc=False, healthy=False, name="t
 
 
 def covnert_list_to_avg(data, col1, col2):
+    """
+    Converting the string data to numeric average data
+    :param data: the data matrix
+    :param col1: control column
+    :param col2: after treatment column
+    :return: the control, after treatment average vectors
+    """
     control, treat = [], []
     for row in data.iterrows():
         temp = row[1][col1].split(",")
@@ -420,6 +436,14 @@ def covnert_list_to_avg(data, col1, col2):
 
 
 def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
+    """
+    Creating gene list from existing
+    :param file: the input file
+    :param outputname: the output's file name.
+    :param csc: A flag representing if it is CSC file
+    :param helthy_backgroud: A flag representing if it is healthy file
+    :return: the filtered data
+    """
     data = pd.read_csv(file, sep="\t")
     no_name = "['no_name_found']"
     if helthy_backgroud:
@@ -433,9 +457,6 @@ def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
         control_label = 'controls_{0}_month'.format(csc)
         after_label = 'afters{0}_month'.format(csc)
         data['metylation change'] = data[after_label] - data[control_label]
-        # ref_data = pd.read_csv(DIR + os.path.sep + "after_fdr_correction_csc.tsv", sep="\t")
-        # data['rejected'] = ref_data['rejected_{0}_month'.format(csc)]
-    # data = data[data['rejected'] == True]
     genes_set = set()
     genes_lst = []
     col = 'close_genes'
@@ -484,6 +505,7 @@ def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
     # #             s=20, c=colors[i], label="chr " + str(i))
     # plt.title(file)
     # plt.show()
+
 
 def compare_genes(dir, filter):
     """
@@ -534,7 +556,13 @@ def compare_genes(dir, filter):
 
     data.to_csv("genes" + os.sep + 'allgenes_filter_{0}.tsv'.format(filter), sep="\t")
 
+
 def create_bars(data, filter):
+    """
+    Creating bar plot of the data
+    :param data: the data to plot
+    :param filter: the filter to plot by
+    """
     order_data = data.sort_values(by='appearance', ascending=False)
     groups = order_data.groupby('not 0')
     for name, group in groups:
@@ -552,7 +580,6 @@ def create_bars(data, filter):
             ax.set_xlabel("Genes")
             ax.set_ylabel("Amount of appearance")
             ax.legend()
-        # plt.axes.get_xaxis().set_visible(False)
         plt.savefig("genes/filter_{0}_shared_{1}_groups.png".format(filter, name))
         plt.show()
 
@@ -592,10 +619,6 @@ if __name__ == '__main__':
 # check_with_change_filter([10000, 50000, 100000], 30, "plass_result/filtered/decrease_no_treatment_vs_with_dac_0.6.csv", "test")
 # create_genes_files()
 # creat_cns("plass_result")
-    data = pd.read_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/biomart_genes/bound/kegg.txt", sep='\t')
-    print(data.describe())
-    x=1
-
 # filter_data(0.001, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/increase_mthylation_after_dac_vs_hdac_and_dac.csv")
 # print("done1")
 # filter_data(-0.1, "Compares files/after_dac_vs_after_dac_and_hdac.csv", "change", "Compares files/filtered/decrease_mthylation_after_dac_vs_hdac_and_dac.csv")
