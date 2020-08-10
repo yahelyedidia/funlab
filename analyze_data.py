@@ -195,7 +195,7 @@ def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False, hea
     :param gene_data: thr gene data
     :param site_file: the data of sites
     :param name: the final file's name
-    :return: thr genes dict
+    :return: the genes dict
     """
     gene_dict = {}
     data_sites = pd.read_csv(site_file, sep="\t")
@@ -206,6 +206,7 @@ def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False, hea
         data_sites = data_sites
     else:
         data_sites = data_sites[data_sites['p value'] <= 0.05]
+    # print("pass")
     add_gene = []
     for site in data_sites.iterrows():
         genes = []
