@@ -272,6 +272,49 @@ def play_with_data(matrix):
     print("all cell unbinding data")
     print("p value is {0}".format(p_val))
 
+def set_axis_style(ax, labels):
+    ax.get_xaxis().set_tick_params(direction='out')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_xticks(np.arange(1, len(labels) + 1))
+    ax.set_xticklabels(labels)
+    ax.set_xlim(0.25, len(labels) + 0.75)
+    ax.set_xlabel('Sample name')
+
+
+def different_cuts(matrix):
+    matrix = pd.read_csv(matrix, sep="\t")
+    col_name = list(matrix.columns)
+    bind_col = [col_name[i] for i in range(5, len(col_name), 2)]
+    met_col = [col_name[i] for i in range(4, len(col_name), 2)]
+    matrix["binding_rate"] = matrix[bind_col].mean(axis=1, skipna = True)
+    matrix["met_rate"] = matrix[met_col].mean(axis=1, skipna = True)
+    matrix["met_var"] = matrix[met_col].var(axis=1, skipna = True)
+    matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
+    print(matrix["met_var"].quantile([.25, .5, .75]))
+    ml = matrix["met_var"].quantile(.25)
+    mm = matrix["met_var"].quantile(.5)
+    mh = matrix["met_var"].quantile(.75)
+    l_var = matrix[matrix["met_var"] <= ml]
+    lm_var = matrix[(matrix["met_var"] > ml) & (matrix["met_var"] <= mm)]
+    mh_var = matrix[(matrix["met_var"] > mm) & (matrix["met_var"] <= mh)]
+    h_var = matrix[matrix["met_var"] > mh]
+    print(matrix["binding_rate"].quantile([.25, .5, .75]))
+    bl = matrix["binding_rate"].quantile(.25)
+    bm = matrix["binding_rate"].quantile(.5)
+    bh = matrix["binding_rate"].quantile(.75)
+    l_binding = matrix[matrix["binding_rate"] <= bl]
+    lm_binding = matrix[(matrix["binding_rate"] > bl) & (matrix["binding_rate"] <= bm)]
+    mh_binding = matrix[(matrix["binding_rate"] > bm) & (matrix["binding_rate"] <= bh)]
+    h_binding = matrix[matrix["binding_rate"] > bh]
+    fig, ax = plt.subplots()
+    violin = ax.violinplot([l_binding["met_rate"].values.tolist(), lm_binding["met_rate"].values.tolist(), mh_binding["met_rate"].values.tolist(), h_binding["met_rate"].values.tolist()])
+    ax.set_ylabel("Methylation levels")
+    ax.set_title("hi gal")
+    labels = ['A', 'B', 'C', 'D']
+    set_axis_style(ax, labels)
+    print(violin)
+    plt.legend()
+    plt.show()
 
 
 def compare_significant_sites(compare_to, num, significant_site):
@@ -342,4 +385,5 @@ if __name__ == '__main__':
     #     compare_significant_sites("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p                          
     # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value < 0.05")
     # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/not_significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value >= 0.05")
-    play_with_data(MATRIX)
+    print("hi gal")
+    different_cuts(MATRIX)
