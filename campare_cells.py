@@ -115,64 +115,69 @@ def add_cell(methylation_files_dir, binding_file, name, as_lst=True, matrix_as_d
     matrix.to_csv(MATRIX, sep="\t") # WARNING: pay attention if you really want to replace the original file
     return matrix
 
-def mann_witney_and_fun(matrix):
+def mann_whitney_and_fun(matrix):
+    """
+    A function that apply mann whitney test on each CTCF binding site
+    :param matrix: the healthy cells matrix
+    :return: save a tsv file with the results
+    """
     matrix = pd.read_csv(matrix, sep="\t")
-    # matrix = matrix[matrix['chr'] == 'chr1']
-    matrix = matrix.fillna(0)
     col_name = list(matrix.columns)
-    bind_col = [col_name[i] for i in range(5, len(col_name), 2)]
-    met_col = [col_name[i] for i in range(4, len(col_name), 2)]
-    matrix["binding_rate"] = matrix[bind_col].mean(axis=1)
-    matrix["met_rate"] = matrix[met_col].mean(axis=1)
-    always_bond = matrix[matrix["binding_rate"] == 1]
-    print(matrix.shape)
+    bind_col = [col_name[i] for i in range(5, len(col_name), 2)] # get the binding columns
+    met_col = [col_name[i] for i in range(4, len(col_name), 2)] # get the methylation columns
+    # calculate the average of methylation rate and binding rate for each binding site
+    matrix["binding_rate"] = matrix[bind_col].mean(axis=1, skipna = True)
+    matrix["met_rate"] = matrix[met_col].mean(axis=1, skipna = True)
+    # create new dataframe of all the CTCF binding sites that always bound
+    always_bound = matrix[matrix["binding_rate"] == 1]
     l = matrix.shape[0]
+    # filter the matrix data to sites that bound at least in 5 different cell types
     matrix = matrix[(matrix["binding_rate"] > 5 / len(bind_col)) & (matrix["binding_rate"] < 1- (3 / len(bind_col)))]
     np_data = np.array(matrix[met_col])
+    # calculate the variance of the methylation rate
     vars = np.var(np_data, axis=1)
     matrix['met_var'] = vars
     m = matrix[matrix["met_var"] != 0]
+    # create new data frame of all the CTCF binding sites that there methylation variance is less then 0.01
     never_met = matrix[matrix["met_var"] <= 0.01]
-    binded_avg = []
-    unbinded_avg = []
+    bound_avg = []
+    unbound_avg = []
     p_val = []
     counter = 0
+    # apply mann whitney test for each site
     for site in m.iterrows():
-        binded = []
-        unbinded = []
+        bound = []
+        unbound = []
         for cell in range(len(bind_col)):
             if site[1][bind_col[cell]] == 1:
-                binded.append(float(site[1][met_col[cell]]))
+                bound.append(float(site[1][met_col[cell]]))
             else:
-                unbinded.append(float(site[1][met_col[cell]]))
+                unbound.append(float(site[1][met_col[cell]]))
         if site[1]["met_rate"] == 0:
-            print("in line {0}".format(counter))
             p_val.append(None)
         else:
-            p_val.append(st.mannwhitneyu(binded, unbinded).pvalue)
-        binded_avg.append((sum(binded))/len(binded))
-        if len(unbinded) != 0:
-            unbinded_avg.append((sum(unbinded))/len(unbinded))
+            p_val.append(st.mannwhitneyu(bound, unbound).pvalue)
+        bound_avg.append((sum(bound))/len(bound))
+        if len(unbound) != 0:
+            unbound_avg.append((sum(unbound))/len(unbound))
         else:
-            unbinded_avg.append(0)
+            unbound_avg.append(0)
         counter += 1
-    m["binded_avg"] = binded_avg
+    m["binded_avg"] = bound_avg
     # m["binded_avg"] = binded_avg
-    m["unbinded_avg"] = unbinded_avg
+    m["unbinded_avg"] = unbound_avg
     m["p_val"] = p_val
-    # m.plot.scatter(x="binded_avg", y="unbinded_avg", c="p_val", colormap='viridis')
-    # plt.show()
+    # create new dataframe of the significant values and not significant values
     sg_matrix = m[m["p_val"] <= 0.05]
     nsg_matrix = m[m["p_val"] > 0.05]
     sg_matrix.to_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", sep="\t")
     nsg_matrix.to_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/not_significant_sites_all_chr_p=0.05.tsv", sep="\t")
     m.to_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all.tsv", sep="\t")
-    print(sg_matrix.shape)
-    print(never_met.shape)
-    print(always_bond.shape)
+
+    # draw pie charts
     langs = ['Always bound', 'Stable methylation levels', 'Dynamic relationship']
     p = lambda x: (x/l) * 100
-    a_r = p(always_bond.shape[0])
+    a_r = p(always_bound.shape[0])
     n_r = p(never_met.shape[0])
     ratio = [a_r,n_r , 100 - a_r - n_r]
     print(ratio)
@@ -185,6 +190,13 @@ def mann_witney_and_fun(matrix):
     pie(ratio2, langs)
 
 def pie(values, labels, color='RdPu'):
+    """
+    A function that draw pie chart
+    :param values: the values for the chart
+    :param labels: the labels for the chart
+    :param color: the color of the chart
+    :return: show the chart
+    """
     fig = plt.figure()
     ax = fig.add_axes([0,0,1,1])
     ax.axis('equal')
@@ -196,43 +208,36 @@ def pie(values, labels, color='RdPu'):
 
 
 def play_with_data(matrix):
+    """
+    A function that split the big matrix to 4 groups:
+    1. always bound (binding rate == 1) and dynamic methylation (met_var >= 0.01)
+    2. always bound (binding rate == 1) and stable methylation (met_var < 0.01)
+    3. stable methylation (met_var < 0.01) but not always bound (binding_rate != 1)
+    4. dynamic state (met_var >=0.01, binding_rate != 1)
+    :param matrix: the healthy cells matrix
+    :return: save the groups as tsv
+    """
     matrix = pd.read_csv(matrix, sep="\t")
-    print("read data")
-    # matrix = matrix[matrix['chr'] == 'chr1']
-    # matrix = matrix.fillna(0)
-    # print(matrix.describe())
     col_name = list(matrix.columns)
     bind_col = [col_name[i] for i in range(5, len(col_name), 2)]
     met_col = [col_name[i] for i in range(4, len(col_name), 2)]
-    matrix["binding_rate"] = matrix[bind_col].mean(axis=1)
-    matrix["met_rate"] = matrix[met_col].mean(axis=1)
-    matrix["met_var"] = matrix[met_col].var(axis=1)
-    # matrix.plot.scatter(x=0, y="met_rate", c="binding_rate", colormap='viridis')
-    # plt.show()
-    # x = 1
-    # x = 1
+    matrix["binding_rate"] = matrix[bind_col].mean(axis=1, skipna = True)
+    matrix["met_rate"] = matrix[met_col].mean(axis=1, skipna = True)
+    matrix["met_var"] = matrix[met_col].var(axis=1, skipna = True)
     matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
-    print("full matrix shape = {0}".format(matrix.shape))
     always_bound_and_stable_met = matrix[(matrix["binding_rate"] == 1) & (matrix["met_var"] <= 0.01)]
     always_bound_and_stable_met.to_csv(BOUND_STABLE_MET_TSV, sep="\t")
-    print("bound and met shape = {0}".format(always_bound_and_stable_met.shape))
     always_bound = matrix[(matrix["binding_rate"] == 1) & (matrix["met_var"] > 0.01)]
-    print("bound = {0}".format(always_bound.shape))
     always_bound.to_csv(BOUND_TSV, sep="\t")
     stable_met = matrix[(matrix["binding_rate"] != 1) & (matrix["met_var"] <= 0.01)]
-    print("stable met shape = {0}".format(stable_met.shape))
     stable_met.to_csv(STABLE_MET_TSV, sep="\t")
     dynamic_state = matrix[(matrix["binding_rate"] != 1) & (matrix["met_var"] > 0.01)]
-    print("dynamic shape = {0}".format(dynamic_state.shape))
     dynamic_state.to_csv(DYNAMIC_STATE_TSV, sep="\t")
-# is_it_the_same_distribution(matrix, met_col, ")
+    # is_it_the_same_distribution(matrix, met_col, ")
     all_cells = []
     for i in range(len(met_col)):
         all_cells.append(matrix[met_col[i]].tolist())
     s, p_val = st.kruskal(*zip(*all_cells))
-    # print("all cell binding and unbinding")
-    # print("p value is {0}".format(p_val))
-    # methylation_dist_in_cell(matrix, col_name[4], col_name[5])
     fig, axes = plt.subplots(2, 3, dpi=100, sharex=True, sharey=True)
     # fig, axes = plt.subplots(4, 5, dpi=100, sharex=True, sharey=True)
 # colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:pink', 'tab:olive']
@@ -267,9 +272,60 @@ def play_with_data(matrix):
     print("all cell unbinding data")
     print("p value is {0}".format(p_val))
 
+def set_axis_style(ax, labels):
+    ax.get_xaxis().set_tick_params(direction='out')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_xticks(np.arange(1, len(labels) + 1))
+    ax.set_xticklabels(labels)
+    ax.set_xlim(0.25, len(labels) + 0.75)
+    ax.set_xlabel('Sample name')
+
+
+def different_cuts(matrix):
+    matrix = pd.read_csv(matrix, sep="\t")
+    col_name = list(matrix.columns)
+    bind_col = [col_name[i] for i in range(5, len(col_name), 2)]
+    met_col = [col_name[i] for i in range(4, len(col_name), 2)]
+    matrix["binding_rate"] = matrix[bind_col].mean(axis=1, skipna = True)
+    matrix["met_rate"] = matrix[met_col].mean(axis=1, skipna = True)
+    matrix["met_var"] = matrix[met_col].var(axis=1, skipna = True)
+    matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
+    print(matrix["met_var"].quantile([.25, .5, .75]))
+    ml = matrix["met_var"].quantile(.25)
+    mm = matrix["met_var"].quantile(.5)
+    mh = matrix["met_var"].quantile(.75)
+    l_var = matrix[matrix["met_var"] <= ml]
+    lm_var = matrix[(matrix["met_var"] > ml) & (matrix["met_var"] <= mm)]
+    mh_var = matrix[(matrix["met_var"] > mm) & (matrix["met_var"] <= mh)]
+    h_var = matrix[matrix["met_var"] > mh]
+    print(matrix["binding_rate"].quantile([.25, .5, .75]))
+    bl = matrix["binding_rate"].quantile(.25)
+    bm = matrix["binding_rate"].quantile(.5)
+    bh = matrix["binding_rate"].quantile(.75)
+    l_binding = matrix[matrix["binding_rate"] <= bl]
+    lm_binding = matrix[(matrix["binding_rate"] > bl) & (matrix["binding_rate"] <= bm)]
+    mh_binding = matrix[(matrix["binding_rate"] > bm) & (matrix["binding_rate"] <= bh)]
+    h_binding = matrix[matrix["binding_rate"] > bh]
+    fig, ax = plt.subplots()
+    violin = ax.violinplot([l_binding["met_rate"].values.tolist(), lm_binding["met_rate"].values.tolist(), mh_binding["met_rate"].values.tolist(), h_binding["met_rate"].values.tolist()])
+    ax.set_ylabel("Methylation levels")
+    ax.set_title("hi gal")
+    labels = ['A', 'B', 'C', 'D']
+    set_axis_style(ax, labels)
+    print(violin)
+    plt.legend()
+    plt.show()
 
 
 def compare_significant_sites(compare_to, num, significant_site):
+    """
+    A function that get a file that you want to compare and the file of significant sites
+    and check if there overlap sites
+    :param compare_to:
+    :param num:
+    :param significant_site:
+    :return:
+    """
     comp = pd.read_csv(compare_to, sep="\t")
     comp = comp[(comp["chr"] == 1) & (comp["p_values_{0}_month".format(num)] <= 0.1)]
     sg = pd.read_csv(significant_site, sep="\t")
@@ -329,4 +385,5 @@ if __name__ == '__main__':
     #     compare_significant_sites("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/CSC/p                          
     # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value < 0.05")
     # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/not_significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value >= 0.05")
-    play_with_data(MATRIX)
+    print("hi gal")
+    different_cuts(MATRIX)
