@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pandas as pd
 from itertools import islice
@@ -21,6 +22,8 @@ BEDGRAPH_LINE_FORMAT = "s{i}\tchr{chr_name}\t{start}\t{number}\n"
 
 COLUMNS = 1
 REP_LIST = ['6', '10', '15']
+
+PATH = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups" + os.sep + "genes"
 
 """number of cromosomes"""
 NUM_OF_CHR = 24
@@ -235,9 +238,9 @@ def find_close_genes(filter, gene_data, site_file, name, i=False, csc=False, hea
         merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name.format(i)), sep="\t", index=False)
         merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name.format(i)), sep="\t")
     elif healthy:
-        data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name), sep="\t")
+        data_sites.to_csv(PATH + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name), sep="\t")
         merge_genes_data = pd.concat(gene_data)
-        merge_genes_data.to_csv("genes" + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name), sep="\t")
+        merge_genes_data.to_csv(PATH + os.path.sep + "sites_close_to_genes_{1}_filter_{0}.csv".format(filter, name), sep="\t")
     else:
         data_sites.to_csv("genes" + os.path.sep + "genes_close_to_sites_{1}_filter_{0}.csv".format(filter, name), sep="\t", index=False)
         merge_genes_data = pd.concat(gene_data)
@@ -595,10 +598,10 @@ if __name__ == '__main__':
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_10_filter_100000.csv", 'genes/genes_file_csc_10_ref.txt', 10)
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_6_filter_100000.csv", 'genes/genes_file_csc_6_ref.txt', 6)
     # get_genes(file, csc=True)
-    # file = sys.argv[1]
-    # n = sys.argv[2]
-    # print(file)
-    # get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
+    file = sys.argv[1]
+    n = sys.argv[2]
+    print(file)
+    get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
     # print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
