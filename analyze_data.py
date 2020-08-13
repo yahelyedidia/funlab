@@ -577,15 +577,29 @@ def corr(row, bind, met):
     r, p = st.pearsonr(x, y)
     return r
 
-def calculate_correlation(matrix):
+def calculate_correlation(matrix, filter):
     data = pd.read_csv(matrix, sep='\t')
     data = data.drop(data.columns[[0, 1, 2]], axis=1)
     col_name = list(data.columns)
     bind_col = [col_name[i] for i in range(4, len(col_name) - 4, 2)]
     met_col = [col_name[i] for i in range(3, len(col_name) - 4 , 2)]
     data["correlation"] = data.apply(lambda x: corr(x, bind_col, met_col), axis=1)
-    print(data.describe())
-    data.to_csv("with_corr.tsv", sep='\t')
+    # print(data.describe())
+    data.boxplot(column='correlation')
+    plt.show()
+    # data.to_csv("with_corr.tsv", sep='\t')
+    neg_corr = data[data['correlation'] <= -0.5]
+    print(neg_corr.shape)
+    pos_corr = data[data['correlation'] >= 0.5]
+    print(pos_corr.shape)
+    low_corr = data[(data['correlation'] > -0.5) & (data['correlation'] < 0.5)]
+    print(low_corr.shape)
+    neg_corr.to_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups" + os.sep + "negative_correlation_filter_{0}.tsv".format(filter), sep='\t')
+    pos_corr.to_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups" + os.sep + "positive_correlation_filter_{0}.tsv".format(filter), sep='\t')
+    low_corr.to_csv("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups" + os.sep + "low_correlation_filter_{0}.tsv".format(filter), sep='\t')
+
+
+
 
 
 def create_bars(data, filter):
@@ -625,10 +639,10 @@ if __name__ == '__main__':
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_10_filter_100000.csv", 'genes/genes_file_csc_10_ref.txt', 10)
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_6_filter_100000.csv", 'genes/genes_file_csc_6_ref.txt', 6)
     # get_genes(file, csc=True)
-    # file = sys.argv[1]
-    # n = sys.argv[2]
+    file = sys.argv[1]
+    n = sys.argv[2]
     # print(file)
-    # get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
+    get_genes(file, csc=False, flag_38=True, healthy=True, name=n)
     # print("done")
     # read_genes_data(GENES_B37)
     # read_genes_data(GENES_B38)
@@ -645,7 +659,9 @@ if __name__ == '__main__':
     # get_output_gene_list("genes/allgenes_filter_10000.tsv", "genes/background_filter10000.txt", helthy_backgroud=True)
     # get_output_gene_list("genes/allgenes_filter_100000.tsv", "genes/background_filter100000.txt", helthy_backgroud=True)
     # get_output_gene_list("genes/allgenes_filter_50000.tsv", "genes/background_filter50000.txt", helthy_backgroud=True)
-    calculate_correlation("genes/filter10000/genesTosites/genes_close_to_sites_new_genes_dynamic_filter_10000.csv")
+    # calculate_correlation("genes/filter10000/genesTosites/genes_close_to_sites_new_genes_dynamic_filter_10000.csv", 10000)
+    # calculate_correlation("genes/filter100000/genesTosites/genes_close_to_sites_new_genes_dynamic_filter_100000.csv", 100000)
+    # calculate_correlation("genes/filter50000/genesTosites/genes_close_to_sites_new_genes_dynamic_filter_50000.csv", 50000)
     # corr(pd.DataFrame(np.array([[1, np.nan, 2, 3]])), [0, 1], [2, 3])
 # create_genes_files(0.2, -0.4)
 # check_with_change_filter([50000], 30, "plass_result/filtered/increase_no_treatment_vs_with_dac.csv_0.6.csv", "increase_plass_no_treatment_vs_with_dac.csv_0.6.csv")
