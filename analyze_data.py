@@ -477,35 +477,14 @@ def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
     with open(outputname, 'w') as f:
         for item in genes_set:
             f.write("%s\n" % item)
-
-    # todo to csv ?
     return data
 
-                # x.append(g)
-                # ys.append(row[1]['metylation change'])
-                # c.append(row[1]['chr'])
-    # d = pd.DataFrame({'chr': c, 'genes': x, 'met': ys})
-    # print(d.head())
-    # d['genes'] = d['genes'].apply(lambda x: x.strip('" '))
-    # d['genes'] = d['genes'].apply(lambda x: x.strip('"'))
-    # x = d['genes']
-    # return
-    # x.to_csv("genes_at_{0}_month.txt".format(6), index=False)
-    # d.to_csv("data_to_plot_gene_6_csc.tsv", sep="\t", index=False)
-    # for i in range(1, 24):
-    #     temp = d[d['chr'] == i]
-    #     plt.scatter(x='genes', y='met', data=temp,
-    #                 s=20, c=colors[i], label="chr " + str(i))
-    # # i = 23
-    # # temp = data[data['chr'] == "X"]
-    # # plt.scatter(x='genes', y='met', data=temp,
-    # #             s=20, c=colors[i], label="chr " + str(i))
-    # # i = 24
-    # # temp = data[data['chr'] == "Y"]
-    # # plt.scatter(x='genes', y='met', data=temp,
-    # #             s=20, c=colors[i], label="chr " + str(i))
-    # plt.title(file)
-    # plt.show()
+
+def convert_dir(dir):
+    for file in os.listdir(dir):
+        if file.endswith(".csv"):
+            file_name = dir+os.path.sep + file
+            get_output_gene_list(file_name, file_name[:-4] + ".txt", helthy_backgroud=True)
 
 
 def compare_genes(dir, filter):
@@ -554,7 +533,6 @@ def compare_genes(dir, filter):
     data['appearance'] = data.loc[:, 'n_bound' : 'n_boundNstable'].sum(axis=1)
     # calculate how many groups has close sites to the genes
     data['not 0'] = data.loc[:, 'n_bound' : 'n_boundNstable'].gt(0).sum(axis=1)
-
     data.to_csv("genes" + os.sep + 'allgenes_filter_{0}.tsv'.format(filter), sep="\t")
 
 
@@ -590,6 +568,8 @@ if __name__ == '__main__':
     # file = sys.argv[1]
     # window = sys.argv[2]
     print("hi")
+    convert_dir("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups/genes")
+    print("done")
     # plot_sgnificant_genes("genes/genes_close_to_sites_imm_sgnificant_w_1000_filter_100000.csv", "genes/imm_1000_ref.txt")
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_15_filter_100000.csv", 'genes/genes_file_csc_15_ref.txt', 15)
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_10_filter_100000.csv", 'genes/genes_file_csc_10_ref.txt', 10)
