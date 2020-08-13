@@ -356,8 +356,6 @@ def different_cuts(matrix):
 
 
 
-
-
 def compare_significant_sites(compare_to, num, significant_site):
     """
     A function that get a file that you want to compare and the file of significant sites
@@ -427,4 +425,5 @@ if __name__ == '__main__':
     # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value < 0.05")
     # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/not_significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value >= 0.05")
     print("hi gal")
-    different_cuts(MATRIX)
+    # different_cuts(MATRIX)
+    calculate_correlation(MATRIX)
