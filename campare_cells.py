@@ -344,7 +344,7 @@ def different_cuts(matrix):
     merge_matrix.boxplot(column="met_rate", by=["binding_group", "met_group"])
     plt.savefig("try save")
     plt.show()
-    met_filter = [0, ml, mm, mh, 1]
+    met_filter = [mh, 100]
     binding_filter = [0, bl, bm, bh, 1]
     for i in range(len(binding_filter) - 1):
         data =  matrix[(matrix["binding_rate"] > binding_filter[i]) & (matrix["binding_rate"] <= binding_filter[i+1])]
