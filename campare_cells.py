@@ -22,6 +22,7 @@ MATRIX = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/the_big_matrix.tsv" #
 MATRIX_FOR_PLAY = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/cell/site_&_bind_matrix.tsv"
 COLUMNS = ["chr", "start", "end"]
 THRESHOLD = 50
+DIFFERENT = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups"
 
 
 def build_matrix():
@@ -280,6 +281,14 @@ def set_axis_style(ax, labels):
     ax.set_xlim(0.25, len(labels) + 0.75)
     ax.set_xlabel('Sample name')
 
+def sort_by(l, m, h, val):
+    if val > h:
+        return 1
+    if val > m:
+        return 2
+    if val > l:
+        return 3
+    return 4
 
 def different_cuts(matrix):
     matrix = pd.read_csv(matrix, sep="\t")
@@ -290,31 +299,61 @@ def different_cuts(matrix):
     matrix["met_rate"] = matrix[met_col].mean(axis=1, skipna = True)
     matrix["met_var"] = matrix[met_col].var(axis=1, skipna = True)
     matrix = matrix[matrix["binding_rate"] > 5/len(bind_col)]
+
     print(matrix["met_var"].quantile([.25, .5, .75]))
     ml = matrix["met_var"].quantile(.25)
     mm = matrix["met_var"].quantile(.5)
     mh = matrix["met_var"].quantile(.75)
     l_var = matrix[matrix["met_var"] <= ml]
+    l_var.to_csv(DIFFERENT + os.sep + "methylation_variance_ander_{0:.2f}.tsv".format(ml), sep='\t')
     lm_var = matrix[(matrix["met_var"] > ml) & (matrix["met_var"] <= mm)]
+    lm_var.to_csv(DIFFERENT + os.sep + "methylation_variance_between_{0:.2f}_to_{1:.2f}.tsv".format(ml, mm), sep='\t')
     mh_var = matrix[(matrix["met_var"] > mm) & (matrix["met_var"] <= mh)]
+    mh_var.to_csv(DIFFERENT + os.sep + "methylation_variance_between_{0:.2f}_to_{1:.2f}.tsv".format(mm, mh), sep='\t')
     h_var = matrix[matrix["met_var"] > mh]
+    h_var.to_csv(DIFFERENT + os.sep + "methylation_variance_above_{0:.2f}.tsv".format(mh), sep='\t')
+    # methyaltion_matrix = pd.DataFrame(matrix["binding_rate"])
+    # methyaltion_matrix["met_group"] = matrix["met_var"].apply(lambda x: sort_by(ml, mm, mh, x))
+    # methyaltion_matrix.boxplot(by="met_group", grid=False)
+    # plt.show()
     print(matrix["binding_rate"].quantile([.25, .5, .75]))
     bl = matrix["binding_rate"].quantile(.25)
     bm = matrix["binding_rate"].quantile(.5)
     bh = matrix["binding_rate"].quantile(.75)
     l_binding = matrix[matrix["binding_rate"] <= bl]
+    l_binding.to_csv(DIFFERENT + os.sep + "binding_rate_ander_{0:.2f}.tsv".format(bl), sep='\t')
     lm_binding = matrix[(matrix["binding_rate"] > bl) & (matrix["binding_rate"] <= bm)]
+    lm_binding.to_csv(DIFFERENT + os.sep + "binding_rate_between_{0:.2f}_to_{1:.2f}.tsv".format(bl, bm), sep='\t')
     mh_binding = matrix[(matrix["binding_rate"] > bm) & (matrix["binding_rate"] <= bh)]
+    mh_binding.to_csv(DIFFERENT + os.sep + "binding_rate_between_{0:.2f}_to_{1:.2f}.tsv".format(bm, bh), sep='\t')
     h_binding = matrix[matrix["binding_rate"] > bh]
-    fig, ax = plt.subplots()
-    violin = ax.violinplot([l_binding["met_rate"].values.tolist(), lm_binding["met_rate"].values.tolist(), mh_binding["met_rate"].values.tolist(), h_binding["met_rate"].values.tolist()])
-    ax.set_ylabel("Methylation levels")
-    ax.set_title("hi gal")
-    labels = ['A', 'B', 'C', 'D']
-    set_axis_style(ax, labels)
-    print(violin)
-    plt.legend()
+    h_binding.to_csv(DIFFERENT + os.sep + "binding_rate_above_{0:.2f}.tsv".format(bh), sep='\t')
+    # l_binding.plot.scatter(x="met_rate", y="met_var")
+    # lm_binding.plot.scatter(x="met_rate", y="met_var")
+    # mh_binding.plot.scatter(x="met_rate", y="met_var")
+    # h_binding.plot.scatter(x="met_rate", y="met_var")
+
+    # binding_matrix = pd.DataFrame(matrix["met_rate"])
+    # binding_matrix["binding_group"] = matrix["binding_rate"].apply(lambda x: sort_by(bl, bm, bh, x))
+    # binding_matrix.boxplot(by="binding_group", grid=False)
+    # plt.show()
+    merge_matrix = pd.DataFrame(matrix["binding_rate"])
+    merge_matrix["met_rate"] = matrix["met_rate"]
+    merge_matrix["binding_group"] = matrix["binding_rate"].apply(lambda x: sort_by(bl, bm, bh, x))
+    merge_matrix["met_group"] = matrix["met_var"].apply(lambda x: sort_by(ml, mm, mh, x))
+    merge_matrix.boxplot(column="met_rate", by=["binding_group", "met_group"])
+    plt.savefig("try save")
     plt.show()
+    met_filter = [mh, 100]
+    binding_filter = [0, bl, bm, bh, 1]
+    for i in range(len(binding_filter) - 1):
+        data =  matrix[(matrix["binding_rate"] > binding_filter[i]) & (matrix["binding_rate"] <= binding_filter[i+1])]
+        for j in range(len(met_filter) - 1):
+            d =  data[(data["met_var"] > met_filter[j]) & (data["met_var"] <= met_filter[j+1])]
+            d.to_csv(DIFFERENT + os.sep + "binding_rate_between_{0:.2f}_to_{1:.2f}_methylation_variance_between_{2:.2f}_to_{3:.2f}.tsv".format(binding_filter[i], binding_filter[i + 1], met_filter[j], met_filter[j + 1]), sep='\t')
+            print("i={0}, j={1}".format(i,j))
+
+
 
 
 def compare_significant_sites(compare_to, num, significant_site):
@@ -386,4 +425,5 @@ if __name__ == '__main__':
     # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value < 0.05")
     # compare_at_significant("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/not_significant_sites_all_chr_p=0.05.tsv", "Methylation distribution at binding site with p value >= 0.05")
     print("hi gal")
-    different_cuts(MATRIX)
+    # different_cuts(MATRIX)
+    calculate_correlation(MATRIX)
