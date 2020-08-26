@@ -480,11 +480,12 @@ def get_output_gene_list(file, outputname, csc=False, helthy_backgroud=False):
     return data
 
 
-def convert_dir(dir):
-    for file in os.listdir(dir):
+def convert_dir(dir_name):
+    for file in os.listdir(dir_name):
         if file.endswith(".csv"):
-            file_name = dir+os.path.sep + file
-            get_output_gene_list(file_name, file_name[:-4] + ".txt", helthy_backgroud=True)
+            file_name = dir_name + os.path.sep + file
+            print(file_name)
+            get_output_gene_list(file_name, file_name[:-4] + ".txt")
 
 
 def compare_genes(dir, filter):
@@ -564,11 +565,17 @@ def create_bars(data, filter):
 
 
 
+
+
 if __name__ == '__main__':
     # file = sys.argv[1]
     # window = sys.argv[2]
     print("hi")
-    convert_dir("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups/genes")
+    # remove_first_row("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups/genes/geneslist/biomart")
+    file = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups/genes/geneslist/biomart/50000/genes_close_to_sites_update_midhigh_binding_rateNhigh_met_rate_filter_50000/msigdb.txt"
+    # convert_dir("/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups/genes/filter50000/genesTosites")
+    a = pd.read_csv(file, sep='\t')
+    print(a.head())
     print("done")
     # plot_sgnificant_genes("genes/genes_close_to_sites_imm_sgnificant_w_1000_filter_100000.csv", "genes/imm_1000_ref.txt")
     # plot_sgnificant_genes("genes/genes_close_to_sites_csc_sgnificant_15_filter_100000.csv", 'genes/genes_file_csc_15_ref.txt', 15)

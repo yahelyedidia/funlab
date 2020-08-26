@@ -47,7 +47,7 @@ def fasta_creator(dir, file_name):
 
 def convert_dir(dir):
     for file in os.listdir(dir):
-        if file.endswith(".tsv"):
+        if file.endswith("correlation.tsv"):
             fasta_creator(dir, file[:-4])
 
 
