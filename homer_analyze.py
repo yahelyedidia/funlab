@@ -4,8 +4,8 @@ import pandas as pd
 from scipy.stats import rankdata
 
 
-LOCATION = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups/genes/geneslist/biomart/50000/{0}/msigdb.txt"
-output = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups/genes/geneslist/biomart/50000/compares.tsv"
+LOCATION = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups/genes/geneslist/biomart/10000/{0}/msigdb.txt"
+output = "/vol/sci/bio/data/yotam.drier/Gal_and_Yahel/different_groups/genes/geneslist/biomart/10000/compares.tsv"
 
 
 def remove_first_row(files_dir):
@@ -25,7 +25,7 @@ def get_significant(file):
     data = pd.read_csv(file, sep='\t')
     # print(data.shape)
     data = data.sort_values(by=['logP'])
-    reject, corrected_p = fdrcorrection(np.exp(data['logP']))
+    reject, corrected_p = fdrcorrection(np.exp(data['logP']), 0.05)
     data['fdr'] = corrected_p
     # print(data.shape)
     # data = data[data['logP'] <= np.log(0.05)]
@@ -81,8 +81,8 @@ def compare_significant(names):
 
 if __name__ == '__main__':
     # get_significant(LOCATION + os.path.sep + "genes_close_to_sites_update_midhigh_binding_rateNhigh_met_rate_filter_50000/msigdb.txt")
-    names = ["genes_close_to_sites_high_binding_rate_filter_50000",
-             "genes_close_to_sites_low_binding_rate_filter_50000",
-             "genes_close_to_sites_lowmid_binding_rate_filter_50000",
-             "genes_close_to_sites_midhigh_binding_rate_filter_50000"]
+    names = ["genes_close_to_sites_high_binding_rate_filter_10000",
+             "genes_close_to_sites_low_binding_rate_filter_10000",
+             "genes_close_to_sites_lowmid_binding_rate_filter_10000",
+             "genes_close_to_sites_midhigh_binding_rate_filter_10000"]
     compare_significant(names)
